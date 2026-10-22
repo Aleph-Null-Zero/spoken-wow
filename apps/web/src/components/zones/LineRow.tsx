@@ -4,6 +4,7 @@ import ActorTakeCell from "@/components/ActorTakeCell";
 import { MadeByCell } from "@/components/MadeBy";
 import { RenameButton } from "@/components/RenameButton";
 import { Untranslated, UntranslatedMark } from "@/components/Untranslated";
+import FilterLink from "@/components/FilterLink";
 import {
   ChevronDownIcon,
   Eraser,
@@ -32,7 +33,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor cell: the search sent recordings, so the viewer records here. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   /** Editor and up: the rewrite and regenerate controls. */
   canRegenerate: boolean;
   /** May write this line's text in the page's language, which a translator may do without
@@ -43,6 +44,8 @@ type Props = {
   state?: RowState;
   onPlay: (line: ResultLine) => void;
   onNarrowToZone: (line: ResultLine) => void;
+  /** The narrowed view as a link, for a click that opens it elsewhere. */
+  zoneHref: (line: ResultLine) => string;
   onReport: (line: ResultLine) => void;
   /** An earlier take is live again, so the row and the player can catch up. */
   onRestored: (line: ResultLine, version: number) => void;
@@ -80,6 +83,7 @@ export function LineRow({
   state,
   onPlay,
   onNarrowToZone,
+  zoneHref,
   onReport,
   onRestored,
   onEditText,
@@ -118,13 +122,14 @@ export function LineRow({
       {/* Narrowing is a sibling of the play button below, never nested inside it: a
           <button> within a <button> is invalid HTML and the inner click never fires. */}
       <td className="px-2 py-2">
-        <button
+        <FilterLink
+          href={zoneHref(line)}
+          onApply={() => onNarrowToZone(line)}
           className="hover:text-foreground block max-w-full truncate text-left underline-offset-2 hover:underline"
           title={`Show only ${line.zoneName}`}
-          onClick={() => onNarrowToZone(line)}
         >
           <Untranslated missing={line.zoneNameMissing}>{line.zoneName}</Untranslated>
-        </button>
+        </FilterLink>
       </td>
 
       <td className="px-2 py-2">
@@ -231,7 +236,7 @@ export function LineRow({
           source="zones"
           file={line.file}
           recording={line.recording ?? null}
-          onChanged={onRecordingChanged}
+          onChanged={() => onRecordingChanged(line)}
         />
       )}
 

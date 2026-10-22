@@ -43,6 +43,11 @@ export type CorpusLine = {
   /** An admin added this speaker by hand in the explorer (migration 0076), and may take it back. */
   added?: boolean;
   /**
+   * No other NPC speaks this line's moment, so the explorer offers no way to take this one off:
+   * a line is there only through its speakers.
+   */
+  soleSpeaker?: boolean;
+  /**
    * What a language other than English has not translated yet. The row then carries the
    * English in its place, for the explorer to show and mark -- never to voice: a line whose
    * text is missing is not generatable. Absent in English, and absent on a row where nothing

@@ -23,6 +23,7 @@ import { corpus } from "@/lib/quests/catalogue";
 import { isSource, type Source } from "@/lib/sections";
 import {
   requireAnyRegenerate,
+  requireApiKey,
   requireSpeaker,
   requireIn,
 } from "@/lib/generation/authz";
@@ -36,6 +37,7 @@ import { catalogue as bookCatalogue } from "@/lib/books/catalogue";
 import type { Lang } from "@/lib/lang";
 import { isAdmin } from "@/lib/permissions";
 import type { Provider } from "@/lib/generation/speakers/speaker";
+import { pinnedVoices } from "@/lib/voices/references";
 import { catalogue as zoneCatalogue } from "@/lib/zones/catalogue";
 
 export const dynamic = "force-dynamic";
@@ -106,6 +108,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "nothing to regenerate", kind: "bad-request" }, { status: 400 });
   }
 
+  // A pinned voice's lines are fish.audio jobs in whatever batch they fall in, so a batch that
+  // holds one needs the fish.audio key as well, for the reason the first key is checked above.
+  const pinned = provider === "fish" ? new Set<string>() : await pinnedVoices(lang);
+  if (jobs.some((job) => pinned.has(job.voice))) {
+    const { denied: noFishKey } = await requireApiKey(session.user.id, "fish");
+    if (noFishKey) return noFishKey;
+  }
+
   const batchId = await createBatch(label, session.user.id, "quests", lang);
   // BatchLine calls it audioPath and the queue calls it file, because a job is one mp3 on
   // either side and only the quests corpus thinks of it as a line's audio.
@@ -117,6 +127,7 @@ export async function POST(request: NextRequest) {
       npcName: job.npcName,
       preview: job.preview,
       characters: job.characters,
+      provider: pinned.has(job.voice) ? "fish" : undefined,
     })),
     "quests",
     lang,

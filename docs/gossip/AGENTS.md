@@ -40,3 +40,5 @@ Run each with `luajit tests/lua/<name>`; `make test-player` runs them all.
 - `gossip_part_test.lua`: the two sources, which part a window belongs to, and one part off
   leaving the other speaking.
 - `gossip_frequency_test.lua`: Read Greetings values, Never and the Listen button.
+- `gossip_variant_test.lua`: one NPC with several texts, a text the packs lack, and the player's
+  tokens filled into a line before it is compared.

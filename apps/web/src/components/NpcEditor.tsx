@@ -12,6 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import FilterChip, { type ChipOption } from "@/components/FilterChip";
 import { LiteButton, ROW_BUTTON, ROW_LINE } from "@/components/LiteControls";
 import { useLang } from "@/components/LangProvider";
+import { useHistoryMode } from "@/components/useHistoryMode";
 import { useRosterEdits } from "@/components/RosterEdits";
 import SortHeader from "@/components/SortHeader";
 import SpeakerCell, { type SpeakerAnswer } from "@/components/SpeakerCell";
@@ -114,6 +115,25 @@ function unfinished(npc: NpcSummary, roster: Roster): boolean {
 function progressOf(npc: NpcSummary, roster: Roster): Progress {
   if (unfinished(npc, roster)) return "unfinished";
   return npc.doubtful ? "doubtful" : "finished";
+}
+
+/**
+ * Whether the NPC, or any body it is split into, is of this type or read by this voice. Each
+ * filter matches on its own when the other is unset.
+ */
+function matchesSpeaker(
+  npc: NpcSummary,
+  bodies: NpcBodyAnswer[],
+  roster: Roster,
+  type: string | undefined,
+  voice: string | undefined,
+): boolean {
+  if (!type && !voice) return true;
+  return [npc, ...bodies].some(
+    (answer) =>
+      (!type || answer.race === type) &&
+      (!voice || roster.voiceFor(answer.race, answer.gender, answer.flavor) === voice),
+  );
 }
 
 /** A voice answer, or a name: the route saves each on its own. */
@@ -285,17 +305,22 @@ export default function NpcEditor({
   const pathname = usePathname();
   const params = useSearchParams();
   // The filters live in the URL, so a reload or a shared link keeps the view. Written with
-  // history.replaceState rather than router.replace, for zones/Explorer.tsx's reason: the rows
+  // native history calls rather than the router, for zones/Explorer.tsx's reason: the rows
   // are all here already, and Next re-renders useSearchParams() from a native history call.
   const query = params.get("q") ?? "";
   const speakerParam = params.get("speaker");
   const provenance = isProvenance(speakerParam) ? speakerParam : undefined;
   const progressParam = params.get("progress");
   const progress = isProgress(progressParam) ? progressParam : undefined;
+  // Taken as written rather than checked against the roster: FilterChip shows an unknown value
+  // as itself, and it matches nothing.
+  const type = params.get("type") || undefined;
+  const voice = params.get("voice") || undefined;
   // Absent is the default bin, so "all" is written out.
   const client = clientFilterOf(params.get("client"));
   const sortValue = params.get("sort");
   const sort = useMemo(() => sortOf(sortValue), [sortValue]);
+  const historyMode = useHistoryMode();
   const setParam = useCallback(
     (name: string, value: string | undefined) => {
       const search = new URLSearchParams(params.toString());
@@ -304,9 +329,12 @@ export default function NpcEditor({
       // A narrower view starts again from its first page: the one it was on may not exist.
       if (name !== "page") search.delete("page");
       const next = search.toString();
-      window.history.replaceState(null, "", next ? `${pathname}?${next}` : pathname);
+      const url = next ? `${pathname}?${next}` : pathname;
+      // The search box writes per keystroke; see useHistoryMode.
+      if (historyMode(name === "q") === "push") window.history.pushState(null, "", url);
+      else window.history.replaceState(null, "", url);
     },
-    [params, pathname],
+    [historyMode, params, pathname],
   );
   /** What this session saved, over the server's rows, keyed by NPC. */
   const [saved, setSaved] = useState<Record<string, NpcSummary>>({});
@@ -415,8 +443,14 @@ export default function NpcEditor({
       )
       .filter((npc) => !provenance || npc.provenance === provenance)
       .filter((npc) => !progress || progressOf(npc, roster) === progress)
+      .filter((npc) => {
+        const k = key(npc.npcKind, npc.npcId);
+        return matchesSpeaker(npc, savedBodies[k] ?? initialBodies.get(k) ?? [], roster, type, voice);
+      })
       .sort(compare(sort));
-  }, [initial, client, saved, query, provenance, progress, sort, roster]);
+  }, [initial, client, saved, savedBodies, initialBodies, query, provenance, progress, type, voice, sort, roster]);
+  const typeOptions = useMemo(() => roster.races.map((race) => ({ value: race, label: race })), [roster]);
+  const voiceOptions = useMemo(() => roster.voiceNames.map((name) => ({ value: name, label: name })), [roster]);
 
   // A page at a time: every row is a SpeakerCell with its own selects, and all of them at once
   // made the first load and every tick slow.
@@ -467,6 +501,8 @@ export default function NpcEditor({
           options={PROGRESS_CHIP_OPTIONS}
           onChange={(next) => setParam("progress", next)}
         />
+        <FilterChip label="type" value={type} options={typeOptions} onChange={(next) => setParam("type", next)} />
+        <FilterChip label="voice" value={voice} options={voiceOptions} onChange={(next) => setParam("voice", next)} />
         <span className="text-muted-foreground text-xs">
           {rows.length} of {initial.length}
         </span>

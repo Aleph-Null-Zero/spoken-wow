@@ -7,7 +7,7 @@
  * `language` table -- and is asked on the server.
  *
  * THE SAME LIST AS pipelines/lib/locales.mjs, restated here as a literal so the type of a
- * code is the eleven codes rather than `string`. lang.test.ts fails if the two drift, the way
+ * code is the twelve codes rather than `string`. lang.test.ts fails if the two drift, the way
  * pipelines/zones/tools/validate.mjs guards the addon's copy.
  *
  * It was here before as lib/zones/lang.ts, and went when zones lost its language axis in
@@ -25,6 +25,7 @@ export const LOCALES = [
   { code: "koKR", name: "Korean", bcp47: "ko-KR", elevenLabs: "ko" },
   { code: "zhCN", name: "Chinese (S)", bcp47: "zh-CN", elevenLabs: "zh" },
   { code: "zhTW", name: "Chinese (T)", bcp47: "zh-TW", elevenLabs: "zh" },
+  { code: "viVN", name: "Vietnamese", bcp47: "vi-VN", elevenLabs: "vi", client: false },
 ] as const;
 
 export type Lang = (typeof LOCALES)[number]["code"];
@@ -42,8 +43,8 @@ export function isLang(value: unknown): value is Lang {
 }
 
 /**
- * Whether a game client runs in this language. Italian is translated by a community and
- * chosen by a player in the addons; no client ever reports it, so nothing that comes from a
+ * Whether a game client runs in this language. Italian and Vietnamese are translated by a
+ * community and chosen by a player in the addons; no client ever reports it, so nothing that comes from a
  * client -- a contribution above all -- is in it. See `client` in pipelines/lib/locales.mjs.
  */
 export function isClientLang(lang: Lang): boolean {

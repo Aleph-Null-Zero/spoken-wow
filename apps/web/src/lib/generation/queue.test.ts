@@ -117,6 +117,23 @@ describe("enqueue", () => {
   });
 });
 
+describe("the generator a job is spoken by", () => {
+  // A voice pinned to fish.audio queues its lines as fish.audio jobs inside a batch whose
+  // collaborator generates with ElevenLabs; the worker reads each job's own.
+  it("is the batch's unless the job names its own", async () => {
+    const batch = await newBatch();
+    await enqueue(batch, [line(1), { ...line(2), provider: "fish" }], "quests", "enUS", "elevenlabs");
+    const { rows } = await db().query<{ file: string; provider: string }>(
+      `select "file", "provider" from "regeneration_job" where "batchId" = $1 order by "file"`,
+      [batch],
+    );
+    expect(rows).toEqual([
+      { file: `${prefix}/1.mp3`, provider: "elevenlabs" },
+      { file: `${prefix}/2.mp3`, provider: "fish" },
+    ]);
+  });
+});
+
 describe("the language a job is in", () => {
   it("is English unless the batch says otherwise", async () => {
     const batch = await newBatch();

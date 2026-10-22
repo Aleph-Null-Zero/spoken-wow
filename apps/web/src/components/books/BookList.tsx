@@ -20,7 +20,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor column: the search sent recordings. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   canRegenerate: boolean;
   canEdit: boolean;
   rowStates: Record<string, RowState>;
@@ -28,6 +28,7 @@ type Props = {
   onRegenerate: (line: ResultLine) => void;
   /** Narrowing to one book, from its name. */
   onSelectBook: (line: ResultLine) => void;
+  bookHref: (line: ResultLine) => string;
   /** Open the report dialog. Everyone gets this, signed in or not. */
   onReport: (line: ResultLine) => void;
   /** An earlier take is live again. */
@@ -75,6 +76,7 @@ export function BookList({
   onPlay,
   onRegenerate,
   onSelectBook,
+  bookHref,
   onClearDirty,
   onReport,
   onRestored,
@@ -135,6 +137,7 @@ export function BookList({
             onPlay={onPlay}
             onRegenerate={onRegenerate}
             onSelectBook={onSelectBook}
+            bookHref={bookHref}
             onClearDirty={onClearDirty}
             onReport={onReport}
             onRestored={onRestored}

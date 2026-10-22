@@ -22,7 +22,7 @@ Three modules, each can be switched off in the settings. **The voices are not in
 | **Spoken Places** | zone and area lore, on the world map | [Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places) |
 | **Spoken Readables** | books, letters, notes and the plaques out in the world | [Spoken Audio: Readables](https://www.curseforge.com/wow/addons/spoken-audio-readables) |
 
-Want everything in English at once? Install [Spoken English](https://www.curseforge.com/wow/addons/spoken-english) instead: it brings this addon and every English pack.
+Want everything in English at once? Install [Spoken: English](https://www.curseforge.com/wow/addons/spoken-english) instead: it brings this addon and every English pack.
 
 Voice packs in German, Spanish, French, Korean, Portuguese, Russian and Chinese are separate downloads.
 

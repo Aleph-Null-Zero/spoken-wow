@@ -16,9 +16,6 @@ covers how they are made. Spoken has no guide; `docs/spoken/` holds its changelo
     or builds it with `scripts/developer/package.sh` (`addons/Spoken_Developer/README.md`).
   - `SpokenZonesAudio` and `SpokenBooksAudio` are sound packs. The quests packs have no folder
     here; they are built into `pipelines/quests/audio/`, which is gitignored.
-  - `SpokenPlayer`, `SpokenQuests`, `SpokenZones` and `SpokenBooks` are tombstones: a `.toc`
-    and no Lua, so an update replaces an old install with a folder that never loads. Never
-    add code to them.
 - `apps/web`: the site, `spoken.rusty.one`, a Next.js app backed by Postgres. It imports
   `pipelines/zones` and `pipelines/books` (`@tools/*` and `@books-tools/*`), so a change there is
   a change to the site.
@@ -66,10 +63,20 @@ running one. `sounds` directories are assembled from the live takes before a bui
 never the record. Audio stays out of git; `.gitignore` says which directories cannot be
 reproduced. Never prune those.
 
+**The database is the source of truth; committed data files are exports of it.** Text and
+structure live in Postgres (`quest_line`, `book_page`/`book_line`, `lore_line` and the rest), and
+the site edits them. `corpus.json.gz`, `Books.lua`, the Places `Zones.lua`/`Subzones.lua` and
+every file headed "AUTO-GENERATED" come out of a database or a generator through a make target.
+Never edit one by hand, merge rows into one, or fill one from the site's public API: the next
+export overwrites the change, and until then the repo and the site disagree. Fix a wrong line
+in the database and export it again, and fix a wrong file in its generator. If you cannot reach
+the database, change only code, tests and hand-kept inputs (the section guides list them), and
+say in the PR which database change and which export are needed.
+
 **The droplet is never named in the tree.** Host, user and key come from the environment
 (`make/droplet.mk`) locally and from the `DO_*` secrets in CI.
 
-**Ids and filenames are frozen.** `q:{questID}:{accept|progress|complete}`, `g:{md5}`,
+**Ids and filenames are frozen.** `q:{questID}:{accept|progress|complete}` (and its other wordings, `…:w{n}`), `g:{md5}`,
 `g:b{broadcastTextID}-{voice}`, `g:{lang}-{md5}`, `f:{broadcastTextID}:{voice}` (each with an optional `:m`/`:f` suffix), `z:{mapID}`,
 `s:{mapID}:{key}`, `b:{pageTextID}`, the minted `b:n{uuid}` (a page only a player's client has
 shown) and its book's `n{uuid}`, and the paths derived from them. A minted page later found in
@@ -99,8 +106,8 @@ Tooling, the site, CI and docs add no notes.
 A release PR bumps the version and renames `## Unreleased` to the real version heading with
 its date.
 
-- Spoken, its modules, `SpokenContributions` and the tombstones move together, in every
-  `.toc`, both `Environment.lua` `AddonVersion` literals included. Their notes go in
+- Spoken, its modules and `SpokenContributions` move together, in every `.toc`, both
+  `Environment.lua` `AddonVersion` literals included. Their notes go in
   `docs/spoken/CHANGELOG.md`, and they release as the `spoken/vX` tag.
 - Sound packs version on their own, with sections in their section's changelog.
 - `Spoken_Developer` has its own version, and nothing releases it.

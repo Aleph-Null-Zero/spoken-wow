@@ -10,6 +10,8 @@ local H = require("queue_helpers")
 local Expect, Failures = H.Expecter(stub.print)
 local SPOKEN = here .. "/../../addons/Spoken/"
 
+-- Pages under Spoken held until the world is entered, as in the game (see below).
+stub.holdPages = true
 local env, quests, zones = H.Fresh(stub, SPOKEN)
 local Q, S = env.SoundQueue, env.Sources
 
@@ -30,8 +32,10 @@ Expect("switched back on, it plays again", quests:Enqueue(H.Clip()) ~= nil, true
 Expect("...and nothing is left in the settings", env.Addon.db.profile.Parts.quests, nil)
 Q:RemoveAllSoundsFromQueue()
 
--- A feature addon may build its settings page before Spoken's own entry exists. The page
--- waits, then is nested under it in its order rather than in the order the addons loaded.
+-- A feature addon may build its settings page before Spoken's own entry exists, or after it,
+-- on entering the world. The game lists them in the order they were registered, so each page
+-- waits until just after the world is entered, then all are nested in their order rather than
+-- in the order the addons asked.
 stub.settingsCategories = {}
 local zonesPage = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Zones", 3)
 local questsPage = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Quests", 1)
@@ -41,6 +45,10 @@ Expect("a page asked for before Spoken's own entry waits for it", questsPage.cat
 -- Quests found no voice pack, as the real addon reports it when none is installed.
 quests.packs = function() return {} end
 env.Addon:Enable()
+local gossipPage = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Gossip", 2)
+Expect("...and one asked for after it, until the world is entered", gossipPage.category, nil)
+stub.FireEvent("PLAYER_ENTERING_WORLD")
+stub.Advance(0.1)
 local function Listed()
     local names = {}
     for _, category in ipairs(stub.settingsCategories) do
@@ -48,7 +56,7 @@ local function Listed()
     end
     return table.concat(names, "|")
 end
-Expect("...then is nested under it, in its own order", Listed(), "Spoken|Spoken>Quests|Spoken>Zones")
+Expect("...then is nested under it, in its own order", Listed(), "Spoken|Spoken>Quests|Spoken>Gossip|Spoken>Zones|Spoken>Contribute & Report")
 local readables = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Writings", 2)
 Expect("a page asked for afterwards is nested at once", readables.category and readables.category.parent.name, "Spoken")
 Expect("opening a page opens its own entry", readables.Open(), true)

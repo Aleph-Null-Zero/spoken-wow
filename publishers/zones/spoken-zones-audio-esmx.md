@@ -3,7 +3,7 @@ curseforge: 1711067
 release: zones-audio-esMX
 section: zones
 lang: esMX
-version: 1.0.1
+version: 1.0.2
 slug: spoken-spanish-al-audio-places
 name: Spoken Spanish (AL) Audio: Places
 summary: The Latin American Spanish narration for Spoken's Places module: every zone and subzone read aloud in Spanish (AL).
@@ -12,17 +12,18 @@ categories:
   - Miscellaneous
   - Roleplay
 license: MIT
+manager: true
 ---
 
 Narrated zone lore for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Places module, in Latin American Spanish. This addon is data only — it does nothing on its own.
 
-It plays while Spoken Places is showing its lore in **Spanish (AL)**, and never under another language's text. It installs beside the English pack, **[Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places)**, rather than replacing it, so a player who switches languages keeps the narration for both.
+Spoken Places plays it when Spoken's **Voice Language** is Spanish (AL). It installs beside the English pack, **[Spoken Audio: Places](https://www.curseforge.com/wow/addons/spoken-audio-places)**, rather than replacing it, so a player who switches languages keeps the narration for both.
 
 ## Installing
 
 Install **Spoken** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped (`SpokenZonesAudio_esMX`) — Spoken finds packs by folder name.
 
-Spoken Places reads your client's language when it has lore in it, and `/spp lang esMX` picks Spanish (AL) on any client.
+Voice Language follows your client's language until you choose one, so to hear Spanish (AL) on another client, pick it on Spoken's settings page. A place this pack has no narration for is read in the language set under **If a Voice Is Missing**, English unless you change it.
 
 ## Compatibility
 

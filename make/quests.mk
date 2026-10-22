@@ -59,7 +59,7 @@ endef
         package-meta icon \
         downloads-status \
         factions followup-lines compendium-text compendium release release-audio release-audio-dry release-wago release-curse \
-        release-dry import-corpus import-locale import-npc-bodies fill-locales import-questit export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
+        release-dry import-corpus import-locale import-npc-bodies fill-locales import-questit import-forever-csv export-corpus export-ignores export-locale-text export-giver-names export-gossip-text \
         sync check-synced full-release
 
 help: ## Show this help
@@ -145,12 +145,10 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 # the player touch no voiceline, and the sound pack is three orders of magnitude larger.
 #
 # `package` takes its version from `## Version:` in Spoken_Quests.toc, so bumping the addon
-# and naming the zips stay one edit. It refuses to build from an uncommitted tree, because a
+# and naming the zip stay one edit. It refuses to build from an uncommitted tree, because a
 # zip nobody can trace back to a commit is a zip nobody can rebuild - ALLOW_DIRTY=1 to
-# override while testing. Four zips come out: one for Blizzard's clients, which pick a .toc by
-# flavor suffix, and one apiece for 1.12, 2.4.3 and 3.3.5, which read Spoken_Quests.toc and
-# nothing else and each need their own vendored Ace3 in it. Only the first goes to CurseForge;
-# the GitHub release workflow publishes all four.
+# override while testing. One zip comes out, and every client picks its .toc from it by
+# flavor suffix.
 #
 # `package-audio` builds the store into four packs - Alliance, Horde, the quests both sides
 # share, and gossip - zips each, and bundles the four into one zip for GitHub. Ogg Vorbis at the full 44.1 kHz,
@@ -170,7 +168,8 @@ acted: pull-recorded package-acted ## Pull the recordings and build the voice-ac
 # sound packs take the Quests mark -- scripts/quests/package-meta.sh and tts_cli/build.py copy
 # spoken-quests.tga into every module they build. A language's packs and its Spoken stub take the
 # same mark with the language's badge, spoken-<mark>-<locale>.tga, made from the
-# spoken-<mark>-<locale>-512.png beside it.
+# spoken-<mark>-<locale>-512.png beside it. Spoken_Developer and SpokenContributions have no
+# pipeline of their own, so their marks (the brackets and the heart) are kept and built here too.
 # The minimap button wears the same player mark from a tighter crop, as a BLP rather than a
 # TGA: a texture a frame loads is BLP on every client this ships to. LibDBIcon draws its own
 # round border around it, so the crop drops the shield's octagonal frame -- two frames at 17
@@ -181,10 +180,13 @@ icon: ## Rebuild the addons' icon.tga and the minimap BLP from pipelines/quests/
 	@cp pipelines/quests/assets/icon/spoken-player.tga addons/Spoken/icon.tga
 	@for png in pipelines/quests/assets/icon/spoken-*-??[A-Z][A-Z]-512.png; do python3 pipelines/quests/tools/make_icon.py "$$png" "$${png%-512.png}.tga"; done
 	@cp pipelines/quests/assets/icon/spoken-quests.tga addons/Spoken_Quests/icon.tga
-	@echo "==> copied into addons/Spoken/ and addons/Spoken_Quests/"
+	@for mark in developer contributions; do python3 pipelines/quests/tools/make_icon.py "pipelines/quests/assets/icon/spoken-$$mark-512.png" "pipelines/quests/assets/icon/spoken-$$mark.tga"; done
+	@cp pipelines/quests/assets/icon/spoken-developer.tga addons/Spoken_Developer/icon.tga
+	@cp pipelines/quests/assets/icon/spoken-contributions.tga addons/SpokenContributions/icon.tga
+	@echo "==> copied into addons/Spoken/, addons/Spoken_Quests/, addons/Spoken_Developer/ and addons/SpokenContributions/"
 	@python3 pipelines/quests/tools/make_minimap_icon.py pipelines/quests/assets/icon/spoken-player-512.png addons/Spoken/Textures/MinimapButton.blp
 
-package: ## Zip the player addon into dist/: one Blizzard zip, one per legacy client
+package: ## Zip the quests addon into dist/
 	@./scripts/quests/package.sh
 
 # Languages no client runs in (pipelines/lib/locales.mjs, `client: false`). Their packs carry
@@ -246,7 +248,7 @@ compendium-text: ## Re-export addons/Spoken_Quests/Data/QuestText.lua from the c
 # quest log's zone nor who may take a quest, so this reads the Forever repack's TrinityCore DB
 # (COMPENDIUM_MYSQL_*). ARGS=--no-db adds the corpus's new quests without it.
 
-compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL; ARGS=--no-db without it)
+compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL and its map files in COMPENDIUM_MAPS; ARGS=--no-db without them)
 	@$(PYTHON) pipelines/quests/tools/export_compendium.py $(ARGS)
 
 release-dry: ## Show what `make release` would upload to CurseForge and Wago
@@ -385,6 +387,15 @@ fill-locales: ## Fill vmangos's empty *_locN columns from TrinityCore (TDB335= T
 import-questit: ## Import a QuestIT release into itIT (QUESTIT=~/Downloads/QuestIT)
 	@test -n "$(QUESTIT)" || { echo "import-questit: set QUESTIT to a QuestIT release folder"; exit 2; }
 	@cd $(QUESTS_DIR) && $(abspath $(PYTHON)) tools/import_questit.py "$(abspath $(patsubst ~/%,$(HOME)/%,$(QUESTIT)))" $(ARGS)
+
+# Vietnamese, which no client runs in either, from Forever's mission export: quest text and
+# titles, as 'community' rows. Run again on each new export; an edit made on the site is
+# kept. ARGS=--dry-run counts instead. The path is resolved in the shell, not with abspath:
+# an export saved by a browser has spaces in its name, and make splits words on them.
+import-forever-csv: ## Import a Forever mission export into its language (CSV=~/Downloads/forever-mission-viVN-….csv)
+	@test -n "$(CSV)" || { echo "import-forever-csv: set CSV to a forever-mission-<lang>-<stamp>.csv export"; exit 2; }
+	@csv='$(CSV)'; case "$$csv" in "~/"*) csv="$$HOME/$${csv#\~/}";; /*) ;; *) csv="$(CURDIR)/$$csv";; esac; \
+	  cd $(QUESTS_DIR) && $(abspath $(PYTHON)) tools/import_forever_csv.py "$$csv" $(ARGS)
 
 export-corpus: check-synced ## quest_line -> corpus/corpus.json.gz (ARGS=--check to compare instead)
 	@$(QUESTS_CLI) export-corpus $(ARGS)

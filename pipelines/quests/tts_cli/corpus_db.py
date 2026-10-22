@@ -193,6 +193,12 @@ def split_contributed(lines, schema_version, known_contributions, contributed_sp
     return extracted, skipped
 
 
+def removed_here(row, removed_speakers):
+    """Whether a row of the dump names a speaker an admin removed from its moment (apps/web
+    migration 0077). `removed_speakers` holds (moment, npcType, npcId)."""
+    return (moment_of(row["lineId"]), row["npcType"], row["npcId"]) in removed_speakers
+
+
 def _progress(message):
     """One line per step, as it happens: the import is a single transaction, so nothing it
     writes is visible from outside until the end, and this is the only way to see it move."""
@@ -523,6 +529,17 @@ def import_corpus_data(corpus, verbose=True):
                 (LANG,),
             )
             added_speakers = {tuple(r) for r in cur.fetchall()}
+            # Only rows this database lacks: a fresh extract carries none, and a removal is
+            # taken back by adding the speaker again, never by an import.
+            if corpus.get("removedSpeakers"):
+                _bulk(cur, "quest_line_speaker_removed", [
+                          (r["moment"], r["npcType"], r["npcId"], r["removedBy"])
+                          for r in corpus["removedSpeakers"]],
+                      """insert into "quest_line_speaker_removed"
+                           ("moment", "npcType", "npcId", "removedBy")
+                         values %s on conflict do nothing""")
+            cur.execute("""select "moment", "npcType", "npcId" from "quest_line_speaker_removed" """)
+            removed_speakers = {tuple(r) for r in cur.fetchall()}
             lines, contributed = split_contributed(
                 corpus["lines"], corpus["schemaVersion"], known_contributions,
                 contributed_speakers, added_speakers,
@@ -647,12 +664,17 @@ def import_corpus_data(corpus, verbose=True):
             # A line split here is spoken by the dump's speakers on both of its sides. The
             # sides' `ord`s follow the dump's own, which are only ever as many as its rows.
             # A row added by hand keeps the line it was added to, split side or not.
-            speaker_rows, added_rows = [], []
+            # A speaker an admin removed (migration 0077) is left out here and nowhere earlier:
+            # its row may be the only one carrying the line's text into quest_line.
+            speaker_rows, added_rows, removed = [], [], 0
             for ord_, row in enumerate(lines):
                 variant = variants[row["lineId"]].index(_line_key(row))
                 speaker = tuple(row[field] for field in SPEAKER_FIELDS)
                 if row.get("addedBy") is not None:
                     added_rows.append((row["lineId"], variant, LANG) + speaker + (row["addedBy"],))
+                    continue
+                if removed_here(row, removed_speakers):
+                    removed += 1
                     continue
                 if (row["lineId"], variant) not in split:
                     speaker_rows.append((row["lineId"], variant, LANG, ord_) + speaker)
@@ -762,7 +784,8 @@ def import_corpus_data(corpus, verbose=True):
             f"speakers overtaken by the dump"
             + ("" if marked else " (none: the file predates marking them)")
         )
-        print(f"{superseded_added} speakers added by hand overtaken by the dump")
+        print(f"{superseded_added} speakers added by hand overtaken by the dump, "
+              f"{removed} of the dump's speakers left out as removed by hand")
         print(
             f"defects carried over unchanged: {collisions} lineIds naming two different "
             f"lines, {duplicates} duplicate rows"
@@ -864,6 +887,12 @@ def export_corpus(path, check=False, verbose=True):
             npc_rows = cur.fetchall()
 
             body_rows = export_npc_bodies(cur)
+
+            cur.execute(
+                """select "moment", "npcType", "npcId", "removedBy"
+                     from "quest_line_speaker_removed" order by 1, 2, 3"""
+            )
+            removed_rows = cur.fetchall()
     finally:
         conn.close()
 
@@ -918,6 +947,12 @@ def export_corpus(path, check=False, verbose=True):
         ],
         "npcBodies": body_rows,
     }
+    # Only once there is one, so the files exported before the table existed stay identical.
+    if removed_rows:
+        corpus["removedSpeakers"] = [
+            {"moment": moment, "npcType": kind, "npcId": npc_id, "removedBy": by}
+            for moment, kind, npc_id, by in removed_rows
+        ]
 
     if check:
         existing = load_corpus(path)
@@ -1039,9 +1074,10 @@ def export_giver_names(corpus_path, out_dir, verbose=True):
     """
     from tts_cli.giver_names import (KINDS, givers, localized_names, write_giver_names,
                                    write_names_xml)
-    from tts_cli.ignores import ignored_line_ids
+    from tts_cli.ignores import load_pack_ignored
 
-    found = givers(load_corpus(corpus_path), ignored_line_ids())
+    corpus = load_corpus(corpus_path)
+    found = givers(corpus, load_pack_ignored(corpus))
     conn = connect()
     try:
         with conn, conn.cursor() as cur:
@@ -1068,6 +1104,38 @@ def export_giver_names(corpus_path, out_dir, verbose=True):
     write_names_xml(out_dir, sorted(by_lang))
 
 
+def _client_texts(cur, sources, locales):
+    """(english, translations, natives) of the current lines of `sources`, as
+    gossip_text.gossip_text_tables takes them: English's template by lineId; each locale's
+    newest translation with localeText, as (lineId, the English it translates, its text); and
+    each locale's own text by lineId, for a line English lacks."""
+    cur.execute(
+        """select "lineId", "originalText" from "quest_line"
+            where "isCurrent" and "source" = any(%s) and "lang" = %s""", (list(sources), LANG))
+    english = dict(cur.fetchall())
+
+    cur.execute(
+        """select distinct on ("lineId", "variant", "lang")
+                  "lang", "lineId", "originalText", "localeText"
+             from "quest_line"
+            where "lang" = any(%s) and "source" = any(%s)
+              and coalesce("localeText", '') <> ''
+            order by "lineId", "variant", "lang", "version" desc""",
+        (list(locales), list(sources)))
+    translations = {}
+    for lang, line_id, original, text in cur.fetchall():
+        translations.setdefault(lang, []).append((line_id, original, text))
+
+    cur.execute(
+        """select "lang", "lineId", "originalText" from "quest_line"
+            where "isCurrent" and "source" = any(%s) and "lang" = any(%s)""",
+        (list(sources), list(locales)))
+    natives = {}
+    for lang, line_id, text in cur.fetchall():
+        natives.setdefault(lang, {})[line_id] = text
+    return english, translations, natives
+
+
 def export_gossip_text(out_dir, aliases_path, verbose=True):
     """Every client locale's gossip text, and the moments' aliases -> the addon's Gossip/.
 
@@ -1075,7 +1143,7 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
     export_locale_text's reason, and is kept only while it translates the current English.
     """
     from tts_cli.gossip_text import (CLIENT_LOCALES, gossip_aliases, gossip_text_tables,
-                                     write_aliases_json, write_gossip_text)
+                                     quest_wording_tables, write_aliases_json, write_gossip_text)
     from tts_cli.ignores import ignored_line_ids
 
     conn = connect()
@@ -1098,30 +1166,7 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
             for kind, npc_id, gender in cur.fetchall():
                 sexes.setdefault((kind, npc_id), []).append(gender)
 
-            cur.execute(
-                """select "lineId", "originalText" from "quest_line"
-                    where "isCurrent" and "source" = 'gossip' and "lang" = %s""", (LANG,))
-            english = dict(cur.fetchall())
-
-            cur.execute(
-                """select distinct on ("lineId", "variant", "lang")
-                          "lang", "lineId", "originalText", "localeText"
-                     from "quest_line"
-                    where "lang" = any(%s) and "source" = 'gossip'
-                      and coalesce("localeText", '') <> ''
-                    order by "lineId", "variant", "lang", "version" desc""",
-                (list(CLIENT_LOCALES),))
-            translations = {}
-            for lang, line_id, original, text in cur.fetchall():
-                translations.setdefault(lang, []).append((line_id, original, text))
-
-            cur.execute(
-                """select "lang", "lineId", "originalText" from "quest_line"
-                    where "isCurrent" and "source" = 'gossip' and "lang" = any(%s)""",
-                (list(CLIENT_LOCALES),))
-            natives = {}
-            for lang, line_id, text in cur.fetchall():
-                natives.setdefault(lang, {})[line_id] = text
+            english, translations, natives = _client_texts(cur, ("gossip",), CLIENT_LOCALES)
 
             cur.execute("""select "lineId", "broadcastTextId" from "gossip_broadcast"
                             order by 1, 2""")
@@ -1141,6 +1186,10 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
 
             cur.execute("""select "lineId", "mergedInto" from "gossip_merge" order by 1""")
             merges = cur.fetchall()
+
+            # Quest text in every client locale, for the moments shown in more than one wording.
+            quest_english, quest_translations, quest_natives = _client_texts(
+                cur, ("accept", "complete"), CLIENT_LOCALES)
     finally:
         conn.close()
 
@@ -1152,10 +1201,12 @@ def export_gossip_text(out_dir, aliases_path, verbose=True):
     tables = gossip_text_tables(shown, english, translations, natives, broadcast_ids,
                                 broadcast_texts, ignored)
     aliases = gossip_aliases(speakers, broadcast_ids, ignored, merges)
-    write_gossip_text(out_dir, tables, aliases)
+    wordings = quest_wording_tables(quest_english, quest_translations, quest_natives, ignored)
+    write_gossip_text(out_dir, tables, aliases, wordings)
     write_aliases_json(aliases_path, aliases)
     if verbose:
         for lang in CLIENT_LOCALES:
             count = sum(len(texts) for kind in tables[lang].values() for texts in kind.values())
-            print(f"wrote {lang}.lua: {count} texts")
+            print(f"wrote {lang}.lua: {count} texts, "
+                  f"{len(wordings[lang])} quest moments in several wordings")
         print(f"wrote Aliases.lua: {len(aliases)} stems with aliases")

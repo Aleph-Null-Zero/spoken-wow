@@ -213,6 +213,50 @@ describe("a line with no audio yet", () => {
   });
 });
 
+describe("a lexicon uploaded to ElevenLabs", () => {
+  let previous: { dictionaryId: string | null; versionId: string | null } | undefined;
+
+  beforeEach(async () => {
+    const { rows } = await db().query(
+      `select "dictionaryId", "versionId" from "pronunciation_lexicon" where "id"`,
+    );
+    previous = rows[0];
+    await db().query(
+      `update "pronunciation_lexicon" set "dictionaryId" = 'dict-abc', "versionId" = 'ver-1'
+       where "id"`,
+    );
+  });
+
+  afterEach(async () => {
+    await db().query(
+      `update "pronunciation_lexicon" set "dictionaryId" = $1, "versionId" = $2 where "id"`,
+      [previous?.dictionaryId ?? null, previous?.versionId ?? null],
+    );
+  });
+
+  // The version alone cannot be looked up: ElevenLabs addresses a version through its
+  // dictionary, so a take that dropped the id could not say which rules it was made with.
+  it("records the dictionary it sent, id as well as version", async () => {
+    const { options, calls } = stub();
+    const result = await regenerate(SOLO, options);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const body = calls.find((c) => c.url.includes("text-to-speech"))!.body as {
+      pronunciation_dictionary_locators: unknown;
+    };
+    expect(body.pronunciation_dictionary_locators).toEqual([
+      { pronunciation_dictionary_id: "dict-abc", version_id: "ver-1" },
+    ]);
+
+    const { rows } = await db().query(
+      `select "dictionaryId", "dictionaryVersion" from "take" where "file" = $1`,
+      [result.file],
+    );
+    expect(rows).toEqual([{ dictionaryId: "dict-abc", dictionaryVersion: "ver-1" }]);
+  });
+});
+
 describe("a race with an accent tag", () => {
   it("sends the direction ahead of the words", async () => {
     const { options, calls } = stub();

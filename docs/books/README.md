@@ -53,10 +53,21 @@ and "traveler", or the page's language's own words, and takes `$G`'s first branc
 flattened, hashed and judged). The extract's stored `substitution` label is left as it was;
 the catalogue re-judges every page from its text.
 
+Words in angle brackets are read, as a quest's stage directions are: `<illegible text>`,
+`<The rest of the book is blank>`. Each is set apart by a line break on either side, so it is
+not run into the sentence around it. Four of the 26 empty pages above held nothing else, and
+are voiced in every language now. Only the tags of the 54 signed pages (`<HTML>`, `<P>`,
+`<BR/>`, `<IMG>` and the rest) are dropped, and esMX's `<nombre>`, which would otherwise be
+read as the word.
+
+The signed pages are HTML in `page_text`. `normaliseText` stores them as the lines the
+client draws, so the site shows words rather than tags. The addon's `Normalise` lays out what
+`ItemTextGetText` returns the same way before it takes the checksum; it also tries the
+checksum over the HTML, which is what packs built before 2026-10-18 are keyed on.
+
 A book's first page is narrated with its title ahead of it — "Letter to Ello.", a line
 break, then "The letters on this note…" — because the client shows the title and never says
-it (`spokenWithTitle` in `tools/lib/text.mjs`). The break is the one newline spoken text
-keeps, for the pause: fish.audio is sent the title as a request of its own, and the page is
+it (`spokenWithTitle` in `tools/lib/text.mjs`). The break is kept for the pause: fish.audio is sent the title as a request of its own, and the page is
 hashed with `spokenHash`, which does not flatten it. The narration only: the stored text and the addon's checksum stay the
 page's own words, so nothing in the addon changes. The 33 first pages that already open with
 their title (gravestones, a treatise's `<H1>`) are left alone rather than read it twice. In
@@ -152,8 +163,10 @@ three.
 
 **A page is identified by what is on screen**, because the client never says which page id
 it is showing. Title, page number and a checksum of the text; then the checksum alone,
-where no other page shares it; then nothing. Nothing is the right third answer: the
-alternative is reading the wrong page's words aloud.
+where no other page shares it; then, for a page the client filled with the reader's name,
+class or gender word, its words against the captions that hold a token, where exactly one
+fits; then nothing. Nothing is the right last answer: the alternative is reading the wrong
+page's words aloud.
 
 **The checksum is the load-bearing part.** `pipelines/books/tools/lib/naming.mjs` and
 `addons/Spoken_Readables/Checksum.lua` must produce the same number for the same text, over
@@ -217,8 +230,7 @@ place all of this identically, so one anchor covers three clients.
 The cost is that a full page's last line runs under the button; the alternative was
 colliding with one of Blizzard's controls on page two of every book.
 
-**Every clip carries a Report action**, the bug icon the quests and zones clips use, falling
-back to an "R" on the three legacy clients where that texture does not exist. The
+**Every clip carries a Report action**, the bug icon the quests and zones clips use. The
 client cannot open a browser or post anywhere, so pressing it raises a popup holding one
 selectable address — `UI/CopyLink.lua`, the same shape the Places addon carries, and not
 shared with it because two addons cannot own one StaticPopup id.
@@ -269,28 +281,31 @@ every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and pictur
 reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
 and to listen to wherever you are. Which readables exist and where they are comes from
 `Data/Places.lua` (`pipelines/books/tools/places.mjs`); what this character has found, from
-`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`.
+`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`. `make books-places` reads
+the repack's world DB (`PLACES_MYSQL_*`) and its map files (`PLACES_MAPS`, the repack's `data/maps`
+folder; it stops without them). A quest places a readable only when the quests corpus or the
+client's QuestV2 has it: the repack also carries Cataclysm's quest rows.
 
 **The list.** A banner for each continent, Kalimdor and the Eastern Kingdoms, each opening and
-closing on its own. Under a continent each zone is a card (its name, how many of its readables are
-found out of all, and a bar), a city a card inside the zone around it, and
-after the city the card of each dungeon or raid whose entrance is in the zone (a zone with several
-has a Dungeons and Raids line holding them, as on Quests). Several cards can be open at once. An
+closing on its own. Under a continent each zone is a line (its name, and how many of its readables are
+found out of all with the share), a city a line inside the zone around it, and
+after the city the line of each dungeon or raid whose entrance is in the zone (a zone with several
+has a Dungeons and Raids line holding them, as on Quests). Several can be open at once. An
 opened zone or dungeon has a line for each kind of readable it holds, closed until chosen, and the
-readables under it, each once: a city's under the city, a dungeon's under its card. After the
+readables under it, each once: a city's under the city, a dungeon's under its line. After the
 continents come Other Lands' banner (zones on no continent) and Battlegrounds'; then a banner for
 the seasonal events, for the readables had in more than eight zones (Across Azeroth) and for those
 whose origin is not known. Holidays and Events holds a line for each event (Feast of Winter Veil,
 Harvest Festival, Stranglethorn Fishing Extravaganza, Scourge Invasion; `event` in
 `Data/Places.lua`, `EVENTS` in `Readables.lua`), each with a line per kind inside; a readable whose
 event the data does not name is listed under its kind alone. A banner shows only for a continent or
-a kind, a card only for a place. A readable is listed in every zone it is had in: a lore book
-shelved in Stormwind and in Scholomance is under both cards, because a player looking through
+a kind; everything else is a line. A readable is listed in every zone it is had in: a lore book
+shelved in Stormwind and in Scholomance is under both zones, because a player looking through
 either place expects to find it there. Inside a zone it is listed once: under the city where it
-is also in the zone around it, under the dungeon's card where it is had only from inside a
+is also in the zone around it, under the dungeon's line where it is had only from inside a
 dungeon whose entrance is in that zone (`dungeons` in `Data/Places.lua`, the instance maps of
 Spoken's `Data/Dungeons.lua`). A continent's banner counts each readable once, so its count can
-be less than the sum of its zone cards.
+be less than the sum of its zones'.
 
 **What the list keeps.** The search box looks in names only: a search naming a place lists
 everything under it, a title lists itself under its place. The filter menu has Found Only and Voiced
@@ -299,13 +314,12 @@ default) or By Type, and the window's Unlock Unfound Readables, which makes ever
 here. Without it a readable not found yet is greyed with a padlock, and its page says to open it in
 the world. A filter that hides the chosen row moves the page to the nearest row above it that is
 still listed, or to where the player stands; a row chosen only because the player stood there is
-chosen again. The window opens on where the player stands: the dungeon's card, else the zone's,
+chosen again. The window opens on where the player stands: the dungeon's line, else the zone's,
 else the continent's banner.
 
 **The page.** A readable's page has its name, the places it is in under it (its first two zones, and
 how many more; a click goes up to its kind in its place, then the zone and the continent), and
-then two parts: Where to Find It (how it is had: "Dropped by Defias Messenger (Westfall)", each
-source with its zone) and its words, all its pages one after another. A zone's, city's, continent's
+then its words, all its pages one after another. A zone's, city's, continent's
 or dungeon's page has its count and Places' picture of the place above it; the other lines (a kind,
 a banner) show their count alone. Play starts the readable from its first page with a recording and becomes Stop and then
 Replay while it is read, as every Play of the Compendium's; browsing here does not count as hearing
@@ -343,9 +357,8 @@ CurseForge projects are left here:
 | Spoken Books, retired | 1701514 | `spoken-books` |
 | Spoken Audio: Readables | 1701520 | `spoken-audio-readables` |
 
-The first project's last file is the tombstone that `make package-spoken-retired` builds. The
-second is the sound pack, which declares `spoken` as its required dependency. Cutting a
-pack:
+The first is retired and gets no more uploads. The second is the sound pack, which declares
+`spoken` as its required dependency. Cutting a pack:
 
 ```bash
 make books-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
@@ -367,8 +380,7 @@ stores; after `make descriptions`, paste `dist/descriptions/<slug>.md` into Curs
 `dist/descriptions-wago/<slug>.md` — the same text with its cross-links pointed at Wago —
 into Wago, then record it with `make descriptions-published`.
 
-`make books-release` sends each zip to both stores. The pack goes to CurseForge alone: at
-452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
+`make books-release` uploads the pack to CurseForge alone: at 452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
 in as many words. `make audio-release` then publishes it as a GitHub release under
 `books-audio/vX.Y.Z`, which is where the pack's Wago page sends anyone looking for
 the narration.

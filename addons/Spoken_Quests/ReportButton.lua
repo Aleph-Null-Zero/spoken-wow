@@ -55,10 +55,10 @@ end
 --- number their ids apart (creature 68 is a guard, object 68 a poster), so each has its own
 --- address.
 ---
---- Guarded twice over: Utils:GetIDFromGUID is absent on 1.12 and asserts on a GUID carrying no
---- id, and an error thrown here would land on a player who only wanted to complain about audio.
+--- Guarded: Utils:GetIDFromGUID asserts on a GUID carrying no id, and an error thrown here would
+--- land on a player who only wanted to complain about audio.
 function ReportButton:TargetForGUID(guid)
-    if not guid or not Utils.GetGUIDType or not Utils.GetIDFromGUID then
+    if not guid then
         return nil
     end
 
@@ -106,13 +106,10 @@ function ReportButton:CurrentTarget()
     return self:TargetForGUID(Utils:GetNPCGUID())
 end
 
--- The address the popup is currently showing. Held here rather than passed to
--- StaticPopup_Show, whose `data` argument and the dialog/data handler signature both postdate
--- the legacy clients: there the popup would open with an empty box.
+-- The address the popup is currently showing.
 local shownLink
 
---- The report address for `target`, filed under `language` -- the language of the clip being
---- reported, which is not necessarily the client's.
+--- The report address for `target`, filed under `language`.
 ---@param target string
 ---@param language? string
 ---@return string url
@@ -134,16 +131,18 @@ end
 --- The report address for `target`, with the line as the player met it in its fragment: the
 --- addon version, the client, the text and the NPC. `clip` is the line being reported, or nil
 --- for the window on screen. The bare address in the popup under a Spoken too old to say more.
-function ReportButton:ShowLink(target, language, clip)
-    local url = self:Link(target, language)
+---
+--- Filed under the voice language the player chose, not the language the clip played in. A
+--- line missing from a German pack plays the English fallback, and its report ("no German")
+--- belongs beside the German line: filed under the clip's language, it reached the English page.
+function ReportButton:ShowLink(target, clip)
+    local url = self:Link(target, Language:GetVoiceLanguage())
     if not (Spoken and Spoken.ShowReport) then
         ShowCopy(url)
         return
     end
-    -- Absent on the legacy clients, whose toc never loads Contribute.xml.
-    local contribute = rawget(VoiceOver, "Contribute")
     Spoken:ShowReport(url, function()
-        return contribute and contribute:ReportContext(clip)
+        return Contribute:ReportContext(clip)
     end)
 end
 

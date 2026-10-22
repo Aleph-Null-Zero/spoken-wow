@@ -86,8 +86,9 @@ a language pins it on every client.
   pack first, then the fallback language's packs, unless If a Voice Is Missing is Stay Silent.
 - `/spp lang <code> force` and the Developer page's Offer Unfinished Translations show an
   unfinished language. Every login prints a warning while the override is on.
-- Italian is in the list (`client = false`: no client runs in it) and has no data yet. The
-  list in `Language.lua` must equal `pipelines/lib/locales.mjs`; `validate.mjs` checks it.
+- Italian and Vietnamese are in the list (`client = false`: no client runs in them) and have no
+  data yet. Vietnamese is offered only where a font draws its accents (`script = "vietnamese"`).
+  The list in `Language.lua` must equal `pipelines/lib/locales.mjs`; `validate.mjs` checks it.
 
 ## How a story is read
 
@@ -165,6 +166,12 @@ The game announces a discovery once per character, and Places reads that message
   `SpokenZonesCharacter` makes it happen once, and `/spp forget` clears it.
 - Include Places Found Before also reads on zone change, once per place, for a character that
   explored before installing. `heard` records places when a clip starts, not when it is queued.
+- Entering a dungeon or raid reads its story, once per character (`heard`), with Read
+  Automatically and Include Smaller Areas on. Inside an instance the client gives no map for the
+  player and announces no discovery, so on every loading screen, zone change and two seconds
+  after login Places asks for the instance's map (`select(8, GetInstanceInfo())`) and reads the
+  area `story` that `addons/Spoken/Data/Dungeons.lua` names for it. Battlegrounds and arenas are
+  not asked. An instance with no `story` reads nothing.
 - The queue refuses a duplicate of a line already queued or playing.
 
 ## Reports and contributions

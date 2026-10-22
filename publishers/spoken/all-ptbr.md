@@ -3,7 +3,7 @@ curseforge: 1746508
 lang: ptBR
 version: 1.0.0
 slug: spoken-portuguese
-name: Spoken Portuguese
+name: Spoken: Portuguese
 summary: Meta package: installs Spoken with every Brazilian Portuguese voice pack, quests, gossip, zones and books. Install through the CurseForge app.
 categories:
   - Audio & Video
@@ -29,6 +29,6 @@ license: MIT
 
 ## Language
 
-Spoken speaks in your client's language by default. To hear Brazilian Portuguese on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line the Brazilian Portuguese packs do not hold.
+Spoken speaks in your client's language by default. To hear Brazilian Portuguese on another client, pick it under **Voice Language** on Spoken's settings page; **If a Voice Is Missing** decides what plays for a line the Brazilian Portuguese packs do not hold.
 
-English has its own set: [Spoken English](https://www.curseforge.com/wow/addons/spoken-english).
+English has its own set: [Spoken: English](https://www.curseforge.com/wow/addons/spoken-english).

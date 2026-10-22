@@ -1,4 +1,4 @@
--- The Developer page: Spoken > Developer in the game's settings, last of Spoken's pages. Tools for
+-- The Developer page: Spoken > Developer in the game's settings, after the modules' pages. Tools for
 -- trying Spoken out, which a player never needs: this module's debug log first, then what feature
 -- addons handed Spoken with Spoken:AddDeveloperSettings (Spoken keeps them until this builds the
 -- page, and announces a late one with DEVELOPER_SETTINGS_ADDED): every module's switches for
@@ -19,8 +19,8 @@ local INFO_SIZE = 26
 -- The game's light blue for help, apart from the grey notes and the gold labels.
 local HELP_TITLE = { 0.45, 0.75, 1 }
 local HELP_TEXT = { 0.72, 0.85, 1 }
--- After the modules' pages (Quests 1, Gossip 2, Places 3, Readables 4).
-local ORDER = 5
+-- After the modules' pages (Quests 1, Gossip 2, Places 3, Readables 4, Bosses 5).
+local ORDER = 6
 
 local panel, layout, scroller
 local resets = {}

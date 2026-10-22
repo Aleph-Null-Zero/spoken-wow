@@ -2,8 +2,7 @@
 //
 // Two forms, deliberately: `normaliseText` is stored and shown, so it keeps the shape of
 // the page -- a letter's paragraphs are part of reading it. `spokenText` is what would be
-// sent to ElevenLabs, where a newline buys nothing and the markup on the signed pages
-// would be read aloud as tag names.
+// sent to ElevenLabs, where a newline buys nothing.
 //
 // No dependencies, so `node tools/extract.mjs` runs on a clone with nothing installed.
 
@@ -14,13 +13,37 @@ const PLACEHOLDERS = new Set(["missing text", "texto ausente", "test", "placehol
 const SUBSTITUTION = /\$[a-zA-Z]/;
 
 /**
- * Storage form: real newlines, no trailing spaces, no runs of blank lines.
+ * The tags the signed pages are written in, and nothing else in angle brackets.
+ *
+ * Every other bracket is the book talking: `<The rest of the book is blank>`,
+ * `<illegible text>`. A pattern for any tag would delete those as well.
+ */
+const MARKUP = /<\/?(?:html|body|h[1-6]|p|br|img|a|span|b)(?![\w])[^>]*>/gi;
+const SIGNED = new RegExp(MARKUP.source, "i");
+
+/** Where the client breaks a line inside a signed page. */
+const LINE_BREAK = /<br(?![\w])[^>]*>|<\/(?:p|h[1-6])(?![\w])[^>]*>/gi;
+
+/**
+ * The entities the signed pages carry. `&lt;` and `&gt;` stay escaped in storage: decoded,
+ * they could form a tag, and a second pass would strip it and change the checksum.
+ */
+const STORED_ENTITIES = { amp: "&", quot: '"', apos: "'", nbsp: " " };
+const STORED_ENTITY = /&(amp|quot|apos|nbsp);/g;
+
+/**
+ * Storage form: real newlines, no trailing spaces, no runs of blank lines, no markup.
  *
  * `$B` is WoW's newline token and appears in both cases in the same table, so matching
  * only the documented upper case leaves a literal "$b" in the middle of a sentence.
+ *
+ * A signed page (A Treatise on Military Ranks, the tombstones) is HTML in page_text. It is
+ * stored as the lines the client draws, so the site shows words rather than tags. The
+ * addon's Normalise in Checksum.lua does the same to what the client hands it, so the
+ * checksum still agrees; it is ASCII whitespace only on both sides for that reason.
  */
 export function normaliseText(raw) {
-  return String(raw ?? "")
+  const text = String(raw ?? "")
     .replace(/\r\n?/g, "\n")
     .replace(/\$[Bb]/g, "\n")
     .split("\n")
@@ -28,25 +51,54 @@ export function normaliseText(raw) {
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  return SIGNED.test(text) ? unmark(text) : text;
 }
 
-/** The HTML entities page text carries, as the characters the game draws. */
-const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " " };
+/**
+ * A signed page's markup laid out as lines. Source newlines inside it are whitespace, as in
+ * any HTML, or every paragraph would gain a blank line under it.
+ */
+function unmark(text) {
+  return text
+    .replace(/[ \t\n\r\f\v]+/g, " ")
+    .replace(LINE_BREAK, "\n")
+    .replace(MARKUP, "")
+    .replace(STORED_ENTITY, (_, name) => STORED_ENTITIES[name])
+    .split("\n")
+    .map((line) => line.replace(/ +/g, " ").replace(/^ | $/g, ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/^\n+|\n+$/g, "");
+}
+
+/** Entities as the characters the game draws, in a title or wherever storage left them. */
+const ENTITIES = { ...STORED_ENTITIES, lt: "<", gt: ">" };
+
+/** Whatever sits in brackets once the markup is gone. */
+const ASIDE = /<([^<>]+)>/g;
 
 /**
- * Narration form: one flowing paragraph, markup gone.
+ * esMX writes the player's name as `<nombre>` on three pages. Read aloud it would be the
+ * word "nombre", so it goes, as it did before asides were read.
+ */
+const NAME_PLACEHOLDER = /<nombre>/gi;
+
+/**
+ * Narration form: one flowing paragraph, asides read.
  *
- * Tags become a space rather than nothing, because "<H1>Ledger</H1>Three crates." has no
- * space of its own and deleting the tags would leave "LedgerThree". Entities become their
- * characters after the tags go, so an escaped "&lt;" is never taken for a tag, and "&amp;" is
- * shown and read as "&" (Military Ranks of the Horde & Alliance).
+ * An aside is read, as a quest's stage direction is, between two line breaks: they are a
+ * pause on ElevenLabs and a split on fish.audio, so "The Venture Company <illegible text> It
+ * would" is not run together as one sentence. Entities become their characters last, so an
+ * escaped "&lt;" is never taken for an aside, and a title's "&amp;" is read as "&".
  */
 export function spokenText(text) {
   return normaliseText(text)
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&(amp|lt|gt|quot|apos|nbsp);/g, (_, name) => ENTITIES[name])
+    .replace(NAME_PLACEHOLDER, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .replace(ASIDE, "\n$1\n")
+    .replace(/\s*\n\s*/g, "\n")
+    .trim()
+    .replace(/&(amp|lt|gt|quot|apos|nbsp);/g, (_, name) => ENTITIES[name]);
 }
 
 /**
@@ -80,7 +132,7 @@ function wordsOf(text) {
  * name itself in its own words starts mid-thought. Only the narration takes it -- the page's
  * stored text, and the checksum the addon finds it by, are of the words on the page alone.
  *
- * The break is the one newline spoken text keeps. A full stop alone runs the title into the
+ * The break is a newline, as an aside's are. A full stop alone runs the title into the
  * first sentence; the newline is a longer pause on ElevenLabs, and on fish.audio a silence of
  * its own, because SHAPE.fish splits the line there rather than sending the break.
  *

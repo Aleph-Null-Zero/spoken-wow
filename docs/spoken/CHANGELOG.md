@@ -4,6 +4,140 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The Places tab sorts names without a leading "The".** The Barrens is listed under B and
+  The Crossroads under C, among the zones, areas and dungeons, as you would look for them. The
+  names still read in full. *([rusty-key](https://github.com/rusty-key))*
+- **Readables in the Compendium are filed where Forever has them.** Archmage Khadgar's plaque is
+  under Alterac Mountains as well as Stormwind, Holidays and Events has a line for each event, the
+  Green Hills of Stranglethorn cover is under Stranglethorn Vale, and Hildelve's Journal and
+  Rabine's Letter are no longer under Loch Modan and Silithus. *([Nucabe](https://github.com/Nucabe))*
+- **A quest's page writes your class and race in lower case mid-sentence**, as the quest window does:
+  "young hunter", not "young Hunter". German keeps the capital. *([Nucabe](https://github.com/Nucabe))*
+- **Gossip finds its line on Chinese, Korean and French clients.** A reworded line now matches in
+  Chinese and Korean, and French text with a curly apostrophe or a no-break space matches the line it is,
+  where before it played nothing. On a client in another language than English, an NPC with several
+  lines and none in that language no longer reads one of its English lines at random: it reads nothing
+  and offers Contribute. *([Nucabe](https://github.com/Nucabe))*
+- **Readables that name you are recognised.** The class letters every new character gets, and other
+  letters that greet you by name, class or as brother or sister, now count as found, and the Compendium
+  shows them with your name in them. A page sent from the Contribute button no longer carries your
+  character's name. *([Nucabe](https://github.com/Nucabe))*
+- **117 more quest givers and enders show their own face.** Seven creatures, such as Malfurion Stormrage,
+  no longer ship an appearance the game cannot draw. *([Nucabe](https://github.com/Nucabe))*
+- **The Ruins of Lordaeron dungeon is listed in Tirisfal Glades**, where its entrance is, and its card
+  is Tirisfal's Ruins of Lordaeron. It was listed in the Undercity. *([Nucabe](https://github.com/Nucabe))*
+- **Highlight Words is on by default, and Type Words Out and Show Progress Bar are off.** The words of a
+  line show whole and the word being read is lit. *([Nucabe](https://github.com/Nucabe))*
+- **The AddOns list says what each part reads.** Hovering Spoken now says it reads quests, gossip,
+  places and readables, with one queue, one narrator and one minimap button. The Places and
+  Readables sound packs say what they hold and that they load with the game, and the Vanilla
+  quest packs say they are narrated.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Show Spoken Over DialogueUI is gone.** While DialogueUI's window is open, Spoken's window and
+  subtitles step aside, and DialogueUI's own window shows the words and the queue. *([Nucabe](https://github.com/Nucabe))*
+- **Read Greetings is Once for Quest Givers by default.** A quest giver's greeting is read once, and other
+  NPCs greet every time. A choice you made yourself is kept. *([Nucabe](https://github.com/Nucabe))*
+- **The 1.12, 2.4.3 and 3.3.5 clients are no longer supported.** Spoken runs on WoW: Forever, Classic Era
+  and TBC Anniversary.
+  *([rusty-key](https://github.com/rusty-key))*
+- **More bosses in the Bosses tab show their face.** The bosses of the Ruins of Lordaeron, the Hall of Thanes,
+  the City of Dalaran and the Excavation Site: Wetlands, and two of the Marylas in the Karazhan Crypts, have their
+  portrait. Sneed, Grubbis, Darkmaster Gandling, Sapphiron and Dalaran's Arcane Anomaly show the right one, a boss
+  with no known face shows the question mark instead of an empty portrait, and targeting Balnazzar in Stratholme no
+  longer shows the Scarlet Enclave's story. Five bosses take the name the game gives them: The Baron, Magmatus,
+  Kirtonos the Herald, Ras Frostwhisper and C'Thun. *([Nucabe](https://github.com/Nucabe))*
+- **A boss's story shows in the narrator when you target the boss.** It shows once per character, as words
+  with no voice. On the Bosses settings page, Show a Boss's Story picks targeting or killing it, and Forget
+  Stories Shown shows each again. *([Nucabe](https://github.com/Nucabe))*
+- **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
+  face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
+  shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
+- **Fixed: closing DialogueUI on a giver's greeting after taking a quest showed the queue's
+  animation with no window.** The quest's page went behind a window that was not on screen.
+  Now the window flies out of the dialog with the greeting, the quest counted after its title. *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's minimise arrow sits in the middle of its button.** It was drawn off to one side of the
+  frame the template gives it. *([Nucabe](https://github.com/Nucabe))*
+- **The AddOns list shows Spoken and each module's name in colour, with new icons.** Spoken, Quests,
+  Places, Readables, Contributions and Developer each have a new icon, the voice packs show Spoken in
+  colour too, and the minimap button shows the mark at its size, centred. *([Nucabe](https://github.com/Nucabe))*
+- **Entering a dungeon or raid reads its story**, once per character, and counts it in the
+  Places tab as found. The Ruins of Lordaeron, the Deadmines, Ragefire Chasm and five more could
+  never be found before. Azeroth's story is back on the world map, and the Places tab lists Azeroth
+  above the continents. *([Nucabe](https://github.com/Nucabe))*
+- **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
+  manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
+  so you no longer upload the file yourself. Collected lines now also say which version of your
+  voice pack was playing, so the site can tell a line nobody has voiced from a pack that is out
+  of date. The note Spoken shows before collecting says so.
+  *([rusty-key](https://github.com/rusty-key))*
+- **Every Compendium page has a round picture beside its title, and the lists are plain lines.** A place shows its
+  picture with the world, a quest a scroll with the exclamation or question mark, a readable its kind with the
+  training book. Zones and dungeons in the lists are lines with their count, as the groups are. A title
+  is always one line. *([Nucabe](https://github.com/Nucabe))*
+- **A readable's page is its text only.** The where-to-find-it lines are gone. *([Nucabe](https://github.com/Nucabe))*
+- **A page with nothing to read shows your faction's wax seal in its middle.** Where the client has no seal
+  it shows a faint lattice. It replaces the line telling you to choose something on the left, on the
+  Compendium's pages for continents, zones, dungeons and groups. *([Nucabe](https://github.com/Nucabe))*
+- **A page nobody has written yet says so in the same words on every tab, with Contribute under them.**
+  Quests, Places and Readables use one message, and a quest part with no words gets Contribute too.
+  *([Nucabe](https://github.com/Nucabe))*
+- **Play stays on the Compendium's pages and quest parts, greyed where nothing is recorded.** Its
+  tooltip says there is no voice for it yet. *([Nucabe](https://github.com/Nucabe))*
+- **Rows in the Compendium are dimmed when their voice, picture or words are missing.** A line with nothing
+  inside it has no plus button, and the Unlock switches no longer grey rows that have nothing found. The
+  button that shrinks the window is the size of Close. *([Nucabe](https://github.com/Nucabe))*
+- **A quest chain's page has the quest scroll, as a quest does, and the Classes, Professions, holiday and
+  other group pages have icons of their own.** Each part of a quest's page is headed by who speaks it,
+  over Description or Completion. *([Nucabe](https://github.com/Nucabe))*
+- **New module, Spoken NPCs, with a Bosses tab in Azeroth's Compendium.** It lists every boss of every
+  dungeon and raid, under the zones that have one, then the dungeons and their bosses. A boss is found when
+  its fight starts: one not found is greyed until you find it or turn on Unlock Unfound Bosses, and Found
+  Only hides it. Zones and dungeons count what is found. A boss's page names its dungeon and zone, shows
+  its face with a skull, and holds its story where one is written. *([Nucabe](https://github.com/Nucabe))*
+- **Show Boss Abilities, on the new Bosses settings page, puts each boss's spells under its story.** The spells
+  are cards with the spellbook's frame. It is on by default. *([Nucabe](https://github.com/Nucabe))*
+- **A boss's page tells its story.** 272 bosses have one, written from the Adventure Guide and Warcraft Wiki
+  and kept to Classic. *([Nucabe](https://github.com/Nucabe))*
+- **Every dungeon and raid has its own icon in the Compendium, and so do the cities, Moonglade and the
+  battlegrounds.** *([Nucabe](https://github.com/Nucabe))*
+
+## 3.5.1 — 2026-10-19
+
+- **The objective tracker's Play buttons can be turned off.** Untick Show Play Button, under
+  Objective Tracker on the Quests settings page, and the button beside each tracked quest goes
+  away.
+  *([rusty-key](https://github.com/rusty-key))*
+- **Targeting or pointing at a unit whose GUID is secret no longer raises a Lua error.**
+  Spoken Quests skips the hidden GUID before comparing or parsing it.
+  *([Merryfett](https://github.com/Merryfett))*
+- **Read Greetings reads each new greeting once, not each NPC.** Many NPCs greet you with one of
+  several lines, and Once per NPC kept every line but the first one silent. The setting is now
+  Once per Greeting: each line plays the first time you see it. Once for Quest Givers works the
+  same way. Greetings heard before this update play once more.
+  *([rusty-key](https://github.com/rusty-key))*
+- **Spoken Contributions has its own icon in the AddOns list**, a heart, rather than none, and its
+  name is no longer greyed out. No Spoken addon colours its name or description there any more.
+  *([Nucabe](https://github.com/Nucabe))*
+- **A quest that reads differently for you is voiced in your words.** Where a quest's text
+  changes with who gives it or who takes it, Spoken plays the recording of the text on your
+  screen, and where it has none for those words it plays nothing and offers Contribute.
+  *([rusty-key](https://github.com/rusty-key))*
+- **The Compendium's Minimize button is the same size as its Close button.** The two top-right
+  buttons on the Compendium window were different sizes; the Minimize button now matches the
+  Close button.
+  *([anon1231823](https://github.com/anon1231823))*
+- **An NPC whose words change with who asks no longer reads you the wrong line.** A trainer
+  greets someone of its profession differently, and a barker sends each faction to its own
+  place. Where the packs hold only another of these, the NPC used to read that one. Now it reads
+  nothing and offers Contribute, so the line you saw can be added.
+  *([rusty-key](https://github.com/rusty-key))*
+- **Report files a line under the voice language you chose.** A line missing from your language
+  plays in English instead, and reporting it used to land on the English page, where nobody
+  looking after your language would see it. It now goes to your language's page.
+  *([rusty-key](https://github.com/rusty-key))*
+
+## 3.5.0 — 2026-10-17
+
 - **Readables finds and reads pages only a language pack has.** A page that exists in your client's
   language but not in English, such as one a player sent in, is now recognised, placed in its
   book and read aloud once its language pack carries it, and Report works on it.
@@ -77,6 +211,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   game's other sounds too, and puts your own value back once the last line ends, after a reload or
   at the next login. A change you make to that setting meanwhile is kept. Off by default.
   *([Nucabe](https://github.com/Nucabe))*
+- Names and tooltips were read again in every language: a part or control has one name wherever it appears,
+  tooltips that still described old behaviour say what the control does now, and the voice packs are called
+  voice packs in chat and in the missing-pack messages. *([Nucabe](https://github.com/Nucabe))*
 - Seven settings rows no longer carry a line of description under the name: Text Language, Include
   Places Found Before, Keep Reading in Background, Collect Missing Lines, Original Thrall Speech, Mark
   Words in DialogueUI and NPC Voice Before Reading. *([anon1231823](https://github.com/anon1231823))*

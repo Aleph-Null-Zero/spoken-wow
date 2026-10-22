@@ -30,7 +30,7 @@ import { BOOK_ID_COMPAT, PAGE_COUNT } from "@books-tools/lib/page.mjs";
 import { normaliseText } from "@books-tools/lib/text.mjs";
 
 import { recordActivity } from "@/lib/activity/store";
-import { db } from "@/lib/db";
+import { db, inTransaction } from "@/lib/db";
 import { observedFrom } from "@/lib/npc/resolve";
 import {
   getResolution,
@@ -60,13 +60,20 @@ import type { Roster } from "@/lib/voices/roster";
 import { loadRoster } from "@/lib/voices/roster-store";
 
 import { loadBookCorpus, matchBook, sameMatch, type BookCorpus, type BookMatchResult } from "./book-match";
+import { sameLine } from "./compare";
 import type { ContributionStatus } from "./contributions";
+import { momentTexts } from "./known";
 import {
   answersQuestMomentSql,
   baseLineId,
   lineIdentityFor,
+  momentOf,
   playerGenderForms,
+  questWordingFileName,
+  questWordingLineId,
+  wordingsOfMomentSql,
   type LineIdentity,
+  type QuestEvent,
 } from "./naming";
 import { gossipIdentity, recordBroadcast, resolveGossip, type GossipPlan } from "./gossip";
 import { noVoice } from "./speaker";
@@ -196,7 +203,7 @@ function indexOf(lines: readonly CorpusLine[], roster: Roster): CorpusIndex {
 async function speakerFor(
   contribution: Contribution,
   resolutions?: Resolutions,
-): Promise<{ ok: true; speaker: Speaker } | ResolveRefusal> {
+): Promise<{ ok: true; speaker: Speaker } | Extract<ResolveRefusal, { reason: "needs-speaker" }>> {
   const speaker = await resolvedSpeaker(observationMeta(contribution), resolutions);
   if (speaker === "conflict") {
     return {
@@ -291,14 +298,19 @@ function preparedFrom(plan: GossipPlan, text: string, speaker: Speaker): Prepare
  * that already had speakers took without one.
  */
 export async function contributedLineExists(contributionId: number, client?: PoolClient): Promise<boolean> {
-  const { rowCount } = await (client ?? db()).query(
-    `select 1 from "quest_line_speaker" where "contributionId" = $1
+  return (await contributedLine(contributionId, client)) !== null;
+}
+
+/** The moment of the line a contribution's accept wrote (momentOf its id), or null for none. */
+export async function contributedLine(contributionId: number, client?: PoolClient): Promise<string | null> {
+  const { rows } = await (client ?? db()).query<{ lineId: string }>(
+    `select "lineId" from "quest_line_speaker" where "contributionId" = $1
      union all
-     select 1 from "quest_line" where "origin" = 'contributed' and "note" = $2
+     select "lineId" from "quest_line" where "origin" = 'contributed' and "note" = $2
      limit 1`,
     [contributionId, noteFor(contributionId)],
   );
-  return (rowCount ?? 0) > 0;
+  return rows[0] ? momentOf(rows[0].lineId) : null;
 }
 
 /**
@@ -592,6 +604,66 @@ async function acceptQuestMoment(
     }
   }
   return null;
+}
+
+/**
+ * Another wording of a quest moment the corpus already has: the contribution's text as the
+ * moment's next `:w{n}` line in its language, spoken by its NPC (naming.py says what a wording
+ * is). Numbered past every wording the moment has in any language, under the moment's lock,
+ * so two accepts never take one number.
+ */
+export async function writeWording(
+  contribution: Contribution,
+  userId: string,
+): Promise<
+  | { ok: true; lineId: string }
+  | { ok: false; reason: "not-a-correction"; message: string }
+  | Extract<ResolveRefusal, { reason: "needs-speaker" | "malformed" }>
+> {
+  const identity = lineIdentityFor(contribution.meta, contribution.text, "", "");
+  if (!identity || identity.questId === null || !contribution.text) {
+    return { ok: false, reason: "malformed", message: "Only a quest line can be another wording." };
+  }
+  const found = await speakerFor(contribution);
+  if (!found.ok) return found;
+  // Narrowed here: a closure does not keep the narrowing of a property.
+  const questId = identity.questId;
+  const text = contribution.text;
+  const lang = contribution.locale as Lang;
+  const event = identity.source as QuestEvent;
+
+  return inTransaction(async (client) => {
+    await lockLine(client, identity.lineId);
+    // Decided under the lock, so an accept that waited on another's sees what it wrote: its
+    // own wording again is done, and a text some wording already says is not another.
+    const own = await contributedLine(contribution.id, client);
+    if (own) return { ok: true as const, lineId: own };
+    const lines = (await momentTexts([{ locale: lang, moment: identity.lineId }], client)).get(`${lang}|${identity.lineId}`);
+    if (lines?.some((line) => sameLine(line.text, text))) {
+      return { ok: false as const, reason: "not-a-correction" as const, message: "The corpus already has this text for the moment -- nothing to add." };
+    }
+    const n = await nextWording(client, identity.lineId);
+    const wording: LineIdentity = {
+      ...identity,
+      lineId: questWordingLineId(questId, event, n),
+      fileName: questWordingFileName(questId, event, n),
+    };
+    for (const row of await ownRows(client, wording, text, lang)) {
+      await insertLine(client, contribution.id, userId, row, text, lang);
+      await insertSpeaker(client, { lineId: row.lineId, variant: 0, lang, speaker: found.speaker, contributionId: contribution.id });
+    }
+    return { ok: true as const, lineId: wording.lineId };
+  });
+}
+
+/** One past the highest wording a moment has in any language: 1 for a moment with only its first. */
+async function nextWording(client: PoolClient, moment: string): Promise<number> {
+  const { rows } = await client.query<{ n: number | null }>(
+    `select max(substring("lineId" from ':w([0-9]+)(?::[mf])?$')::int) as "n"
+       from "quest_line" where ${wordingsOfMomentSql(`"questId"`, `"source"`, "$1")}`,
+    [moment],
+  );
+  return (rows[0].n ?? 0) + 1;
 }
 
 /**

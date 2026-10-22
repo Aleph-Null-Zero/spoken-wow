@@ -5,6 +5,7 @@ import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 
 import ReportForm from "@/components/ReportForm";
+import ListenFirst from "@/components/reports/ListenFirst";
 import { audioRelPath } from "@/lib/zones/audio";
 import { isCorpusEmpty, lineByPath, loadContext } from "@/lib/zones/catalogue";
 import { Contained } from "@/components/Width";
@@ -76,6 +77,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           <p className="text-muted-foreground mt-1 text-sm">
             {entry.kind === "subzone" ? `In ${entry.zoneName}` : "Zone lore"}
           </p>
+
+          {take ? <ListenFirst className="mt-4" /> : null}
 
           {take ? (
             // The native control rather than the explorer's Player: that one carries a rate

@@ -13,6 +13,7 @@
 import { BASE_LANG, withLang, type Lang } from "@/lib/lang";
 import { noApiKeyMessage } from "@/lib/no-api-key";
 import type { ResultLine as BookLine } from "@/lib/books/search";
+import type { CorpusLine } from "@/lib/corpus";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { ResultLine as ZoneLine } from "@/lib/zones/search";
 
@@ -24,7 +25,8 @@ import type { Source } from "@/lib/sections";
 /** Whichever shape the section's search endpoint answered with. */
 export type SourceLine = QuestLine | ZoneLine | BookLine;
 
-export type LineDetail = {
+/** What a line is and who says it: what LineHeading draws, for a line or for a speaker alone. */
+export type Heading = {
   /** What the line is called: the quest, the subzone, the book. */
   heading: string;
   /** The explorer, narrowed to the heading's quest. Null where the heading is no quest. */
@@ -37,6 +39,9 @@ export type LineDetail = {
   speakerIsHeading: boolean;
   /** Where it sits, and for quests what picked its voice. */
   aside: string;
+};
+
+export type LineDetail = Heading & {
   /** The live take was made from text that has since changed. */
   stale: boolean;
   text: string;
@@ -149,24 +154,33 @@ function audio(source: Source, path: string, version: number | undefined, lang: 
   return withLang(lang, `/api/${source}/audio/${path}${version === undefined ? "" : `?v=${version}`}`);
 }
 
-function questDetail(line: QuestLine, version: number | undefined, lang: Lang): LineDetail {
-  // Race, gender and flavor rather than the voice alone: "wrong voice for this character"
-  // is a complaint about that triple, and the voice is what it currently resolves to.
+/**
+ * Who says a quests line, with their NPC page and the explorer narrowed to their lines, and
+ * what picked their voice. Race, gender and flavor rather than the voice alone: "wrong voice
+ * for this character" is a complaint about that triple, and the voice is what it currently
+ * resolves to.
+ */
+export function speakerOf(
+  line: Pick<CorpusLine, "npcId" | "npcName" | "npcType" | "source" | "race" | "gender" | "flavor" | "voice">,
+): { speaker: NonNullable<Heading["speaker"]>; aside: string } {
   const who = [line.race, line.gender, line.flavor].filter(Boolean).join(" ");
-  const npc = {
-    name: line.npcName,
-    page: npcPageHref(line.npcId),
-    search: npcHref({ npcId: line.npcId, npcType: line.npcType, gossip: line.source === "gossip" }),
+  return {
+    speaker: {
+      name: line.npcName,
+      page: npcPageHref(line.npcId),
+      search: npcHref({ npcId: line.npcId, npcType: line.npcType, gossip: line.source === "gossip" }),
+    },
+    aside: [who, line.voice].filter(Boolean).join(" · "),
   };
-  const aside = [who, line.voice].filter(Boolean).join(" · ");
+}
 
+function questDetail(line: QuestLine, version: number | undefined, lang: Lang): LineDetail {
   return {
     heading: line.questTitle ?? line.npcName,
     headingHref:
       line.questTitle && line.questId !== null ? questsHref({ q: String(line.questId), filter: "quest" }) : null,
-    speaker: npc,
+    ...speakerOf(line),
     speakerIsHeading: !line.questTitle,
-    aside,
     stale: isStale("quests", line),
     // The override when there is one: it is what the next take will say, and a panel that
     // showed the corpus text would report a rewrite as having changed nothing.

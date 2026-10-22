@@ -11,7 +11,8 @@
 //
 // The name is the store page's, so Discord says exactly what the stores say. A pack's page names
 // its tag in `release:` (packs.mjs); the four addon pages are matched by their directory, which
-// is the tag prefix.
+// is the tag prefix. spoken's directory also holds the meta addons, Spoken: English (all.md) and
+// each language's (all-<lang>.md), whose pages have no `section` either.
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -56,7 +57,7 @@ function sectionFor(text, version, matches) {
 function addonName(publishersDir, prefix) {
   let pages;
   try {
-    pages = readdirSync(join(publishersDir, prefix)).filter((f) => f.endsWith(".md"));
+    pages = readdirSync(join(publishersDir, prefix)).filter((f) => f.endsWith(".md") && !/^all(-.+)?\.md$/.test(f));
   } catch {
     return null;
   }

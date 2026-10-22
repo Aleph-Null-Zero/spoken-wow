@@ -71,6 +71,68 @@ export async function listVoices(options: ElevenLabsOptions = {}): Promise<Map<s
   return found;
 }
 
+/** A voice in the account, whatever it is called: what the picker offers to fill a slot with. */
+export type AccountVoice = {
+  voiceId: string;
+  name: string;
+  /** ElevenLabs' own: "cloned", "generated", "professional", "premade" and so on. */
+  category: string;
+};
+
+/**
+ * Every voice in the account, slot-named or not, by name.
+ *
+ * listVoices is the roster; this is the account as the ElevenLabs dashboard shows it, so a
+ * voice designed or added from the library there can be adopted into a slot (renameVoice).
+ */
+export async function listAccountVoices(options: ElevenLabsOptions = {}): Promise<AccountVoice[]> {
+  const { apiKey, baseUrl, fetchImpl } = config(options);
+
+  const response = await fetchImpl(`${baseUrl}/v1/voices`, {
+    headers: { "xi-api-key": apiKey },
+    cache: "no-store",
+  });
+  if (!response.ok) throw await failure(response, "listing ElevenLabs voices");
+
+  const body = (await response.json()) as {
+    voices?: { name?: string; voice_id?: string; category?: string }[];
+  };
+  return (body.voices ?? [])
+    .flatMap((voice) =>
+      voice.name && voice.voice_id
+        ? [{ voiceId: voice.voice_id, name: voice.name, category: voice.category ?? "unknown" }]
+        : [],
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Premade voices are ElevenLabs' own and cannot be edited, so they cannot take a slot's name.
+ * Their ids are shared by every account, which is what binding one would need instead.
+ */
+export function isRenamable(voice: AccountVoice): boolean {
+  return voice.category !== "premade";
+}
+
+/** Rename a voice in the account. Only the name changes: samples and settings stay. */
+export async function renameVoice(
+  voiceId: string,
+  name: string,
+  options: ElevenLabsOptions = {},
+): Promise<void> {
+  const { apiKey, baseUrl, fetchImpl } = config(options);
+
+  // The edit endpoint takes multipart only, even with no files in it.
+  const form = new FormData();
+  form.append("name", name);
+  const response = await fetchImpl(`${baseUrl}/v1/voices/${voiceId}/edit`, {
+    method: "POST",
+    headers: { "xi-api-key": apiKey },
+    body: form,
+  });
+  if (!response.ok) throw await failure(response, `renaming voice ${voiceId} to "${name}"`);
+}
+
 /**
  * What the plan allows and how much of it is left.
  *

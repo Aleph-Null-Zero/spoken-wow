@@ -4,6 +4,7 @@ import ActorTakeCell from "@/components/ActorTakeCell";
 import { MadeByCell } from "@/components/MadeBy";
 import { RenameButton } from "@/components/RenameButton";
 import { Untranslated, UntranslatedMark } from "@/components/Untranslated";
+import FilterLink from "@/components/FilterLink";
 import { ChevronDownIcon, Eraser, FlagIcon, PencilIcon, PlayIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -28,7 +29,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor cell: the search sent recordings, so the viewer records here. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   /** Editor and up: the regenerate control, and reading and resolving the row's reports. */
   canRegenerate: boolean;
   /** May write this page's text in the page's language, apart from regenerating it. */
@@ -46,6 +47,8 @@ type Props = {
   onRegenerate: (line: ResultLine) => void;
   /** Narrowing to this book, from its name. */
   onSelectBook: (line: ResultLine) => void;
+  /** The narrowed view as a link, for a click that opens it elsewhere. */
+  bookHref: (line: ResultLine) => string;
   /** Open the report dialog. Everyone gets this, signed in or not. */
   onReport: (line: ResultLine) => void;
   /** An earlier take is live again, so the row and the player can catch up. */
@@ -85,6 +88,7 @@ export function PageRow({
   onPlay,
   onRegenerate,
   onSelectBook,
+  bookHref,
   onClearDirty,
   onReport,
   onRestored,
@@ -127,13 +131,14 @@ export function PageRow({
       {groupRows > 0 && (
         <>
           <td rowSpan={groupRows} className="border-border/60 border-r px-2 py-2">
-            <button
+            <FilterLink
+              href={bookHref(line)}
+              onApply={() => onSelectBook(line)}
               className="hover:text-foreground block max-w-full text-left font-medium break-words underline-offset-2 hover:underline"
               title={`Show only ${line.title}`}
-              onClick={() => onSelectBook(line)}
             >
               <Untranslated missing={line.missing?.title}>{line.title}</Untranslated>
-            </button>
+            </FilterLink>
             {onRename && (
               <RenameButton label={`Name ${line.title}`} onClick={() => onRename(line)} />
             )}
@@ -252,7 +257,7 @@ export function PageRow({
           source="books"
           file={line.file}
           recording={line.recording ?? null}
-          onChanged={onRecordingChanged}
+          onChanged={() => onRecordingChanged(line)}
         />
       )}
 

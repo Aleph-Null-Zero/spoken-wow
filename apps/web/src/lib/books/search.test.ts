@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { EMPTY_CONTEXT, type BookPage, type SearchContext, type Take } from "./catalogue";
 import { matching, decorate, search, stateOf } from "./search";
+import { activeFilterCount, filterParams, filtersFromParams } from "./filters";
 
 const page = (over: Partial<BookPage> = {}): BookPage => ({
   id: "b:10",
@@ -97,6 +98,15 @@ describe("matching", () => {
   it("filters out the pages that cannot be voiced", () => {
     const silent = decorate(page({ id: "b:30", pageId: 30, generatable: false, skipReason: "substitution" }), EMPTY_CONTEXT);
     expect(matching([...lines, silent], { voiceable: true }).map((l) => l.id)).toEqual(["b:10", "b:20"]);
+    expect(matching([...lines, silent], { voiceable: false }).map((l) => l.id)).toEqual(["b:30"]);
+  });
+
+  it("carries both answers of voiceable through the URL, and counts either as a filter", () => {
+    for (const voiceable of [true, false]) {
+      expect(filtersFromParams(filterParams({ voiceable })).voiceable).toBe(voiceable);
+      expect(activeFilterCount({ voiceable })).toBe(1);
+    }
+    expect(filtersFromParams(new URLSearchParams()).voiceable).toBeUndefined();
   });
 
   it("an empty filter set returns everything", () => {

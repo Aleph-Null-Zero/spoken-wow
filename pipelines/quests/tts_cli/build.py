@@ -9,15 +9,18 @@ Needs no database: the corpus carries every field the lookup tables key on.
 """
 import json
 import os
+import re
 import shutil
 
 from slpp import slpp as lua
 from tqdm import tqdm
 
-from tts_cli.ignores import ignored_files
+from tts_cli.ignores import ignored_files, wordless
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
-                            moment_of, split_voice, subfolder_from_line_id, variant_file_name)
+                            moment_of, quest_moment_stem, quest_stem_from_line_id,
+                            several_wordings, split_voice, subfolder_from_line_id,
+                            variant_file_name)
 from tts_cli.npc_bodies import GENDER_SEX, body_name
 from tts_cli.store import SUBFOLDERS, audio_extension, stored_files
 from tts_cli.utils import (get_first_n_words, get_last_n_words,
@@ -78,11 +81,18 @@ VoiceOver.DataModules:Register("{module}", {module})
 # only once no supported release still looks for it.
 #
 # The Interface line names every client the packs ship for - Era, Anniversary, Forever - as
-# the zones and books packs do, after 100007: the 1.12/2.4.3/3.3.5 clients read the first
-# number alone and refuse one below 20000. DataModules turns checkAddonVersion off around LoadAddOn, which
+# the zones and books packs do. DataModules turns checkAddonVersion off around LoadAddOn, which
 # loads a pack a client calls out of date, but Forever build 70170 calls an Interface it does
 # not list incompatible instead, and nothing turns that off: the pack has to name the client.
 DEFAULT_TITLE = "Spoken Audio: Quests"
+
+#: "Spoken" in the brand colour, as every Spoken addon is titled in the AddOns list. Only the
+#: TOC wears it: the same title names the CurseForge project, where the code would show.
+BRAND = "|cffb48cffSpoken|r"
+
+
+def toc_title(title: str) -> str:
+    return BRAND + title[len("Spoken"):] if title.startswith("Spoken") else title
 
 #: The TOC key naming the language a pack was recorded in. Must match what the addon's
 #: DataModules.lua reads.
@@ -107,9 +117,9 @@ def icon_source(language: str = None) -> str:
         raise FileNotFoundError(f"no icon for {language}: {path} (make quests-icon)")
     return path
 
-TOC_HEADER = """## Interface: 100007, 11509, 20506, 16001
+TOC_HEADER = """## Interface: 11509, 20506, 16001
 ## Title: {title}
-## Notes: Contains voiceovers for content released during the Vanilla era.|n|nIt's |cFF20FF20OK|r for this addon to appear |cFF808080"disabled"|r or |cFFFF2020"out of date"|r, it's compatible with any client and |cFFFFD200Spoken Quests|r will load it even if it's disabled or out of date.
+## Notes: Narrated quests and gossip from the Vanilla era, for Spoken Quests.|n|nIt's OK for this addon to appear "disabled" or "out of date", it's compatible with any client and Spoken Quests will load it even if it's disabled or out of date.
 ## Version: {version}
 ## IconTexture: Interface\\AddOns\\{module}\\{icon}
 ## LoadOnDemand: 1
@@ -173,6 +183,29 @@ def body_by_model() -> dict:
         return {int(file_id): body_name(row["race"], row["gender"]) for file_id, row in json.load(f).items()}
 
 
+#: A title the capture kept after the name ("Ishlee Breezewhisper <Skinner>"). The game names
+#: the unit without it, so a key carrying it is never matched and a quest log shows it.
+_SUBNAME = re.compile(r"\s*<[^<>]*>\s*$")
+#: What a capture wrote when it had no name to give: "null", "npc 263664", or the model's
+#: file name ("Doodad_BeerKeg101").
+_PLACEHOLDER = re.compile(r"(?i)null|npc \d+|\w+_\w+")
+
+
+def speaker_name(name: str) -> str:
+    """The name the game shows for the unit: the corpus's, less any <subname>."""
+    return _SUBNAME.sub("", name or "") or name
+
+
+def name_rank(line: dict) -> int:
+    """How far the names table trusts a line's speaker name: an extracted one over a
+    contributed one, which is the contributor's client's language and has put a Russian or
+    German name in the English quest log; a placeholder not at all."""
+    name = speaker_name(line["npcName"])
+    if not name or _PLACEHOLDER.fullmatch(name):
+        return 0
+    return 1 if line.get("contributionId") is not None else 2
+
+
 def build_tables(corpus: dict, ignored=()) -> dict:
     """Every lookup table, as {output filename: (lua table name, data)}.
 
@@ -190,6 +223,9 @@ def build_tables(corpus: dict, ignored=()) -> dict:
     # own (tts_cli/voice_files.py): keyed by the moment's file and the giver, since the addon
     # names a quest's file from its id and event and knows who is giving it.
     quest_files = {"creature": {}, "gameobject": {}}
+    # A quest moment the game shows in several wordings: each wording's text and its file, by
+    # the moment's stem. The addon matches the text on screen against it as it does gossip.
+    wordings = {}
     # A split NPC's file per body, keyed by the line's own stem: the addon finds the line as
     # before, then asks the body. Each sex keeps a file too, its fallback body's
     # (npc_bodies.sex_bodies), for addons that read only the sex.
@@ -208,6 +244,9 @@ def build_tables(corpus: dict, ignored=()) -> dict:
                and ("creature", npc["npcId"]) not in split}
     sex_of = {}
     bodies_of = {}
+    # Within a rank the last line's name stands, as it always has: the extract gives a few
+    # NPCs two English names, and another order would flip them.
+    ranks = {}
 
     for line in corpus["lines"]:
         base_id, voice = split_voice(line["lineId"])
@@ -215,7 +254,10 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             continue
 
         kind = line["npcType"]
-        names.setdefault(kind, {})[line["npcId"]] = line["npcName"]
+        rank = name_rank(line)
+        if rank and rank >= ranks.get((kind, line["npcId"]), 0):
+            ranks[(kind, line["npcId"])] = rank
+            names.setdefault(kind, {})[line["npcId"]] = speaker_name(line["npcName"])
 
         # Before the quest tables, which it must stay out of: a follow-up line carries its
         # quest, but it is said in chat rather than in the quest dialog, so matching its text
@@ -262,30 +304,34 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             # Same-named NPCs of different voices share one entry here, so it names the line's
             # own file, never a voice's that only some of them speak.
             gossip_by_name[kind].setdefault(
-                escape_lua_string(line["npcName"]), {})[text] = own
+                escape_lua_string(speaker_name(line["npcName"])), {})[text] = own
             continue
 
         # Progress text is never voiced, so an entry would resolve to silence.
         if line["source"] == "progress":
             continue
 
+        stem = quest_stem_from_line_id(base_id)
+        wordings.setdefault(quest_moment_stem(base_id), {})[
+            escape_lua_string(line["originalText"])] = stem
+
         if line["source"] == "accept" and kind in questlog:
             questlog[kind][line["questId"]] = line["npcId"]
 
         if line.get("npcBody") and kind == "creature":
-            stem = f'{line["questId"]}-{line["source"]}'
             file_name = variant_file_name(stem, voice) if voice else stem
             quest_files_by_body.setdefault(stem, {}).setdefault(line["npcId"], {})[line["npcBody"]] = file_name
             if line.get("sexBody"):
                 quest_files_by_sex.setdefault(stem, {}).setdefault(line["npcId"], {})[line["npcSex"]] = file_name
         elif voice and kind in quest_files:
-            stem = f'{line["questId"]}-{line["source"]}'
             quest_files[kind].setdefault(stem, {})[line["npcId"]] = variant_file_name(stem, voice)
 
         quest_ids.setdefault(line["source"], {}) \
                  .setdefault(escape_lua_string(line["questTitle"]), {}) \
-                 .setdefault(escape_lua_string(line["npcName"]), {}) \
+                 .setdefault(escape_lua_string(speaker_name(line["npcName"])), {}) \
                  .setdefault(quest_search_text(line["originalText"]), line["questId"])
+
+    wordings = several_wordings(wordings)
 
     return {
         "npc_gossip_file_lookups": ("GossipLookupByNPCID", gossip_by_id["creature"]),
@@ -302,6 +348,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
         "item_name_lookups": ("ItemNameLookupByItemID", names["item"]),
         "followup_lookups": ("FollowupLookup", followup),
         "npc_quest_file_lookups": ("QuestFileLookupByNPCID", quest_files["creature"]),
+        "quest_wording_lookups": ("QuestWordingLookup", wordings),
         "object_quest_file_lookups": ("QuestFileLookupByObjectID", quest_files["gameobject"]),
         "npc_sex_gossip_file_lookups": ("GossipFileLookupByNPCSex", gossip_by_sex),
         "npc_sex_quest_file_lookups": ("QuestFileLookupByNPCSex", quest_files_by_sex),
@@ -384,7 +431,7 @@ def module_toc(module_name: str, generated_files: list, version: str = "1.0.1",
     The title is what tells the packs apart in the AddOns list, where five of them can sit at
     once and their folder names differ only by a suffix.
     """
-    lines = [TOC_HEADER.format(version=version, title=title,
+    lines = [TOC_HEADER.format(version=version, title=toc_title(title),
                                module=module_name, icon=ICON_NAME)]
     if language:
         # Only when asked: the addon reads an absent key as enUS, so every English pack keeps
@@ -438,8 +485,9 @@ def build_module(corpus: dict, store_dir: str, dist_dir: str = DEFAULT_DIST_DIR,
 
     # Compared without extensions: the ignore list is derived from the corpus and so names
     # mp3s, while a staged store may hold the same audio transcoded to something else.
-    skip = {os.path.splitext(rel)[0] for rel in ignored_files(corpus, ignored)} \
-        if ignored else set()
+    silent = set(wordless(corpus)) | set(ignored)
+    skip = {os.path.splitext(rel)[0] for rel in ignored_files(corpus, silent)} \
+        if silent else set()
     audio = [rel for rel in stored_files(store_dir)
              if os.path.splitext(rel)[0] not in skip
              and (include is None or os.path.splitext(rel)[0] in include)]

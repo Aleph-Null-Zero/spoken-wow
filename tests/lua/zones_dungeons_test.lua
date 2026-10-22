@@ -74,9 +74,9 @@ local strays = {}
 for id in pairs(filed) do table.insert(strays, id) end
 table.sort(strays)
 Expect("every dungeon the Quests data names is in the table, under its entrance's zone", table.concat(strays, ", "), "")
-Expect("Forever's City of Dalaran is Alterac Mountains' Dalaran, and Ruins of Lordaeron the Undercity's",
-    all[2959].zone .. "/" .. all[2959].story[2] .. "|" .. all[2999].zone .. "/" .. all[2999].story[2],
-    "1416/dalaran|1458/ruins of lordaeron")
+Expect("Forever's City of Dalaran is Alterac Mountains' Dalaran, and Ruins of Lordaeron Tirisfal Glades' own ruins, listed there",
+    all[2959].zone .. "/" .. all[2959].story[2] .. "|" .. all[2999].zone .. "/" .. all[2999].story[1] .. "/" .. all[2999].story[2],
+    "1416/dalaran|1420/1420/ruins of lordaeron")
 Expect("the Sunken Temple is the Temple of Atal'Hakkar's area", dungeons[1435][1].key .. "|" .. dungeons[1435][1].dungeon,
     "temple of atalhakkar|109")
 Expect("Razorfen Downs is listed in The Barrens, its story kept under Thousand Needles",
@@ -162,7 +162,7 @@ for _, name in ipairs({ "StoryPlace", "AreaZone", "FoundOn", "AreasIn", "GetSubz
     Z[name] = core[name]
 end
 function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
-for _, file in ipairs({ "UI/ContributeButton", "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
+for _, file in ipairs({ "UI/LorePage", "UI/LoreWindow", "UI/MapPanel" }) do
     assert(loadfile(ZONES .. file .. ".lua"))("Spoken_Places", Z)
 end
 Z:SetupLoreWindow()
@@ -186,11 +186,10 @@ local function RowFor(label)
     for _, row in ipairs(rows) do if row.shown ~= false and row.row and row.row.label == label then return row end end
 end
 local function Click(label) local row = RowFor(label); row.scripts.OnClick(row); return Shown() end
-local KEY = [[Interface\Icons\INV_Misc_Key_03]]
 
 Z:ToggleLoreWindow()
-Expect("opened on Westfall, its dungeon a card of its own before its areas", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Thousand Needles")
+Expect("opened on Westfall, its dungeon a line of its own before its areas", Shown(),
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Durotar|Thousand Needles")
 
 -- Standing at Razorfen Downs' entrance in The Barrens, the tab opens on its card there.
 Z.GetPlayerMapID = function() return 1413 end
@@ -205,19 +204,19 @@ Z.GetPlayerMapID = function() return 1436 end
 _G.GetSubZoneText = function() return "" end
 Click("Dungeons and Raids")
 Expect("...its line and its zone's card closing again on a click each", Click("The Barrens"),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Thousand Needles")
-Expect("...a card, one level in, as a city's is", RowFor("Deadmines").row.style .. "|" .. RowFor("Deadmines").row.nest, "card|1")
-Expect("...with the Quests tab's key on it", RowFor("Deadmines").icon:GetTexture(), KEY)
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Durotar|Thousand Needles")
+Expect("...a single line, one level in, as a city's is", (RowFor("Deadmines").row.leaf and "leaf" or "group") .. "|" .. RowFor("Deadmines").row.nest, "leaf|1")
+Expect("...with no plus, as nothing opens under it", RowFor("Deadmines").toggle:IsShown(), false)
 Expect("...counted as one of the zone's places", RowFor("Westfall").count.text:match("/(%d+)"), "2")
-Expect("...no numbers or bar of its own", RowFor("Deadmines").count.text .. tostring(RowFor("Deadmines").track:IsShown()), "false")
-Expect("...greyed while not found", RowFor("Deadmines").row.none and RowFor("Deadmines").icon.desaturated, true)
+Expect("...no numbers of its own", RowFor("Deadmines").count.text, "")
+Expect("...greyed while not found", RowFor("Deadmines").row.missing, true)
 found["1436/deadmines"] = true
 Z:RefreshLoreWindow(); Shown()
-Expect("...ticked once found, as its area's row was", RowFor("Deadmines").tick:IsShown() and not RowFor("Deadmines").row.none, true)
+Expect("...ticked once found, as its area's row was", RowFor("Deadmines").status:IsShown(), true)
 found["1436/deadmines"] = nil
 showAll = false
 Z:RefreshLoreWindow(); Shown()
-Expect("...not locked, as no card is", RowFor("Deadmines").row.locked or false, false)
+Expect("...not locked, as no zone or city is", RowFor("Deadmines").row.locked or false, false)
 Click("Deadmines")
 Expect("...chosen, its page says it is not discovered", page.title.text .. ": " .. page.body.text.text,
     "Deadmines: " .. Z.L.NOT_DISCOVERED)
@@ -228,36 +227,37 @@ Expect("...in its zone", page.sub.text.text, "In Westfall")
 
 Click("The Barrens")
 Expect("a zone with several has a Dungeons and Raids line, closed, before its areas", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Crossroads|Thousand Needles")
-Expect("...a line, not a card", RowFor("Dungeons and Raids").row.style .. "|" .. RowFor("Dungeons and Raids").row.nest, "group|1")
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Dungeons and Raids|Crossroads|Durotar|Thousand Needles")
+Expect("...a line with no dungeon of its own", RowFor("Dungeons and Raids").row.style .. "|" .. RowFor("Dungeons and Raids").row.nest, "group|1")
 Expect("...counting its dungeons found out of all", RowFor("Dungeons and Raids").count.text, "0/2 • 0%")
 Expect("...a story under Thousand Needles counted in the zone of its entrance",
     RowFor("The Barrens").count.text:match("/(%d+)") .. "|" .. RowFor("Thousand Needles").count.text:match("/(%d+)"), "3|1")
 Click("Dungeons and Raids")
-Expect("...opening on a click, a card for each under it by name", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Thousand Needles")
-Expect("...one level further in", RowFor("Razorfen Downs").row.style .. "|" .. RowFor("Razorfen Downs").row.nest, "card|2")
+Expect("...opening on a click, a line for each under it by name", Shown(),
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Durotar|Thousand Needles")
+Expect("...one level further in", (RowFor("Razorfen Downs").row.leaf and "leaf" or "group") .. "|" .. RowFor("Razorfen Downs").row.nest, "leaf|2")
 Expect("...the line chosen, its page counting its dungeons in its zone",
     page.title.text .. "|" .. page.sub.text.text .. "|" .. page.body.text.text,
-    "Dungeons and Raids|In The Barrens · 0 of 2 discovered|" .. Z.L.DUNGEONS_PICK)
+    "Dungeons and Raids|In The Barrens · 0 of 2 discovered|")
+Expect("...an empty page: its mark in the middle and no Play", tostring(page.mark:IsShown()) .. " " .. tostring(page.play:IsShown()), "true false")
 Expect("...its row lit as chosen", RowFor("Dungeons and Raids").selected, true)
 Click("Razorfen Downs")
 Expect("Razorfen Downs' page is its story", page.title.text .. ": " .. page.body.text.text, "Razorfen Downs: The quilboars' barrows.")
 Expect("...in The Barrens, where its entrance is", page.sub.text.text, "In The Barrens")
 Click("Thousand Needles")
 Expect("...and is not an area of Thousand Needles", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Thousand Needles|Highperch")
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Durotar|Thousand Needles|Highperch")
 Click("Thousand Needles")
 Click("Dungeons and Raids")
 Expect("the line closes on another click", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Crossroads|Thousand Needles")
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Dungeons and Raids|Crossroads|Durotar|Thousand Needles")
 
 Click("Durotar")
 Expect("a zone's dungeon after its city's card and before its areas", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|Orgrimmar|Skull Rock|Valley of Trials|The Barrens|Dungeons and Raids|Crossroads|Thousand Needles")
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Dungeons and Raids|Crossroads|Durotar|Orgrimmar|Skull Rock|Valley of Trials|Thousand Needles")
 Click("Orgrimmar")
 Expect("a city's dungeon in the city's card", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|Orgrimmar|Ragefire Chasm|Valley of Strength|Skull Rock|Valley of Trials|The Barrens|Dungeons and Raids|Crossroads|Thousand Needles")
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Dungeons and Raids|Crossroads|Durotar|Orgrimmar|Ragefire Chasm|Valley of Strength|Skull Rock|Valley of Trials|Thousand Needles")
 Expect("...two levels in", RowFor("Ragefire Chasm").row.nest, 2)
 Click("Orgrimmar")
 Click("Durotar")
@@ -266,8 +266,12 @@ Click("Durotar")
 Click("The Barrens")
 Z:ShowLoreFor(1441, "razorfen downs")
 Expect("opened on a dungeon, its entrance's zone and its line open", Shown(),
-    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|Durotar|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Thousand Needles")
-Expect("...the card chosen", RowFor("Razorfen Downs").selected, true)
+    "Eastern Kingdoms|Westfall|Deadmines|Moonbrook|Kalimdor|The Barrens|Dungeons and Raids|Razorfen Downs|Wailing Caverns|Crossroads|Durotar|Thousand Needles")
+Expect("...the dungeon's line chosen", RowFor("Razorfen Downs").selected, true)
+Expect("...its page with the dungeon's round portrait left of the title, the zone badge on it",
+    page.headFace ~= nil and page.headFace.speaker.bullet == "zone" and page.shift > 0, true)
+Expect("...the dungeon's own icon, as the other tabs show it, not its zone's picture", page.headFace.speaker.icon,
+    [[Interface\AddOns\Spoken\Textures\Dungeons\RazorfenDowns]])
 showAll = false
 Z:RefreshLoreWindow()
 Expect("...not discovered, its page says so, in The Barrens", page.sub.text.text .. "|" .. page.body.text.text,

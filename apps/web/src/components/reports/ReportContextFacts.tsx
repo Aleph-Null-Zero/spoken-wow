@@ -4,6 +4,10 @@
  * Shown as the player's claim, never as the line: the fragment is written by a client, and a
  * hand-edited link is as easy to send as a real one.
  */
+"use client";
+
+import { useState, type ReactNode } from "react";
+
 import {
   LATEST_VERSION,
   addonLabel,
@@ -46,13 +50,21 @@ export default function ReportContextFacts({
  * The context folded under a report in triage: the addon version on the summary line, and
  * that the line might already be fixed when a newer release is out. Might, because the
  * version says nothing about whether the release touched this line.
+ *
+ * `children` follow the facts and are drawn only once the context is opened, so what they fetch
+ * is fetched for the reports somebody reads rather than for every row on the page.
  */
-export function ReportContextNote({ context }: { context: ReportContext | null }) {
+export function ReportContextNote({ context, children }: { context: ReportContext | null; children?: ReactNode }) {
+  const [open, setOpen] = useState(false);
   if (!context) return null;
   const version = addonLabel(context) ?? "the game";
   const outdated = outdatedVersion(context);
   return (
-    <details className="mt-1 text-xs" onClick={(event) => event.stopPropagation()}>
+    <details
+      className="mt-1 text-xs"
+      onClick={(event) => event.stopPropagation()}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
       <summary className="text-muted-foreground cursor-pointer">
         From {version}
         {outdated ? (
@@ -63,6 +75,7 @@ export function ReportContextNote({ context }: { context: ReportContext | null }
         ) : null}
       </summary>
       <ReportContextFacts context={context} className="mt-1.5" />
+      {open ? children : null}
     </details>
   );
 }

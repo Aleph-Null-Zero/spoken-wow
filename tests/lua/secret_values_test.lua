@@ -25,7 +25,7 @@ end
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 local env = stub.LoadSpoken(SPOKEN)
 local NotSecret = _G.Spoken.NotSecret
-Expect("without issecretvalue, as on a legacy client, a value is itself", NotSecret("Guard"), "Guard")
+Expect("without issecretvalue, a value is itself", NotSecret("Guard"), "Guard")
 stub.Secrets("Guard")
 Expect("a secret reads as nil", NotSecret("Guard"), nil)
 Expect("...and any other value as itself", NotSecret("Thrall"), "Thrall")
@@ -148,6 +148,23 @@ Expect("...and no unit shows the sex of a GUID that is secret", VO.Utils:GetSexF
 stub.Secrets()
 Expect("not secret, the name is read", VO.Utils:GetNPCName(), GUARD)
 Expect("...and the sex", VO.Utils:GetSexForGUID(GUARD_GUID), world.unitSex)
+
+local getGUIDType, parsedGUIDs = VO.Utils.GetGUIDType, 0
+VO.Utils.GetGUIDType = function(self, guid)
+    parsedGUIDs = parsedGUIDs + 1
+    return getGUIDType(self, guid)
+end
+stub.Secrets(GUARD_GUID)
+Expect("a secret GUID has no creature id", VO.Utils:GetCreatureIDFromGUID(GUARD_GUID), nil)
+Expect("...and never reaches the GUID parser", parsedGUIDs, 0)
+Expect("targeting a unit with a secret GUID raises no error", Quietly(stub.FireEvent, "PLAYER_TARGET_CHANGED"), true)
+Expect("pointing at a unit with a secret GUID raises no error", Quietly(stub.FireEvent, "UPDATE_MOUSEOVER_UNIT"), true)
+Expect("...neither event parses the secret GUID", parsedGUIDs, 0)
+stub.Secrets()
+VO.Utils.GetGUIDType = getGUIDType
+Expect("the same GUID, not secret, still names its creature", VO.Utils:GetCreatureIDFromGUID(GUARD_GUID), 12345)
+Expect("an empty GUID still names no creature", VO.Utils:GetCreatureIDFromGUID(""), nil)
+Expect("a missing GUID still names no creature", VO.Utils:GetCreatureIDFromGUID(nil), nil)
 
 -- Gossip and greeting text.
 stub.Secrets(GOSSIP_TEXT)

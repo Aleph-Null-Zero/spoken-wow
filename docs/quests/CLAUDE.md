@@ -53,12 +53,8 @@ claiming is global.
 - The meta addon must never carry a `DataModule-Version` key. If it does, the player counts it
   as an installed pack and stops offering the real ones.
 - `scripts/quests/release.sh` uploads what is already in `dist/` and never builds. Its targets
-  are `spoken` (the bundle, to `spoken`), `player` (the retired SpokenQuests tombstone),
-  the four packs and `audio-all`; `spoken-all` is accepted by name only. A failing target does
-  not stop the rest.
-- Legacy 1.12/2.4.3/3.3.5 zips are built only from a `quests/vX` tag
-  (`scripts/quests/package.sh`) and published only on GitHub. Each carries Spoken,
-  that client's vendored Ace3 and the two tombstones.
+  are `spoken` (the bundle, to `spoken`), the four packs and `audio-all`; `spoken-all` is
+  accepted by name only. A failing target does not stop the rest.
 - Packs list every client in `## Interface:` (`tts_cli/build.py`). Forever rejects an Interface
   it does not list, so a new client's number must be added there.
 

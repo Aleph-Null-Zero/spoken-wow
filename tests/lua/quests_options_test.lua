@@ -40,7 +40,9 @@ Expect("...and not as a top-level entry of its own", SettingsPanel.category, nil
 
 local rows, headings = {}, {}
 for _, child in ipairs(SettingsPanel.panel.content.children) do
-    if child.layoutHeading then
+    -- Hidden: the Objective Tracker section, on a client without one.
+    if not child:IsShown() then
+    elseif child.layoutHeading then
         table.insert(headings, { y = child.layoutY, height = child.layoutHeight, text = child.text })
     elseif child.layoutHeight then
         table.insert(rows, { y = child.layoutY, height = child.layoutHeight, anchor = child.anchor and child.anchor.y })
@@ -138,13 +140,13 @@ local entries = stub.OpenDropdown(greetings)
 local offered = {}
 for _, entry in ipairs(entries) do table.insert(offered, entry.text) end
 Expect("...offering every choice at once", table.concat(offered, "|"),
-    "Every Time|Once for Quest Givers|Once per NPC|Never")
+    "Every Time|Once for Quest Givers|Once per Greeting|Never")
 Expect("...with the current one ticked", entries[1].checked, true)
 
-Expect("picking one is possible", stub.PickDropdown(greetings, "Once per NPC"), true)
+Expect("picking one is possible", stub.PickDropdown(greetings, "Once per Greeting"), true)
 Expect("...and stores the number the addon reads", db.Audio.GossipFrequency,
     VO.Enums.GossipFrequency.OncePerNPC)
-Expect("...and relabels", greetings.dropdownText, "Once per NPC")
+Expect("...and relabels", greetings.dropdownText, "Once per Greeting")
 -- Picking again from a different value: what the control shows and what it compares have
 -- to be the same thing, or it can never find where in the list it is.
 Expect("picking a second time works too", stub.PickDropdown(greetings, "Never"), true)
@@ -233,6 +235,9 @@ Expect("...a language can be picked", stub.PickDropdown(voice, "Deutsch"), true)
 Expect("...which Quests then speaks", VO.Language:GetVoiceLanguage(), "deDE")
 Expect("...and going back to Auto is possible", stub.PickDropdown(voice, "Auto (English)"), true)
 Expect("...which follows the client", VO.Language:GetVoiceLanguage(), "enUS")
+Expect("...but not Vietnamese, whose pack is not out", stub.PickDropdown(voice, "Tiếng Việt")
+    or stub.PickDropdown(voice, "Vietnamese") or stub.PickDropdown(fallback, "Tiếng Việt")
+    or stub.PickDropdown(fallback, "Vietnamese"), false)
 Expect("the fallback language is chosen there too", fallback and fallback.dropdownText, "English")
 Expect("...and can be switched off", stub.PickDropdown(fallback, "Stay Silent"), true)
 Expect("...which Quests then honours", VO.Language:GetFallbackLanguage(), nil)
@@ -251,6 +256,27 @@ do
     VO.DataModules:Register("TestPack", {})
     stub.Advance(2)
     Expect("...and says its version once the packs have loaded", row and row.message, "1.2.1")
+end
+
+---------------------------------------------------------------- the objective tracker's Play button
+-- Only where the client has the tracker, and unticked, every tracker button goes.
+do
+    _G.QuestObjectiveTracker = {}
+    local VO, Panel = Boot()
+    Panel.panel.layout:Refresh()
+    local heading, box
+    for _, child in ipairs(Panel.panel.content.children) do
+        if child.layoutHeading and child.text == "Objective Tracker" then heading = child end
+        if type(child.text) == "table" and child.text.text == "Show Play Button" then box = child end
+    end
+    Expect("a client with the tracker has its section", heading and heading:IsShown(), true)
+    local swept = 0
+    VO.QuestOverlayUI.UpdateTrackerButtons = function() swept = swept + 1 end
+    box:SetChecked(false)
+    box:GetScript("OnClick")(box)
+    Expect("unticking it turns the buttons off", VO.Addon.db.profile.TrackerPlayButton, false)
+    Expect("...and takes away the ones drawn", swept, 1)
+    _G.QuestObjectiveTracker = nil
 end
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

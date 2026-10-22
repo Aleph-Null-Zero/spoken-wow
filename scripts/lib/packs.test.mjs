@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 
 import {
   actedFolder,
-  changelogSection, findPack, isLanguageHeading, loadPacks, packsFor,
+  changelogSection, findPack, isLanguageHeading, managerFolders, loadPacks, MIN_SPOKEN, packsFor,
 } from "./packs.mjs";
 
 // A publishers/ tree in a temp directory, one page per entry: [group, file, frontmatter].
@@ -174,4 +174,26 @@ test("only a language's shared pack holds quests, and only its sides are dormant
   assert.throws(() => loadPacks(tree([itQuests("gossip", { holds: "quests" })])), /holds: quests/);
   assert.throws(() => loadPacks(tree([itQuests("gossip", { dormant: "true" })])), /dormant: true/);
   assert.throws(() => loadPacks(tree([["quests", "h.md", { ...hordeEn[2], dormant: "true" }]])), /dormant: true/);
+});
+
+test("manager: true puts a pack's folders on the manager channel", () => {
+  const onChannel = ["zones", "b.md", { ...zonesMx[2], manager: "true" }];
+  assert.deepEqual(managerFolders(loadPacks(tree([zonesEn, onChannel]))),
+    [{ folder: "SpokenZonesAudio_esMX", section: "zones", lang: "esMX" }]);
+});
+
+test("English's quests bundle puts its four folders on the channel", () => {
+  const all = ["quests", "all.md", { section: "quests", lang: "enUS", pack: "all", release: "quests-audio",
+    slug: "spoken-audio-quests", name: "Spoken Quests Audio", manager: "true" }];
+  assert.deepEqual(managerFolders(loadPacks(tree([all]))).map((p) => p.folder), [
+    "SpokenQuestsAudioAlliance", "SpokenQuestsAudioHorde", "SpokenQuestsAudioShared", "SpokenQuestsAudioGossip",
+  ]);
+});
+
+test("manager may only be true", () => {
+  assert.throws(() => loadPacks(tree([["zones", "b.md", { ...zonesMx[2], manager: "yes" }]])), /manager may only be true/);
+});
+
+test("every section names the oldest Spoken its packs need", () => {
+  for (const section of ["quests", "zones", "books"]) assert.match(MIN_SPOKEN[section], /^\d+\.\d+\.\d+$/);
 });

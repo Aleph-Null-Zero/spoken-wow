@@ -240,7 +240,8 @@ function DataModules:GetPackLabel(module)
     if label then
         return label
     end
-    local title = module and module.Title or ""
+    -- Without the colour Spoken's name is drawn in.
+    local title = string.gsub(module and module.Title or "", "|c%x%x%x%x%x%x%x%x(.-)|r", "%1")
     -- "Spoken German Audio: Quests - Horde", or a pack built before that, "Spoken Quests Audio: Horde".
     title = string.gsub(title, "^Spoken [^:]*Audio: ", "")
     return (string.gsub(title, "VoiceOver Data %- ", ""))
@@ -262,6 +263,23 @@ function DataModules:GetPackLanguage()
         end
     end
     return order[1]
+end
+
+--- The newest .toc Version among the installed packs recorded in `language`, or "none" when
+--- no pack speaks it. What a contribution says the player was hearing with, so the site can
+--- tell a line nobody has voiced from one only this player's pack is behind on.
+---@param language string
+---@return string version
+function DataModules:GetPackVersion(language)
+    local newest
+    for _, module in self:GetPresentModules() do
+        local version = module.ContentVersion
+        if module.Language == language and version
+            and (not newest or self:IsOlderContent(newest, version)) then
+            newest = version
+        end
+    end
+    return newest or "none"
 end
 
 ---@param loadModules? boolean Whether LoadOnDemand data modules should be loaded during enumeration
@@ -337,12 +355,10 @@ end
 ---@param known string?
 ---@return boolean
 function DataModules:IsOlderContent(installed, known)
-    -- Lua 5.0 safe, as this file loads on 1.12: no `#`, no string methods, gfind there.
-    local gmatch = string.gmatch or string.gfind
     local function parts(version)
         if type(version) ~= "string" or not string.find(version, "^%d+[%d.]*$") then return nil end
         local out = {}
-        for n in gmatch(version, "%d+") do table.insert(out, tonumber(n)) end
+        for n in string.gmatch(version, "%d+") do table.insert(out, tonumber(n)) end
         return out
     end
     local a, b = parts(installed), parts(known)
@@ -364,31 +380,23 @@ function DataModules:LoadPresentModules()
 end
 
 -- We deliberately use a high ##Interface version in TOC to ensure that all clients will load it.
--- Otherwise pre-classic-rerelease clients will refuse to load addons with version < 20000.
 -- Here we temporarily enable "Load out of date AddOns" to load the module, and restore the user's setting afterwards.
 -- These cvars can be nil, so have to store the fact of them being changed in a separate variable.
-local prev_checkAddonVersion, changed_checkAddonVersion
-local prev_lastAddonVersion, changed_lastAddonVersion -- Added in 5.x
-local function EnableOutOfDate(addon)
-    if not changed_checkAddonVersion then
+local prev_checkAddonVersion, prev_lastAddonVersion, changed
+local function EnableOutOfDate()
+    if not changed then
         prev_checkAddonVersion = GetCVar("checkAddonVersion")
-        SetCVar("checkAddonVersion", 0)
-        changed_checkAddonVersion = true
-    end
-    if not changed_lastAddonVersion and Version:IsRetailOrAboveLegacyVersion(50000) then
         prev_lastAddonVersion = GetCVar("lastAddonVersion")
+        SetCVar("checkAddonVersion", 0)
         SetCVar("lastAddonVersion", Version.Interface)
-        changed_lastAddonVersion = true
+        changed = true
     end
 end
-local function RestoreOutOfDate(addon)
-    if changed_checkAddonVersion then
+local function RestoreOutOfDate()
+    if changed then
         SetCVar("checkAddonVersion", prev_checkAddonVersion)
-        changed_checkAddonVersion = nil
-    end
-    if changed_lastAddonVersion and Version:IsRetailOrAboveLegacyVersion(50000) then
         SetCVar("lastAddonVersion", prev_lastAddonVersion)
-        changed_lastAddonVersion = nil
+        changed = nil
     end
 end
 
@@ -407,9 +415,9 @@ function DataModules:LoadModule(module)
         return false, self.loadErrors[module.AddonName]
     end
 
-    EnableOutOfDate(module.AddonName)
+    EnableOutOfDate()
     local callSucceeded, loaded, reason = pcall(LoadAddOn, module.AddonName)
-    RestoreOutOfDate(module.AddonName)
+    RestoreOutOfDate()
 
     if not callSucceeded then
         reason = tostring(loaded)
@@ -432,9 +440,9 @@ function DataModules:GetModuleLoadError(name)
 end
 
 function DataModules:GetModuleAddOnInfo(module)
-    EnableOutOfDate(module.AddonName)
+    EnableOutOfDate()
     local name, title, notes, loadable, reason = GetAddOnInfo(module.AddonName)
-    RestoreOutOfDate(module.AddonName)
+    RestoreOutOfDate()
     return name, title, notes, loadable, reason
 end
 
@@ -522,6 +530,139 @@ function DataModules:HasGossipFor(soundData)
     return false
 end
 
+-- Measured on the corpus: a rewording of the same line scores 0.8 or more, while an NPC's
+-- other variants (another profession's or faction's) mostly score under 0.6.
+local GOSSIP_MATCH_FLOOR = 0.7
+
+-- Lua 5.0 safe from here to Words, as this file loads on 1.12: no `#`, no hex numbers,
+-- string.byte one byte at a time, gfind there.
+
+--- The code point of a three-byte UTF-8 character, else nil.
+local function CodePoint3(char)
+    local a = string.byte(char, 1)
+    if string.len(char) == 3 and a >= 224 and a <= 239 then
+        return (a - 224) * 4096 + (string.byte(char, 2) - 128) * 64 + (string.byte(char, 3) - 128)
+    end
+end
+
+--- Chinese writes no spaces, so a sentence would be one word that only an exact key equals.
+--- Each pair of neighbouring characters is compared as a word instead. Korean words carry their
+--- particles, and pairs of syllables match a reworded line more often than whole words do.
+--- Kana U+3040-30FF, Han U+3400-4DBF, U+4E00-9FFF and U+F900-FAFF, Hangul U+AC00-D7A3.
+local function IsPaired(cp)
+    return cp and ((cp >= 12352 and cp <= 12543) or (cp >= 13312 and cp <= 19903)
+        or (cp >= 19968 and cp <= 40959) or (cp >= 63744 and cp <= 64255)
+        or (cp >= 44032 and cp <= 55203))
+end
+
+--- Punctuation that separates words in that text: general U+2000-206F, CJK U+3000-303F, and
+--- the full-width forms that are not letters or digits.
+local function IsWidePunctuation(cp)
+    return cp and ((cp >= 8192 and cp <= 8303) or (cp >= 12288 and cp <= 12351)
+        or (cp >= 65281 and cp <= 65295) or (cp >= 65306 and cp <= 65312)
+        or (cp >= 65339 and cp <= 65344) or (cp >= 65371 and cp <= 65381))
+end
+
+local function CharacterPairs(text)
+    local words, word, run = {}, "", {}
+    local function EndWord()
+        if word ~= "" then
+            table.insert(words, word)
+            word = ""
+        end
+    end
+    local function EndRun()
+        local n = table.getn(run)
+        if n == 1 then
+            table.insert(words, run[1])
+        end
+        for i = 2, n do
+            table.insert(words, run[i - 1] .. run[i])
+        end
+        run = {}
+    end
+    local gmatch = string.gmatch or string.gfind
+    for char in gmatch(text, "[%z\1-\127\194-\244][\128-\191]*") do
+        local cp = CodePoint3(char)
+        if IsPaired(cp) then
+            EndWord()
+            table.insert(run, char)
+        else
+            EndRun()
+            if char == " " or char == "\t" or char == "\n" or char == "\r" or IsWidePunctuation(cp) then
+                EndWord()
+            else
+                word = word .. char
+            end
+        end
+    end
+    EndWord()
+    EndRun()
+    return table.concat(words, " ")
+end
+
+--- A line's words as they are compared: lower case, ASCII punctuation as spaces. French text
+--- shows a typographic apostrophe and no-break spaces where the keys may have the plain ones.
+--- Other bytes past ASCII are kept, so another alphabet's words compare whole. ASCII text comes
+--- out as it always has.
+local function Words(text)
+    text = string.lower(text)
+    text = string.gsub(text, "\226\128\153", "'")
+    text = string.gsub(text, "\194\160", " ")
+    text = string.gsub(text, "\226\128\175", " ")
+    text = string.gsub(text, "%p", " ")
+    if string.find(text, "[\227-\239]") then
+        return CharacterPairs(text)
+    end
+    return text
+end
+
+--- The keys still hold the server's tokens ($N, $g...), so each is filled in for this player
+--- before it is compared.
+local function ClosestGossipLine(shown, lines)
+    local best = FuzzySearchBestKeys(Words(shown), lines, function(text)
+        return Words(Utils:FillPlayerTokens(text))
+    end)
+    return best and best.similarity >= GOSSIP_MATCH_FLOOR and best or nil
+end
+
+--- Every text a table of text as a client shows it holds under `key`, mapped to its file, into
+--- `into`: the tables written in the client's own locale when `inClientLocale`, the rest
+--- otherwise. That locale is not the language the player chose to hear: an English client
+--- playing a Portuguese pack still shows English text. The file is the line's, not the
+--- recording's, so whichever table found it, PrepareSound looks for the clip in the voice
+--- language.
+---
+--- GossipText (Gossip/<locale>.lua, built only on a client in that locale) is this addon's own
+--- copy of every line's text in the client's locale, so it is asked before any pack's.
+local function CollectTexts(table, key, inClientLocale, into)
+    local client = Language:GetClientLanguage()
+    local own = inClientLocale and GossipText and GossipText[table]
+    if own and own[key] then
+        for text, file in pairs(own[key]) do
+            into[text] = file
+        end
+    end
+    for _, module in DataModules:GetModules() do
+        local data, locale = TextLookup(module, table)
+        if data and (locale == client) == inClientLocale and data[key] then
+            for text, file in pairs(data[key]) do
+                into[text] = into[text] or file -- module priority: the first pack's entry stands
+            end
+        end
+    end
+    return into
+end
+
+--- The file of the text on screen among `entries`: its exact key, else the closest above the floor.
+local function MatchShown(text, entries)
+    if entries[text] then
+        return entries[text]
+    end
+    local best = ClosestGossipLine(text, entries)
+    return best and best.value or nil
+end
+
 ---@param soundData SoundData
 ---@return string|nil hash
 function DataModules:GetNPCGossipTextHash(soundData)
@@ -530,49 +671,31 @@ function DataModules:GetNPCGossipTextHash(soundData)
         return
     end
     local text = soundData.text
-
-    local text_entries = {}
-
-    -- A gossip table maps the NPC's text *as a client shows it* to the line's hash, so the
-    -- tables that can match exactly are the ones written in the client's own locale --
-    -- which is not the language the player chose to hear: an English client playing a
-    -- Portuguese pack still shows English text. The hash is the line's, not the recording's,
-    -- so whichever table found it, PrepareSound looks for the clip in the voice language.
-    --
-    -- Only when no pack in the client's locale knows this NPC are the rest searched. That is
-    -- what every non-English client has always done with English packs, and it mostly works:
-    -- most NPCs have a single line, and the fuzzy match lands on it whatever it is shown in.
-    --
-    -- GossipText (Gossip/<locale>.lua, built only on a client in that locale) is this addon's
-    -- own copy of every line's text in the client's locale, so it is asked before any pack's.
-    local client = Language:GetClientLanguage()
-    local function collect(inClientLocale)
-        local own = inClientLocale and GossipText and GossipText[table]
-        if own and own[npc] then
-            for text, hash in pairs(own[npc]) do
-                text_entries[text] = hash
+    -- An NPC whose text varies by who asks may lack the variant on screen. Playing nothing then
+    -- lets the window offer Contribute. HasGossipFor asks with each key itself, so an exact key
+    -- skips scoring every line again.
+    local text_entries = CollectTexts(table, npc, true, {})
+    if next(text_entries) ~= nil then
+        return MatchShown(text, text_entries)
+    end
+    -- Only when no pack in the client's locale knows this NPC are the rest searched. Their words
+    -- cannot match the screen's, so an NPC with a single line (its aliases count as that line)
+    -- plays it whatever it is shown in. Among several, the best score is noise and would pick
+    -- any of them: one must clear the floor, which another language's words do not, and the
+    -- window offers Contribute instead.
+    CollectTexts(table, npc, false, text_entries)
+    local file, same
+    for _, each in pairs(text_entries) do
+        if not file then
+            file, same = each, { [each] = true }
+            for _, alias in ipairs(GossipAliases and GossipAliases[each] or {}) do
+                same[alias] = true
             end
-        end
-        for _, module in self:GetModules() do
-            local data, locale = TextLookup(module, table)
-            if data and (locale == client) == inClientLocale then
-                local npc_gossip_table = data[npc]
-                if npc_gossip_table then
-                    for text, hash in pairs(npc_gossip_table) do
-                        text_entries[text] = text_entries[text] or
-                            hash -- Respect module priority, don't overwrite the entry if there is already one
-                    end
-                end
-            end
+        elseif not same[each] then
+            return MatchShown(text, text_entries)
         end
     end
-    collect(true)
-    if next(text_entries) == nil then
-        collect(false)
-    end
-
-    local best_result = FuzzySearchBestKeys(text, text_entries)
-    return best_result and best_result.value
+    return file
 end
 
 local function getFirstNWords(text, n)
@@ -714,12 +837,27 @@ function DataModules:GetObjectName(type, id)
     end
 end
 
+--- A quest moment's file: `{questID}-{event}`, or, where the moment has more than one wording
+--- in the client's language, the wording the screen shows, matched as gossip is and none below
+--- the floor. Text in another language cannot be compared to the screen, so a client with no
+--- wordings in its own plays the moment's file, as it always has.
+local function QuestFile(soundData, event)
+    local stem = format("%d-%s", soundData.questID, event)
+    -- An empty text is what a quest reader answers when it has none to give.
+    local text = soundData.text ~= "" and soundData.text or nil
+    local wordings = text and CollectTexts("QuestWordingLookup", stem, true, {})
+    if not wordings or next(wordings) == nil then
+        return stem
+    end
+    return MatchShown(text, wordings)
+end
+
 ---@type table<SoundEvent, fun(soundData: SoundData): string|nil>
 local getFileNameForEvent =
 {
-    [Enums.SoundEvent.QuestAccept]   = function(soundData) return format("%d-%s", soundData.questID, "accept") end,
-    [Enums.SoundEvent.QuestProgress] = function(soundData) return format("%d-%s", soundData.questID, "progress") end,
-    [Enums.SoundEvent.QuestComplete] = function(soundData) return format("%d-%s", soundData.questID, "complete") end,
+    [Enums.SoundEvent.QuestAccept]   = function(soundData) return QuestFile(soundData, "accept") end,
+    [Enums.SoundEvent.QuestProgress] = function(soundData) return QuestFile(soundData, "progress") end,
+    [Enums.SoundEvent.QuestComplete] = function(soundData) return QuestFile(soundData, "complete") end,
     [Enums.SoundEvent.QuestGreeting] = function(soundData) return DataModules:GetNPCGossipTextHash(soundData) end,
     [Enums.SoundEvent.Gossip]        = function(soundData) return DataModules:GetNPCGossipTextHash(soundData) end,
 }
@@ -882,7 +1020,7 @@ function DataModules:PrepareSound(soundData)
     soundData.fileName = getFileNameForEvent[soundData.event](soundData)
 
     if soundData.fileName == nil then
-        return false, "no file name for it (no quest ID, or a greeting no pack's text matches)"
+        return false, "no file name for it (no quest ID, or a text no pack's wording or greeting matches)"
     end
 
     -- A quest given by NPCs of different voices is a file per voice: this giver's own first,

@@ -3,7 +3,7 @@ curseforge: 1723282
 release: books-audio-esMX
 section: books
 lang: esMX
-version: 2.0.1
+version: 2.0.2
 slug: spoken-spanish-al-audio-readables
 name: Spoken Spanish (AL) Audio: Readables
 summary: The Latin American Spanish narration for Spoken's Readables module: books, letters and notes read aloud in Spanish (AL).
@@ -12,6 +12,7 @@ categories:
   - Miscellaneous
   - Roleplay
 license: MIT
+manager: true
 ---
 
 Narrated books, letters and notes for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Readables module, in Latin American Spanish. This addon is data only — it does nothing on its own.
@@ -22,7 +23,7 @@ One clip per page, read from the game's own Spanish text. It installs beside the
 
 Install **Spoken** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped (`SpokenBooksAudio_esMX`).
 
-Spoken Readables reads in your client's language, so this pack plays on a Spanish (AL) client (esMX). A page it does not hold is read in English instead.
+Spoken Readables plays it when Spoken's **Voice Language** is Spanish (AL). Voice Language follows your client's language until you choose one, so to hear Spanish (AL) on another client, pick it on Spoken's settings page. A page this pack has no narration for is read in the language set under **If a Voice Is Missing**, English unless you change it.
 
 ## Compatibility
 

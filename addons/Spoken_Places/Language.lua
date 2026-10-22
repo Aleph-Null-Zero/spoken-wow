@@ -43,7 +43,7 @@ SpokenZones:BindSettings()
 
 -- Every locale a Classic Era or Anniversary client can run in, plus the
 -- languages a community translates into that no client ships (`client = false`:
--- Italian). GetLocale() never returns one of those, so it has no aliases and no
+-- Italian, Vietnamese). GetLocale() never returns one of those, so it has no aliases and no
 -- interface strings, and Auto never lands on it; a player reads it by choosing
 -- it. A code absent here can never be selected, so the list is the addon's definition of "a
 -- language", not a list of languages that have content -- readiness is a
@@ -69,6 +69,7 @@ SpokenZones.LOCALES = {
 	{ code = "koKR", name = "Korean", native = "한국어", script = "korean" },
 	{ code = "zhCN", name = "Chinese (S)", native = "简体中文", script = "simplifiedchinese" },
 	{ code = "zhTW", name = "Chinese (T)", native = "繁體中文", script = "traditionalchinese" },
+	{ code = "viVN", name = "Vietnamese", native = "Tiếng Việt", script = "vietnamese", client = false },
 }
 
 local BASE = "enUS"
@@ -89,6 +90,9 @@ end
 -- Localized area name -> English corpus key, keyed by *client* locale.
 -- Populated by Data/<locale>/Aliases.lua.
 SpokenZones.Aliases = {}
+-- Localized area name -> uiMapID -> English corpus key, for a name the client gives more than
+-- one place. Only in the alias files built since the table existed.
+SpokenZones.ZoneAliases = {}
 
 --------------------------------------------------------------------------------
 -- Readiness
@@ -158,6 +162,8 @@ local SCRIPT_FONTS = {
 	korean = "Fonts\\2002.TTF",
 	simplifiedchinese = "Fonts\\ARKai_T.ttf",
 	traditionalchinese = "Fonts\\blei00d.TTF",
+	-- Not a font for the script, only the stock one most likely to draw ệ and ữ.
+	vietnamese = "Fonts\\ARIALN.TTF",
 }
 
 --- The font file to write `code` (the lore's language by default) in where a page uses
@@ -437,6 +443,7 @@ function SpokenZones:ShouldLoadAliases(locale)
 	return locale == self.clientLocale
 end
 
-function SpokenZones:RegisterAliases(locale, data)
+function SpokenZones:RegisterAliases(locale, data, byZone)
 	self.Aliases[locale] = data
+	self.ZoneAliases[locale] = byZone
 end

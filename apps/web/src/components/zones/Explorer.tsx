@@ -2,6 +2,7 @@
 
 import { nameSubject, TranslateDialog, type TranslateSubject } from "@/components/TranslateDialog";
 import { useCan } from "@/components/useCan";
+import { useHistoryMode } from "@/components/useHistoryMode";
 import { useLang } from "@/components/LangProvider";
 import { BASE_LANG, withLang } from "@/lib/lang";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -35,6 +36,7 @@ import RecordingDropZone from "@/components/RecordingDropZone";
 import { filterParams, filtersFromParams, PAGE_SIZE, type LineFilters } from "@/lib/zones/filters";
 import type { ResultLine, SearchResult } from "@/lib/zones/search";
 import { useClearDirty } from "@/lib/generation/use-clear-dirty";
+import { fetchRows, patchRows } from "@/lib/row-refresh";
 import * as echo from "@/lib/url-echo";
 
 // Long enough to hold a whole typed word: the timer restarts on every keystroke, so this
@@ -124,7 +126,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   // URL
   //----------------------------------------------------------------------------
 
-  // history.replaceState, not router.replace, and the current path rather than "/".
+  // The native history calls, not the router, and the current path rather than "/".
   //
   // Both halves of that were a page load per keystroke. The bare path is a redirect
   // route -- src/app/page.tsx sends it to /enUS -- so "/?q=..." cost a round trip, a
@@ -135,16 +137,21 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   // Nothing on this screen needs the server for a filter change: the rows come from
   // /api/search below, and Next re-renders useSearchParams() from a native history
   // call, so `filters` still rebuilds from the URL and the URL still carries the view.
-  const replaceQuery = useCallback(
-    (search: URLSearchParams) => {
+  const historyMode = useHistoryMode();
+
+  /** `typed` for the search box's own writes; see useHistoryMode. */
+  const writeQuery = useCallback(
+    (search: URLSearchParams, typed = false) => {
       const query = search.toString();
-      window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
+      const url = query ? `${pathname}?${query}` : pathname;
+      if (historyMode(typed) === "push") window.history.pushState(null, "", url);
+      else window.history.replaceState(null, "", url);
     },
-    [pathname],
+    [historyMode, pathname],
   );
 
   const updateUrl = useCallback(
-    (next: Record<string, string | number | undefined>) => {
+    (next: Record<string, string | number | undefined>, typed = false) => {
       const merged = new URLSearchParams(params.toString());
       for (const [key, value] of Object.entries(next)) {
         if (value === undefined || value === "" || value === 0) merged.delete(key);
@@ -153,9 +160,9 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
       // Any change other than paging returns to page 1: staying on page 7 of a result
       // set that just became three pages long shows nothing and looks like a bug.
       if (!("page" in next)) merged.delete("page");
-      replaceQuery(merged);
+      writeQuery(merged, typed);
     },
-    [params, replaceQuery],
+    [params, writeQuery],
   );
 
   // Held in a ref so a filter change mid-word does not restart the keystroke timer.
@@ -164,7 +171,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
 
   const commitQuery = useCallback((value: string) => {
     pending.current = echo.write(pending.current, value);
-    updateUrlRef.current({ q: value });
+    updateUrlRef.current({ q: value }, true);
   }, []);
 
   // A debounce, not a throttle: the timer is cleared and restarted by every keystroke,
@@ -191,9 +198,17 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   const updateFilters = useCallback(
     (next: Partial<LineFilters>) => {
       const merged = { ...filters, ...next };
-      replaceQuery(filterParams(merged));
+      writeQuery(filterParams(merged));
     },
-    [filters, replaceQuery],
+    [filters, writeQuery],
+  );
+
+  const filtersHref = useCallback(
+    (next: Partial<LineFilters>) => {
+      const query = filterParams({ ...filters, ...next }).toString();
+      return query ? `${pathname}?${query}` : pathname;
+    },
+    [filters, pathname],
   );
 
   //----------------------------------------------------------------------------
@@ -203,9 +218,8 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
   // A string, not the object: memoising on object identity would refetch every render.
   const filterQuery = useMemo(() => filterParams(filters).toString(), [filters]);
 
-  // Held in refs so refetch() -- called from a poll and from a completed regeneration
-  // -- reads the current view without being rebuilt on every filter change, which
-  // would restart the poll timer each time.
+  // Held in refs so the callbacks below read the current view without being
+  // rebuilt on every filter change.
   const filterQueryRef = useRef(filterQuery);
   filterQueryRef.current = filterQuery;
   const pageRef = useRef(page);
@@ -285,6 +299,23 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
       .catch(() => {});
   }, [lang]);
 
+  /**
+   * Fetch these rows again by id and swap them in where they sit, so a row the change moved
+   * out of the filter stays until the filter is asked again. See lib/row-refresh.
+   */
+  const refreshRows = useCallback(
+    async (ids: string[]) => {
+      const fresh = await fetchRows<ResultLine>(
+        (id) => withLang(lang, `/api/zones/search?${new URLSearchParams({ line: id })}`),
+        ids,
+      );
+      setResult((current) =>
+        current && { ...current, lines: patchRows(current.lines, fresh, (row) => row.id, (row) => row.id) },
+      );
+    },
+    [lang],
+  );
+
   // What the plan allows and what is left of it, for the confirmation dialog. Shared with
   // the quests section because it is one account and one budget.
   useEffect(() => {
@@ -342,7 +373,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
             [line.id]: { phase: "done", version: data.version! },
           }));
           setVersions((current) => ({ ...current, [line.id]: data.version! }));
-          refetch();
+          void refreshRows([line.id]);
         })
         .catch((err: Error) => {
           setRowStates((current) => ({
@@ -351,7 +382,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
           }));
         });
     },
-    [refetch, lang],
+    [refreshRows, lang],
   );
 
   /**
@@ -464,7 +495,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
             for (const job of mine) next[job.lineId] = job.version;
             return next;
           });
-          refetch();
+          void refreshRows(mine.map((job) => job.lineId));
         }
       }
 
@@ -477,7 +508,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [canRegenerate, refetch, lang]);
+  }, [canRegenerate, refreshRows, lang]);
 
   //----------------------------------------------------------------------------
   // Playback
@@ -579,7 +610,7 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
           onQueryChange={setQuery}
           onQuerySubmit={submitQuery}
           onChange={updateFilters}
-          onClearAll={() => replaceQuery(new URLSearchParams())}
+          onClearAll={() => writeQuery(new URLSearchParams())}
         />
 
         {showRecordings && <RecordingDropZone source="zones" onUploaded={refetch} />}
@@ -679,19 +710,20 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
                 current={line.id === current?.id}
                 showMadeBy={showMadeBy}
                 showRecordings={showRecordings}
-                onRecordingChanged={refetch}
+                onRecordingChanged={(l) => void refreshRows([l.id])}
                 canRegenerate={canRegenerate}
                 canEdit={canEdit}
                 canTriage={canTriage}
                 onPlay={play}
                 onNarrowToZone={(l) => updateFilters({ mapID: l.mapID })}
+                zoneHref={(l) => filtersHref({ mapID: l.mapID })}
                 state={rowStates[line.id]}
                 onClearDirty={(l) => clearDirty([l.file])}
                 onRestored={(l, version) => {
                   // The player's cache buster: the file name does not move when a take is
                   // put back, so without this the browser replays the clip just replaced.
                   setVersions((current) => ({ ...current, [l.id]: version }));
-                  refetch();
+                  void refreshRows([l.id]);
                 }}
                 onReport={setReportFor}
                 onEditText={(l) => setEditFor(withEdits(l))}
@@ -736,7 +768,14 @@ export function Explorer({ zones }: { zones: ZoneFacet[] }) {
         onSaved={(line, full) => setRewritten((current) => ({ ...current, [line.id]: full }))}
       />
 
-      <TranslateDialog subject={naming} onClose={() => setNaming(null)} onSaved={() => refetch()} />
+      <TranslateDialog
+        subject={naming}
+        onClose={() => setNaming(null)}
+        // A place is named by its line's id; see onRename.
+        onSaved={() => {
+          if (naming) void refreshRows([String(naming.address.entityId)]);
+        }}
+      />
 
       <ReportDialog
         subject={reportFor && { source: "zones", line: reportFor }}

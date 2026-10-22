@@ -1,10 +1,7 @@
--- How often gossip plays (the Greetings setting): Once per NPC holds back an NPC's greeting
--- after the first time, and nothing past it. A guard's directions are a page the player
+-- How often gossip plays (the Greetings setting): Once per Greeting holds back each of an NPC's
+-- greetings after the first time, and nothing past it. A guard's directions are a page the player
 -- picked an option to reach, and they went quiet along with the greeting (issue #166).
 -- Run with `make test-player`.
---
--- Both gossip APIs are covered, because picking an option is noticed through a hook on each:
--- C_GossipInfo.SelectOption on Blizzard's clients and SelectGossipOption on the 1.12 one.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -18,6 +15,7 @@ local Expect, Failures = require("queue_helpers").Expecter(print)
 local GREETING = "Well met. How can I help?"
 local BANK = "Where is the bank?"
 local DIRECTIONS = "The bank is past the fountain."
+local OTHER = "Keep your blade sharp, friend."
 -- The option picked to reach the page of the clip that started last.
 local lastTitle
 
@@ -29,10 +27,10 @@ local function Boot(client)
     local VO = stub.LoadQuests(QUESTS, SPOKEN)
     dofile(QUESTS .. "UI/DialogPlayButton.lua")
     VO.Addon:OnInitialize()
-    -- By id and by name: the 1.12 client has no GUID for the lookup to key on.
-    local gossip = { [GREETING] = "greeting-hash", [DIRECTIONS] = "directions-hash" }
+    local gossip = { [GREETING] = "greeting-hash", [DIRECTIONS] = "directions-hash", [OTHER] = "other-hash" }
     VO.DataModules:Register("TestPack", {
-        SoundLengthLookupByFileName = { ["greeting-hash"] = 1, ["directions-hash"] = 1, ["101-accept"] = 1 },
+        SoundLengthLookupByFileName = { ["greeting-hash"] = 1, ["directions-hash"] = 1, ["other-hash"] = 1,
+            ["101-accept"] = 1 },
         GossipLookupByNPCID = { [12345] = gossip },
         GossipLookupByNPCName = { Guard = gossip },
         GetSoundPath = function(_, fileName) return fileName .. ".ogg" end,
@@ -55,8 +53,8 @@ local function Played(played)
     return text ~= "" and text or "(nothing)"
 end
 
-local function Talk()
-    stub.ShowGossip(GREETING, { BANK })
+local function Talk(text)
+    stub.ShowGossip(text or GREETING, { BANK })
     stub.FireEvent("GOSSIP_SHOW")
     stub.Advance(1)
 end
@@ -75,12 +73,16 @@ local function Leave()
     _G.Spoken:StopAll()
 end
 
-for _, client in ipairs({ "11509", "1.12" }) do
+for _, client in ipairs({ "11509", "16001" }) do
     local VO, played = Boot(client)
     local Frequency = VO.Enums.GossipFrequency
 
-    Expect(client .. ": Once per NPC is the default", VO.Addon.db.profile.Audio.GossipFrequency,
-        Frequency.OncePerNPC)
+    Expect(client .. ": Once for Quest Givers is the default", VO.Addon.db.profile.Audio.GossipFrequency,
+        Frequency.OncePerQuestNPC)
+    VO.Addon.db.profile.Audio.GossipFrequency = Frequency.OncePerNPC
+
+    -- An NPC marked heard before greetings were told apart counts as never heard.
+    VO.Addon.db.char.hasSeenGossipForNPC[world.npcGUID] = true
 
     Talk()
     Expect(client .. ": the first greeting plays", Played(played), "greeting-hash")
@@ -97,6 +99,17 @@ for _, client in ipairs({ "11509", "1.12" }) do
     -- Reopening the dialog is not picking an option: the greeting stays held back.
     Talk()
     Expect(client .. ": a pick on the last visit does not carry over", Played(played), "(nothing)")
+    Leave()
+
+    -- The same NPC greeting with another of its lines reads that one, once.
+    Talk(OTHER)
+    Expect(client .. ": another greeting from the same NPC plays", Played(played), "other-hash")
+    Leave()
+    Talk(OTHER)
+    Expect(client .. ": ...but only the first time", Played(played), "(nothing)")
+    Leave()
+    Talk()
+    Expect(client .. ": ...and the first greeting is still held back", Played(played), "(nothing)")
     Leave()
 
     -- DialogueUI picks an option by its index, not its id.

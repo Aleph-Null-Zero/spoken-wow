@@ -166,6 +166,14 @@ export default function ReportsBadge({ source, lineId, count, canTriage }: Props
                       >
                         Not a problem
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy === report.id}
+                        onClick={() => void resolve(report.id, "minor")}
+                      >
+                        Minor
+                      </Button>
                     </>
                   ) : (
                     <Button

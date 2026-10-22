@@ -38,8 +38,6 @@ end
 -- what /spq diagnostics calls the last runtime stage, and in the log they read as the whole story
 -- of a quest window, from the event to the line queued or the reason it was not. Note covers the
 -- decisions that record no stage. Nothing happens without the module, or while its log is off.
---
--- Parsed by the 1.12 client too, so Lua 5.0 syntax: no `#`, no `...`, no string methods.
 
 local function Log(message, a, b, c, d)
     if Spoken and Spoken.Log then Spoken:Log("quests", message, a, b, c, d) end
@@ -175,10 +173,10 @@ local function ContextLines(lines)
     local guid = Safe(function() return Utils:GetNPCGUID() end)
     table.insert(lines, format("now: quest ID %s, title %q, NPC %q, GUID %s", tostring(questID), tostring(title or ""),
         tostring(npc or ""), tostring(guid)))
-    local heard = guid and Addon.db and Addon.db.char.hasSeenGossipForNPC
-        and Addon.db.char.hasSeenGossipForNPC[guid]
+    local text = Safe(function() return NotSecret(GetGossipText()) or NotSecret(GetGreetingText()) end)
+    local heard = guid and Addon.db and Addon:HasHeardGreeting(guid, text)
     if guid then
-        table.insert(lines, "this NPC's greeting heard before: " .. (heard and "yes" or "no"))
+        table.insert(lines, "this NPC's greeting on screen heard before: " .. (heard and "yes" or "no"))
     end
     local found, probe, event = pcall(function() return Addon:GetVisibleLine() end)
     if found and probe then

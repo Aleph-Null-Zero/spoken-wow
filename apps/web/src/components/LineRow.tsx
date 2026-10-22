@@ -4,6 +4,7 @@ import ActorTakeCell from "@/components/ActorTakeCell";
 import { MadeByCell } from "@/components/MadeBy";
 import { RenameButton } from "@/components/RenameButton";
 import { Untranslated, UntranslatedMark } from "@/components/Untranslated";
+import FilterLink from "@/components/FilterLink";
 import { useLang } from "@/components/LangProvider";
 import { localeHref } from "@/lib/lang";
 import {
@@ -15,10 +16,11 @@ import {
   MessageSquareQuoteIcon,
   PencilIcon,
   PlayIcon,
+  RepeatIcon,
   UserPlusIcon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import ReportsBadge from "./ReportsBadge";
 import TakeSelector from "./TakeSelector";
@@ -115,7 +117,7 @@ type Props = {
   showMadeBy: boolean;
   /** Whether to draw the voice actor cell: the search sent recordings, so the viewer records here. */
   showRecordings: boolean;
-  onRecordingChanged: () => void;
+  onRecordingChanged: (line: ResultLine) => void;
   canRegenerate: boolean;
   /** May write this line's text in the page's language. Apart from regenerating: a
    *  translator may do this and not spend anything. */
@@ -144,8 +146,9 @@ type Props = {
   onRename: ((line: ResultLine, what: "npc" | "quest") => void) | null;
   /** Open the ignore dialog, or null for anyone not allowed to make that decision. */
   onIgnore: ((line: ResultLine) => void) | null;
-  /** Add another NPC who says this line, and take back one added that way. Null but for an admin. */
+  /** Add another NPC who says this line, put one in this speaker's place, or take it off. Null but for an admin. */
   onAddSpeaker: ((line: ResultLine) => void) | null;
+  onReplaceSpeaker: ((line: ResultLine) => void) | null;
   onRemoveSpeaker: ((line: ResultLine) => void) | null;
   onRegenerate: (line: ResultLine) => void;
   /** Open the report dialog. Everyone gets this, signed in or not. */
@@ -158,9 +161,11 @@ type Props = {
   groupSpan: number;
   /** Whether the NPC's id links to its row on /npcs, which only an admin can open. */
   showNpcPage?: boolean;
-  /** Narrow the search to this line's NPC, or to its quest. */
+  /** Narrow the search to this line's NPC, or to its quest; the hrefs open that view elsewhere. */
   onNarrowToNpc: (line: ResultLine) => void;
   onNarrowToQuest: (line: ResultLine) => void;
+  npcHref: (line: ResultLine) => string;
+  questHref: (line: ResultLine) => string;
   /** Say this take is fine as it stands, despite a pronunciation having moved under it. */
   onClearDirty: (line: ResultLine) => void;
 };
@@ -186,6 +191,20 @@ function WowheadLink({ href }: { href: string }) {
   );
 }
 
+function SpeakerAction({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      className="hover:text-foreground ml-1 inline-flex align-middle"
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function LineRow({
   line,
   current,
@@ -206,6 +225,7 @@ export default function LineRow({
   onRename,
   onIgnore,
   onAddSpeaker,
+  onReplaceSpeaker,
   onRemoveSpeaker,
   onRegenerate,
   onReport,
@@ -214,6 +234,8 @@ export default function LineRow({
   showNpcPage = false,
   groupSpan,
   onNarrowToQuest,
+  npcHref,
+  questHref,
   onClearDirty,
 }: Props) {
   const missing = absence(line);
@@ -250,13 +272,14 @@ export default function LineRow({
     >
       {spanned && (
         <td rowSpan={groupSpan} className="px-2 py-2">
-          <button
+          <FilterLink
+            href={npcHref(line)}
+            onApply={() => onNarrowToNpc(line)}
             className="hover:text-foreground block max-w-full truncate text-left underline-offset-2 hover:underline"
             title={`Show only ${line.npcName}`}
-            onClick={() => onNarrowToNpc(line)}
           >
             <Untranslated missing={line.missing?.npcName}>{line.npcName}</Untranslated>
-          </button>
+          </FilterLink>
           {onRename && (
             <RenameButton label={`Name ${line.npcName}`} onClick={() => onRename(line, "npc")} />
           )}
@@ -276,31 +299,27 @@ export default function LineRow({
               </>
             )}
             {onAddSpeaker && (
-              <button
-                type="button"
-                title="Add another NPC who says this line"
-                aria-label={`Add another NPC who says ${line.npcName}'s line`}
-                onClick={() => onAddSpeaker(line)}
-                className="hover:text-foreground ml-1 inline-flex align-middle"
-              >
+              <SpeakerAction label={`Add another NPC who says ${line.npcName}'s line`} onClick={() => onAddSpeaker(line)}>
                 <UserPlusIcon className="size-3" />
-              </button>
+              </SpeakerAction>
+            )}
+            {onReplaceSpeaker && (
+              <SpeakerAction
+                label={`Put another NPC in ${line.npcName}'s place on this line`}
+                onClick={() => onReplaceSpeaker(line)}
+              >
+                <RepeatIcon className="size-3" />
+              </SpeakerAction>
+            )}
+            {onRemoveSpeaker && !line.soleSpeaker && (
+              <SpeakerAction label={`Take ${line.npcName} off this line`} onClick={() => onRemoveSpeaker(line)}>
+                <XIcon className="size-3" />
+              </SpeakerAction>
             )}
           </span>
           {line.added && (
             <span className="text-muted-foreground block text-xs" title="Added by hand, not from the game data">
               added
-              {onRemoveSpeaker && (
-                <button
-                  type="button"
-                  title={`Take ${line.npcName} back off this line`}
-                  aria-label={`Take ${line.npcName} back off this line`}
-                  onClick={() => onRemoveSpeaker(line)}
-                  className="hover:text-foreground ml-1 inline-flex align-middle"
-                >
-                  <XIcon className="size-3" />
-                </button>
-              )}
             </span>
           )}
         </td>
@@ -310,15 +329,16 @@ export default function LineRow({
         <td rowSpan={groupSpan} className="px-2 py-2">
           {line.questId !== null ? (
             <>
-              <button
+              <FilterLink
+                href={questHref(line)}
+                onApply={() => onNarrowToQuest(line)}
                 className="hover:text-foreground block max-w-full truncate text-left underline-offset-2 hover:underline"
                 title={`Show only quest ${line.questId}`}
-                onClick={() => onNarrowToQuest(line)}
               >
                 <Untranslated missing={line.missing?.questTitle}>
                   {line.questTitle ?? `quest ${line.questId}`}
                 </Untranslated>
-              </button>
+              </FilterLink>
               {onRename && (
                 <RenameButton
                   label={`Name quest ${line.questId}`}
@@ -535,7 +555,7 @@ export default function LineRow({
           source="quests"
           file={line.audioPath}
           recording={line.recording ?? null}
-          onChanged={onRecordingChanged}
+          onChanged={() => onRecordingChanged(line)}
         />
       )}
 

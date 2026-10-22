@@ -123,6 +123,10 @@ function toPack(page, meta) {
   if (meta.github !== undefined && meta.github !== "false") fail(`github may only be false`);
   const github = meta.github !== "false";
 
+  // `manager: true` puts the pack on the manager's channel (scripts/manager/), one language at a
+  // time, so a language goes there only once its packs have been checked against it.
+  if (meta.manager !== undefined && meta.manager !== "true") fail(`manager may only be true`);
+
   // A language with too few players yet for three quest packs ships two: Gossip, and a Shared
   // pack that `holds: quests` -- every quest line, both sides' included (tts_cli/factions.py
   // builds it as the 'quests' pack). Its Alliance and Horde pages stay, project ids and all, as
@@ -138,7 +142,7 @@ function toPack(page, meta) {
   const folder = english ? englishFolder(section, pack) : `${languageFolder(section, pack)}_${lang}`;
   return {
     page, section, lang, pack, version, github,
-    build: meta.holds ?? pack, dormant: meta.dormant === "true",
+    build: meta.holds ?? pack, dormant: meta.dormant === "true", manager: meta.manager === "true",
     curseforge: meta.curseforge ?? null, wago: meta.wago ?? null, release,
     bundles: english && section === "quests" && pack === "all" ? ENGLISH_QUESTS_BUNDLE : null,
     slug: meta.slug, name: meta.name, folder,
@@ -186,18 +190,34 @@ export function findPack(section, lang, pack, packs = loadPacks()) {
   return found;
 }
 
+// The oldest Spoken whose lookups each section's packs are built for. Bumped by hand only when a
+// section's lookup format changes; scripts/manager/ refuses to publish past the latest release.
+export const MIN_SPOKEN = { quests: "3.0.0", zones: "3.0.0", books: "3.0.0" };
+
+// The folders the manager channel carries, each once: a bundle's folders, else the pack's own.
+export function managerFolders(packs = loadPacks()) {
+  const out = [];
+  for (const p of packs) {
+    if (!p.manager) continue;
+    for (const folder of p.bundles ?? [p.folder]) {
+      if (!out.some((o) => o.folder === folder)) out.push({ folder, section: p.section, lang: p.lang });
+    }
+  }
+  return out;
+}
+
 // The words before the colon in a sound pack's title: "Spoken Audio" for English and, for
-// another language, its meta addon's name plus "Audio" -- "Spoken German Audio" -- so a
-// language is spelled the way its store pages spell it.
+// another language, its meta addon's name without the colon plus "Audio" -- "Spoken: German"
+// gives "Spoken German Audio" -- so a language is spelled the way its store pages spell it.
 export function audioFamily(lang, dir = PUBLISHERS_DIR) {
   if (lang === BASE_LOCALE) return "Spoken Audio";
   const page = join("spoken", `all-${lang.toLowerCase()}.md`);
   const { meta } = parseFrontmatter(readFileSync(join(dir, page), "utf8"), page);
-  return `${meta.name} Audio`;
+  return `${meta.name.replace(/^Spoken: /, "Spoken ")} Audio`;
 }
 
-// A language's meta addon, "Spoken <Language>": publishers/spoken/all-<lang>.md, the language's
-// counterpart of Spoken English (scripts/spoken/package-meta.sh). Not a pack -- the page has
+// A language's meta addon, "Spoken: <Language>": publishers/spoken/all-<lang>.md, the language's
+// counterpart of Spoken: English (scripts/spoken/package-meta.sh). Not a pack -- the page has
 // no `section` -- but its dependencies are the packs, so they are read off the registry here
 // rather than listed a second time: every pack of the language that is on CurseForge and not
 // dormant, quests, zones and books alike. A language without a zones or books project simply

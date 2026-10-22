@@ -81,6 +81,7 @@ export default function UserMenu() {
         may("configure") && { href: "/lexicon", label: "Pronunciation" },
         may("edit") && { href: "/reports", label: "Reports" },
         may("edit") && { href: "/contributions", label: "Contributions" },
+        may("edit") && { href: "/missing-audio", label: "Missing audio" },
         // Who every NPC is holds in every language, so it is the global admin's alone.
         isAdmin(role) && { href: "/npcs", label: "NPCs" },
         // Who did what in this language: for whoever answers for the grants in it.

@@ -5,6 +5,7 @@ import Link from "@/components/LocaleLink";
 import { notFound } from "next/navigation";
 
 import ReportForm from "@/components/ReportForm";
+import ListenFirst from "@/components/reports/ListenFirst";
 import { audioRelPath } from "@/lib/books/audio";
 import { isCorpusEmpty, loadContext, pageById } from "@/lib/books/catalogue";
 import { Contained } from "@/components/Width";
@@ -77,6 +78,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
                 most of this corpus. The addon's queue label makes the same call. */}
             {page.pageCount > 1 ? `Page ${page.pageNumber} of ${page.pageCount}` : "One page"}
           </p>
+
+          {take ? <ListenFirst className="mt-4" /> : null}
 
           {take ? (
             // The native control rather than the explorer's Player: that one carries a rate

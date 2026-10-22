@@ -664,7 +664,8 @@ function SyncBanner({
 
   return (
     <p className="text-muted-foreground text-xs">
-      In force since {saved.syncedAt ? new Date(saved.syncedAt).toLocaleString() : "—"} · version{" "}
+      In force since {saved.syncedAt ? new Date(saved.syncedAt).toLocaleString() : "—"} ·
+      dictionary <code>{saved.locator?.dictionaryId}</code> · version{" "}
       <code>{saved.locator?.versionId}</code>
       {saved.rulesKept !== null && <> · {saved.rulesKept} rules</>}
     </p>
@@ -818,7 +819,7 @@ function Row({
                 onChange={(event) => onChange({ alias: event.target.value })}
                 placeholder="nomeregan"
                 aria-label="Respelling"
-                title="Respell it as it should be said — “nomeregan”, not “NOME-reh-gan”."
+                title="Respell it as it should be said. Capitals mark stress — “NOME-reh-gan”."
                 className={cn("flex-1", FIELD)}
               />
             )}

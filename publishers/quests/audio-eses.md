@@ -3,7 +3,7 @@ release: quests-audio-esES
 section: quests
 lang: esES
 pack: all
-version: 0.0.5
+version: 0.0.6
 slug: spoken-quests-audio-eses
 name: Spoken Quests Audio: Spanish (EU)
 summary: Every quest and gossip line for Spoken, voiced in European Spanish. One pack, both factions. Needs Spoken.
@@ -12,6 +12,7 @@ categories:
   - Roleplay
   - Quests & Leveling
 license: MIT
+manager: true
 ---
 
 Voiced quest dialogue for **[Spoken](https://www.curseforge.com/wow/addons/spoken)**'s Quests module, in European Spanish. This addon is data only — it does nothing on its own.
@@ -24,7 +25,7 @@ One pack holds everything: Alliance quests, Horde quests, the quests both sides 
 
 Install **Spoken** first; this pack is inert without it. Extract into `Interface/AddOns` and leave the folder name as shipped (`SpokenQuestsAudio_esES`) — Spoken finds packs by folder name.
 
-Spoken Quests speaks in your client's language by default. To hear Spanish on another client, pick it under **Voice Language** on Spoken's settings page; **Fallback Language** decides what plays for a line this pack does not hold.
+Spoken Quests speaks in your client's language by default. To hear Spanish on another client, pick it under **Voice Language** on Spoken's settings page; **If a Voice Is Missing** decides what plays for a line this pack does not hold.
 
 ## Compatibility
 

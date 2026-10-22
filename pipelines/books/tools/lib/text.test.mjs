@@ -24,6 +24,42 @@ test("spoken text shows an entity as its character, and never as a tag", () => {
   assert.equal(spokenText("<P>1 &lt;b&gt; 2</P>"), "1 <b> 2");
 });
 
+test("spoken text reads an aside, set apart by breaks", () => {
+  assert.equal(
+    spokenText("The Venture Company <illegible text> It would seem.\n\n<several pages appear to be torn out>"),
+    "The Venture Company\nillegible text\nIt would seem.\nseveral pages appear to be torn out",
+  );
+});
+
+test("a page that is only an aside is voiced", () => {
+  assert.deepEqual(isGeneratable("<The rest of the book is blank>"), { generatable: true, skipReason: null });
+});
+
+test("spoken text drops esMX's <nombre> rather than saying it", () => {
+  assert.equal(spokenText("Ya no somos víctimas, <nombre>. Somos"), "Ya no somos víctimas, . Somos");
+});
+
+test("a signed page is stored as lines, with no tags", () => {
+  assert.equal(
+    normaliseText(
+      '<HTML>\n<BODY>\n<H1 align="center">RANKS</H1><BR/>\n<IMG src="Interface\\PvPRank14"/><BR/>\n' +
+        '<P align="right">Grand Marshal</P><BR/><BR/>\n<P>Horde &amp; Alliance</P></BR>\n</BODY>\n</HTML>',
+    ),
+    "RANKS\n\nGrand Marshal\n\nHorde & Alliance",
+  );
+});
+
+test("a stored signed page normalises to itself, an escaped tag included", () => {
+  const once = normaliseText("<P>1 &lt;b&gt; 2</P>");
+  assert.equal(once, "1 &lt;b&gt; 2");
+  assert.equal(normaliseText(once), once);
+});
+
+test("a page with no markup keeps its asides in storage", () => {
+  assert.equal(normaliseText("Imagine if <illegible text> Hahaha!\n\nMore."), "Imagine if <illegible text> Hahaha!\n\nMore.");
+  assert.equal(normaliseText("<plusieurs pages>"), "<plusieurs pages>");
+});
+
 test("spoken text keeps ordinary prose untouched apart from newlines", () => {
   assert.equal(spokenText("Dear sir,\n\nThe rains have come."), "Dear sir, The rains have come.");
 });

@@ -164,9 +164,6 @@ function SpokenZones:SetupAudio()
 	end
 	Spoken.Minimap:AddEntry("zones", { id = "settings", text = L.MENU_ZONE_SETTINGS, order = 2,
 		onClick = function() SpokenZones:OpenOptions() end })
-	if Spoken.AddSettingsLink then
-		Spoken:AddSettingsLink(L.MENU_ZONE_SETTINGS, function() SpokenZones:OpenOptions() end)
-	end
 end
 
 --------------------------------------------------------------------------------
@@ -437,12 +434,9 @@ end
 local ACTIONS = {
 	{
 		id = "report",
-		-- An icon in the corner rather than a word beside the line. The bug icon postdates
-		-- the three legacy clients, where the texture is missing and the button
-		-- would be a blank square; `text` is what they draw instead.
+		-- An icon in the corner rather than a word beside the line.
 		icon = [[Interface\HelpFrame\HelpIcon-Bug]],
 		label = L.OPT_REPORT_PROBLEM,
-		text = "R",
 		anchor = "topright",
 		tooltip = function(tooltip)
 			tooltip:SetText(L.OPT_REPORT_PROBLEM)
@@ -452,9 +446,10 @@ local ACTIONS = {
 			if not clip then
 				return
 			end
-			-- Filed under the language the clip was narrated in, which for an entry the
-			-- active pack lacks is the English pack's, whatever is being read.
-			SpokenZones:ShowReport(clip.mapID, clip.areaKey, clip.pack and clip.pack.language)
+			-- Filed under the voice language, not the pack the clip came from: an entry the
+			-- active pack lacks plays the English fallback, and "no German" belongs beside
+			-- the German entry.
+			SpokenZones:ShowReport(clip.mapID, clip.areaKey, SpokenZones:GetVoiceLanguage())
 		end,
 	}
 }
@@ -562,9 +557,9 @@ end
 -- saying anything at all.
 function SpokenZones:DescribeMissingAudio()
 	if #self:GetAudioPacks() == 0 then
-		return "no sound pack installed -- get Spoken Audio: Places to hear the lore read aloud"
+		return "no voice pack installed -- get Spoken Audio: Places to hear the lore read aloud"
 	end
-	return "no narration for this entry in the installed sound pack yet"
+	return "no narration for this entry in the installed voice pack yet"
 end
 
 --------------------------------------------------------------------------------

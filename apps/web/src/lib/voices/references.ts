@@ -42,6 +42,8 @@ export type Reference = {
   endSec: number;
   transcript: string;
   clipHash: string;
+  /** Always spoken by fish.audio in this language, whichever generator the collaborator chose. */
+  pinned: boolean;
   updatedAt: string;
 };
 
@@ -63,7 +65,7 @@ function fromRow(row: Row): Reference {
   return { ...row, lang: row.lang as Lang, updatedAt: row.updatedAt.toISOString() };
 }
 
-const COLUMNS = `"voice", "lang", "sample", "startSec", "endSec", "transcript", "clipHash", "updatedAt"`;
+const COLUMNS = `"voice", "lang", "sample", "startSec", "endSec", "transcript", "clipHash", "pinned", "updatedAt"`;
 
 export async function readReference(voice: string, lang: Lang): Promise<Reference | null> {
   const { rows } = await db().query<Row>(
@@ -102,6 +104,12 @@ export function listReferences(lang: Lang): Promise<Map<string, Reference>> {
   value.catch(() => lists.delete(lang));
   lists.set(lang, { at: Date.now(), value });
   return value;
+}
+
+/** The slots spoken by fish.audio in `lang` whoever generates: the pinned references. */
+export async function pinnedVoices(lang: Lang): Promise<Set<string>> {
+  const references = await listReferences(lang);
+  return new Set([...references.values()].filter((ref) => ref.pinned).map((ref) => ref.voice));
 }
 
 /**
@@ -296,6 +304,33 @@ export async function saveTranscript(
     subject: voice,
     detail: { transcript: text },
   });
+  return readReference(voice, lang);
+}
+
+/** Pin a slot to fish.audio in `lang`, or unpin it. Null when the slot has no reference. */
+export async function savePinned(
+  voice: string,
+  lang: Lang,
+  pinned: boolean,
+  userId: string,
+): Promise<Reference | null> {
+  const { rowCount } = await db().query(
+    `update "fish_reference" set "pinned" = $3, "updatedBy" = $4, "updatedAt" = now()
+      where "voice" = $1 and "lang" = $2 and "pinned" <> $3`,
+    [voice, lang, pinned, userId],
+  );
+  lists.delete(lang);
+  // Only on a change, so pressing it twice is not logged twice. It moves every line of the
+  // slot from one bill to another, which is why it is logged at all.
+  if (rowCount) {
+    await recordActivity({
+      kind: pinned ? "reference.pinned" : "reference.unpinned",
+      lang,
+      actorId: userId,
+      subject: voice,
+      detail: {},
+    });
+  }
   return readReference(voice, lang);
 }
 

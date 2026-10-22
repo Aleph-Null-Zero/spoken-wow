@@ -57,6 +57,7 @@ const ANSWERS: { answer: Answer; label: string; done: string; busy: string; key:
     key: "n",
     tone: REJECT_TONE,
   },
+  { answer: "minor", label: STATUS_LABELS.minor, done: STATUS_LABELS.minor, busy: "Saving…", key: "m" },
   { answer: "skip", label: "Skip", done: "Skipped", busy: "Skipping…", key: "s" },
 ];
 

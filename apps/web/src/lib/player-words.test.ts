@@ -36,6 +36,11 @@ describe("speakPlayerTokens", () => {
     expect(speakPlayerTokens("Grazie, $N.", "itIT", "f")).toBe("Grazie, avventuriera.");
   });
 
+  it("speaks Vietnamese, which has one word for either reader", () => {
+    expect(speakPlayerTokens("Cảm ơn, $N.", "viVN", "f")).toBe("Cảm ơn, nhà thám hiểm.");
+    expect(speakPlayerTokens("$R, hãy đi đi.", "viVN")).toBe("Lữ khách, hãy đi đi.");
+  });
+
   it("resolves ruRU's three-field $g by the player gender, agreeing with the noun", () => {
     const line = "Привет тебе, $gюный:юная:r; $r.";
     expect(speakPlayerTokens(line, "ruRU")).toBe("Привет тебе, юный странник.");
@@ -76,6 +81,23 @@ describe("speakPlayerTokens", () => {
     expect(speakPlayerTokens("$N, bring me my hammer, $gBrother:Sister;.", "enUS")).toBe(
       "Adventurer, bring me my hammer, Brother.",
     );
+  });
+
+  it("speaks a writ's count as an order, in the languages that have the words", () => {
+    // q:94360:accept, q:94219:accept, q:94241:accept and q:94004:accept, as players sent them.
+    expect(speakPlayerTokens("the note is requesting $2oa Soul Pouch, along with", "enUS")).toBe(
+      "the note is requesting an order of Soul Pouch, along with",
+    );
+    expect(speakPlayerTokens("o bilhete solicita $2oax Tisana de Respiração Aquática, além", "ptBR")).toBe(
+      "o bilhete solicita algumas unidades de Tisana de Respiração Aquática, além",
+    );
+    expect(speakPlayerTokens("заказ на $2oa темных кожаных мундира:темных кожаных мундиров, а также", "ruRU")).toBe(
+      "заказ на несколько темных кожаных мундиров, а также",
+    );
+    expect(speakPlayerTokens("заказ на $2oa порции:порций эликсира силы огра, а также", "ruRU")).toBe(
+      "заказ на несколько порций эликсира силы огра, а также",
+    );
+    expect(speakPlayerTokens("verlangt $2oa Seelenbeutel", "deDE")).toBe("verlangt $2oa Seelenbeutel");
   });
 
   it("leaves a token it has no word for", () => {

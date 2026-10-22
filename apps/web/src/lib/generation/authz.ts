@@ -184,17 +184,20 @@ export type SpeakerGuard =
  * The signed-in user's Speaker: the provider they activated for `lang` on /voices, with their
  * own key for it. The 428 names that provider, so a collaborator who switched to fish.audio
  * without a key is told which key is missing.
+ *
+ * `provider` replaces the activated one for a line whose voice is pinned (pinned.ts). Still
+ * their key and their settings: a pin decides who speaks, not who pays.
  */
-export async function requireSpeaker(userId: string, lang: Lang): Promise<SpeakerGuard> {
+export async function requireSpeaker(
+  userId: string,
+  lang: Lang,
+  provider?: Provider,
+): Promise<SpeakerGuard> {
   const preference = await readPreference(userId, lang);
-  const { key, denied } = await requireApiKey(userId, preference.provider);
-  if (denied) return { speaker: null, provider: preference.provider, key: null, denied };
-  return {
-    speaker: speakerFrom(preference.provider, key, preference),
-    provider: preference.provider,
-    key,
-    denied: null,
-  };
+  const chosen = provider ?? preference.provider;
+  const { key, denied } = await requireApiKey(userId, chosen);
+  if (denied) return { speaker: null, provider: chosen, key: null, denied };
+  return { speaker: speakerFrom(chosen, key, preference), provider: chosen, key, denied: null };
 }
 
 //------------------------------------------------------------------------------

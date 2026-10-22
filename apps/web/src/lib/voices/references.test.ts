@@ -166,6 +166,16 @@ describe.skipIf(!hasFfmpeg)("a reference", () => {
     expect(after?.clipHash).not.toBe(before.clipHash);
   });
 
+  it("is pinned to fish.audio and unpinned, and a slot with none cannot be", async () => {
+    expect((await references.savePinned(VOICE, LANG, true, USER))?.pinned).toBe(true);
+    expect(await references.pinnedVoices(LANG)).toContain(VOICE);
+    // Pressed twice: still pinned, and logged once.
+    expect((await references.savePinned(VOICE, LANG, true, USER))?.pinned).toBe(true);
+    expect((await references.savePinned(VOICE, LANG, false, USER))?.pinned).toBe(false);
+    expect(await references.pinnedVoices(LANG)).not.toContain(VOICE);
+    expect(await references.savePinned("no-such-slot", LANG, true, USER)).toBeNull();
+  });
+
   it("is loaded by the hash a speaker handed out, and by no other", async () => {
     const current = (await references.readReference(VOICE, LANG))!;
     const { clips: loaded, lost } = await references.loadReferences(LANG, [current.clipHash, "stale"]);
@@ -266,6 +276,8 @@ describe.skipIf(!hasFfmpeg)("fish.audio as a speaker", () => {
     expect(rows.map((row) => row.kind)).toEqual([
       "reference.set",
       "reference.edited",
+      "reference.pinned",
+      "reference.unpinned",
       "reference.edited",
       "reference.deleted",
     ]);

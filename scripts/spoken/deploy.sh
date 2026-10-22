@@ -11,11 +11,8 @@
 # into Interface/AddOns-replaced-<time>/ beside AddOns, never deleted. The sound packs are
 # separate downloads and separate folders, so they are left as they are.
 #
-# The SpokenPlayer tombstone is linked too (addons/SpokenPlayer): the zip carries it, and an
-# install that lacks it is not the one players get. The SpokenQuests, SpokenZones and SpokenBooks
-# tombstones are not: the retired projects' last releases ship those (package-retired.sh), not
-# Spoken's zip, so a real old copy under one of those names is left where it is, for Spoken's
-# leftover-folder warning to find.
+# A real old copy under a folder name Spoken used to have (SpokenPlayer, SpokenQuests and the
+# rest) is left where it is, for Spoken's leftover-folder warning to find.
 
 set -euo pipefail
 
@@ -23,7 +20,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WOW="/Applications/World of Warcraft"
 # Every folder Spoken's zip installs. scripts/spoken/package.sh is the source of truth; keep
 # this in step with its folder list.
-NAMES=(Spoken SpokenContributions SpokenPlayer Spoken_Quests Spoken_Readables Spoken_Places)
+NAMES=(Spoken SpokenContributions Spoken_Quests Spoken_Readables Spoken_Places Spoken_NPCs)
 
 CLIENTS=(era anniversary forever)
 client_flavour() { case "$1" in

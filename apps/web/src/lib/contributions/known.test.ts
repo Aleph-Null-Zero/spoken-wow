@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
 
-import { lineStates, tabOf } from "./known";
+import { lineStates, tabOf, type LineState } from "./known";
 
 const quest = 2_000_000_000 - Math.floor(Math.random() * 1_000_000);
 const npc = quest;
@@ -17,9 +17,10 @@ const gossipId = `g:test-known-${quest}`;
 async function line(lineId: string, lang: string, source: string, originalText: string, localeText: string | null) {
   await db().query(
     `insert into "quest_line"
-       ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "fileName",
+       ("lineId", "variant", "lang", "version", "isCurrent", "origin", "source", "questId", "fileName",
         "text", "originalText", "localeText")
-     values ($1, 0, $2, 1, true, 'extracted', $3, $1, $4, $4, $5)`,
+     values ($1, 0, $2, 1, true, 'extracted', $3,
+             case when $1 like 'q:%' then split_part($1, ':', 2)::int end, $1, $4, $4, $5)`,
     [lineId, lang, source, originalText, localeText],
   );
 }
@@ -27,6 +28,7 @@ async function line(lineId: string, lang: string, source: string, originalText: 
 beforeAll(async () => {
   await line(`q:${quest}:accept`, "enUS", "accept", "Hello, $n.$B$BTurn right at the tree.", null);
   await line(`q:${quest}:complete:m`, "enUS", "complete", "Thank you, sir.", null);
+  await line(`q:${quest}:accept:w1`, "enUS", "accept", "Oh, you are back.", null);
   await line(`q:${quest}:accept`, "deDE", "accept", "Hello, $n.", "Hallo, $N. $B $B Biegt rechts ab.");
   await line(gossipId, "enUS", "gossip", "Well met, traveler.", null);
   await db().query(
@@ -40,7 +42,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await db().query(`delete from "quest_line_speaker" where "lineId" = $1`, [gossipId]);
   await db().query(`delete from "quest_line" where "lineId" = any($1::text[])`, [
-    [`q:${quest}:accept`, `q:${quest}:complete:m`, gossipId],
+    [`q:${quest}:accept`, `q:${quest}:complete:m`, `q:${quest}:accept:w1`, gossipId],
   ]);
   await closeDb();
 });
@@ -55,24 +57,53 @@ function greeting(id: number, text: string) {
 
 describe("lineStates", () => {
   it("knows a quest line the corpus has, written the client's way", async () => {
-    expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn right at the tree.")])).toEqual([{ kind: "known" }]);
+    expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn right at the tree.")])).toEqual([{ kind: "known", lineId: `q:${quest}:accept` }]);
   });
 
   it("finds a player-gender variant under its moment", async () => {
-    expect(await lineStates([moment("complete", "Thank you, sir.")])).toEqual([{ kind: "known" }]);
+    expect(await lineStates([moment("complete", "Thank you, sir.")])).toEqual([{ kind: "known", lineId: `q:${quest}:complete:m` }]);
   });
 
   it("gives the corpus text of a moment that reads differently", async () => {
     expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn left at the tree.")])).toEqual([
-      { kind: "changed", lineId: `q:${quest}:accept`, variant: 0, current: "Hello, $n.$B$BTurn right at the tree." },
+      {
+        kind: "changed",
+        closest: 0,
+        wordings: [
+          { lineId: `q:${quest}:accept`, variant: 0, text: "Hello, $n.$B$BTurn right at the tree." },
+          { lineId: `q:${quest}:accept:w1`, variant: 0, text: "Oh, you are back." },
+        ],
+      },
     ]);
   });
 
+  it("sets a changed moment against the wording closest to the player's", async () => {
+    const [state] = await lineStates([moment("accept", "Oh, so you are back.")]);
+    expect(state.kind === "changed" && state.wordings[state.closest]).toEqual({
+      lineId: `q:${quest}:accept:w1`,
+      variant: 0,
+      text: "Oh, you are back.",
+    });
+  });
+
+  it("counts a text any wording of the moment says as known", async () => {
+    expect(await lineStates([moment("accept", "Oh, you are back.")])).toEqual([{ kind: "known", lineId: `q:${quest}:accept:w1` }]);
+  });
+
   it("compares a translation against its own language's text", async () => {
-    expect(await lineStates([moment("accept", "Hallo, $N.\n\nBiegt rechts ab.", "deDE")])).toEqual([{ kind: "known" }]);
+    expect(await lineStates([moment("accept", "Hallo, $N.\n\nBiegt rechts ab.", "deDE")])).toEqual([{ kind: "known", lineId: `q:${quest}:accept` }]);
     expect(await lineStates([moment("accept", "Hello, $N.\n\nTurn right at the tree.", "frFR")])).toEqual([
       { kind: "missing" },
     ]);
+  });
+
+  it("calls a moment with an event no quest has missing, whatever the event says", async () => {
+    expect(await lineStates([moment("accept(", "Hello, $N.")])).toEqual([{ kind: "missing" }]);
+  });
+
+  it("calls a quest id past the integer ceiling missing", async () => {
+    const huge = { source: "quests" as const, locale: "enUS", text: "Hi.", meta: { quest: "99999999999", event: "accept" } };
+    expect(await lineStates([huge])).toEqual([{ kind: "missing" }]);
   });
 
   it("calls a moment the corpus lacks missing", async () => {
@@ -81,7 +112,7 @@ describe("lineStates", () => {
 
   it("knows a greeting only from the NPC that speaks it, and never calls one changed", async () => {
     expect(await lineStates([greeting(npc, "Well met, traveler."), greeting(npc, "Begone."), greeting(npc + 1, "Well met, traveler.")])).toEqual([
-      { kind: "known" },
+      { kind: "known", lineId: gossipId },
       { kind: "missing" },
       { kind: "missing" },
     ]);
@@ -96,13 +127,13 @@ describe("lineStates", () => {
       [npc],
     );
     try {
-      expect(await lineStates([woman, man])).toEqual([{ kind: "missing" }, { kind: "known" }]);
+      expect(await lineStates([woman, man])).toEqual([{ kind: "missing" }, { kind: "known", lineId: expect.any(String) }]);
       await db().query(
         `insert into "npc_body" ("npcKind", "npcId", "race", "sex", "flavor", "provenance")
          values ('creature', $1, 'human', 2, 'official', 'corpus'), ('creature', $1, 'human', 3, 'official', 'client')`,
         [npc],
       );
-      expect(await lineStates([woman, man])).toEqual([{ kind: "known" }, { kind: "known" }]);
+      expect(await lineStates([woman, man])).toEqual([{ kind: "known", lineId: expect.any(String) }, { kind: "known", lineId: expect.any(String) }]);
     } finally {
       await db().query(`delete from "npc_body" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
       await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
@@ -124,7 +155,7 @@ describe("lineStates", () => {
          values ('creature', $1, 'human', 2, 'standard', 'corpus'), ('creature', $1, 'gnome', 2, null, 'client')`,
         [npc],
       );
-      expect((await lineStates([gnome]))[0]).toEqual({ kind: "known" });
+      expect((await lineStates([gnome]))[0]).toEqual({ kind: "known", lineId: expect.any(String) });
     } finally {
       await db().query(`delete from "npc_body" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
       await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
@@ -159,7 +190,7 @@ describe("lineStates", () => {
       [npc],
     );
     try {
-      expect((await lineStates([man]))[0]).toEqual({ kind: "known" });
+      expect((await lineStates([man]))[0]).toEqual({ kind: "known", lineId: expect.any(String) });
     } finally {
       await db().query(`delete from "npc" where "npcKind" = 'creature' and "npcId" = $1`, [npc]);
     }
@@ -208,8 +239,8 @@ describe("lineStates: books", () => {
       { source: "books", locale: "esES", text: `Words one ${base}.`, meta: { book: `Libro ${base}`, number: "1" } },
       { source: "books", locale: "esES", text: "Nada.", meta: { book: `Nuevo ${base}`, number: "1" } },
     ]);
-    expect(known).toEqual({ kind: "known" });
-    expect(changed).toEqual({ kind: "changed", lineId: pages[0], variant: 0, current: `Texto uno ${base}.` });
+    expect(known).toEqual({ kind: "known", lineId: expect.any(String) });
+    expect(changed).toEqual({ kind: "changed", wordings: [{ lineId: pages[0], variant: 0, text: `Texto uno ${base}.` }], closest: 0 });
     expect(missing).toEqual({ kind: "missing" });
   });
 
@@ -219,14 +250,14 @@ describe("lineStates: books", () => {
       { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: {}, matchLineId: pages[0] },
       { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" }, matchNewBook: true },
     ]);
-    expect(named).toEqual({ kind: "changed", lineId: pages[0], variant: 0, current: `Texto uno ${base}.` });
-    expect(ownText).toEqual({ kind: "known" });
+    expect(named).toEqual({ kind: "changed", wordings: [{ lineId: pages[0], variant: 0, text: `Texto uno ${base}.` }], closest: 0 });
+    expect(ownText).toEqual({ kind: "known", lineId: expect.any(String) });
     expect(newBook).toEqual({ kind: "missing" });
   });
 });
 
 describe("tabOf", () => {
-  const changed = { kind: "changed", lineId: "q:1:accept", variant: 0, current: "x" } as const;
+  const changed: LineState = { kind: "changed", wordings: [{ lineId: "q:1:accept", variant: 0, text: "x" }], closest: 0 };
 
   it("puts a changed row on the corrections tab, accepted or not", () => {
     expect(tabOf("new", changed)).toBe("corrections");
@@ -235,8 +266,8 @@ describe("tabOf", () => {
   });
 
   it("lists a known row nowhere while it waits, and where it was resolved once it is", () => {
-    expect(tabOf("new", { kind: "known" })).toBeNull();
-    expect(tabOf("accepted", { kind: "known" })).toBe("contributions");
-    expect(tabOf("rejected", { kind: "known" })).toBe("contributions");
+    expect(tabOf("new", { kind: "known", lineId: expect.any(String) })).toBeNull();
+    expect(tabOf("accepted", { kind: "known", lineId: expect.any(String) })).toBe("contributions");
+    expect(tabOf("rejected", { kind: "known", lineId: expect.any(String) })).toBe("contributions");
   });
 });

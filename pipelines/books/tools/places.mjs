@@ -1,4 +1,4 @@
-// A TrinityCore world DB + the client's map tables -> addons/Spoken_Readables/Data/Places.lua.
+// A TrinityCore world DB + the client's map tables + the quests corpus -> addons/Spoken_Readables/Data/Places.lua.
 //
 // Where each readable is, for Azeroth's Compendium: those standing in the world (a plaque, a
 // book on a shelf) in the zones their objects are spawned in, and those carried (a letter, a
@@ -27,6 +27,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { gunzipSync } from "node:zlib";
 
 import mysql from "mysql2/promise";
 
@@ -34,35 +35,39 @@ import { instanceZones, loadDungeons } from "../../lib/dungeons.mjs";
 import { loadEnv } from "../../lib/env.mjs";
 import { FOREVER_BUILD, wagoTable } from "../../lib/wago.mjs";
 import { areaReader } from "./lib/area.mjs";
-import { quote } from "./lib/lua.mjs";
-import { cannotBeHad, dungeonsOf, isTemplateCopy, typeOf } from "./lib/places.mjs";
+import { cannotBeHad, dungeonsOf, foreverQuests, isTemplateCopy, typeOf } from "./lib/places.mjs";
 
 await loadEnv("books");
 
 const BOOKS = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Books.lua", import.meta.url));
 const OUT = fileURLToPath(new URL("../../../addons/Spoken_Readables/Data/Places.lua", import.meta.url));
+const CORPUS = fileURLToPath(new URL("../../quests/corpus/corpus.json.gz", import.meta.url));
 // Forever's client, not Era's: Era's 1.15.9 also carries Season of Discovery and anniversary
 // items, and one that shares a vanilla page id lent that book its sources and zones.
 const BUILD = process.env.PLACES_BUILD ?? FOREVER_BUILD;
 const MAPS = process.env.PLACES_MAPS ?? "C:/Forever/ForeverRepack/data/maps";
-const SOURCES = 6;
 const WIDE = 8;
-const LOCALES = ["deDE", "esES", "esMX", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW", "itIT"];
 
 // The dungeons, halls and battlegrounds, under the zone their entrance is in. The battlegrounds are
 // zones of their own: Forever's client files them as orphan maps, not zones, so nothing else would
 // place Alterac Valley's Rock of Durotan. Only the dungeons and raids are a readable's `dungeons`;
 // another instance (a battleground, a PvP hall) stays its zone's.
 const INSTANCE_ZONE = instanceZones();
-const DUNGEONS = loadDungeons().dungeons;
+// A map under `instances` too (the Excavation Site) is its zone's, as the quests' exporter files it.
+const { dungeons: ALL_DUNGEONS, instances: NOT_DUNGEONS } = loadDungeons();
+const DUNGEONS = Object.fromEntries(Object.entries(ALL_DUNGEONS).filter(([map]) => !NOT_DUNGEONS[map]));
 // A spawn inside a dungeon is placed at -map until the file is written, so a readable's zones
 // still say which of them it is had in only from inside one.
 const placeOf = (z) => (z < 0 ? INSTANCE_ZONE[-z] : z);
 // Text objects the server has and never spawns, placed by hand: the nameplates in Blackrock
 // Depths' Dark Keeper vault.
 const UNSPAWNED = { "Dark Keeper Nameplate": 230 };
+// Text objects that place no readable, by entry: the Undercity's "Book" (678602) opens the Libram
+// of Rumination's second page, and would make that Libram, dropped across Azeroth, a book on an
+// Undercity shelf.
+const NOT_PLACING = new Set([678602]);
 // Sources the world DB cannot see, by book id: an item a spell or a machine makes, a quest whose
-// giver it does not spawn. Each names a quest or an object, for its name in every language, and
+// giver it does not spawn. Each names a quest or an object, checked against the world DB, and
 // the zones, where the object's spawns do not give them.
 const SOURCES_BY_HAND = {
   394: [{ how: "quest", quest: 1016, zones: [1440] }], // Divined Scroll: the Divining Scroll, used in Ashenvale
@@ -74,6 +79,7 @@ const SOURCES_BY_HAND = {
   1194: [{ how: "object", object: 142696 }], // 3005-D
   2671: [{ how: "quest start", quest: 7636, zones: [1448] }], // Petrified Bark: Vartrus the Ancient, Felwood
   2859: [{ how: "quest reward", quest: 8996, zones: [1427] }], // Brazier of Invocation: Bodley, Blackrock Mountain
+  2786: [{ how: "quest reward", quest: 8228, zones: [1455] }], // Fishing Tournament!: Barrus, Ironforge, whom the DB does not spawn
 };
 // The seasonal events' readables, had only while the event runs, by event: the Compendium lists
 // them under Holidays and Events, a line for each event. Their NPCs are spawned by the event, and
@@ -112,8 +118,6 @@ const TYPE_BY_HAND = {
   2882: "letter", 2883: "letter", 2884: "letter",
   2885: "letter", 2886: "letter", 2887: "letter", 2888: "letter", 2889: "letter", 2890: "letter",
 };
-// The order sources are listed in on a page: how the readable is had, most specific first.
-const ORDER = ["quest start", "quest reward", "mail", "quest", "drop", "object", "container", "fishing", "vendor", "pickpocket"];
 
 // ---------------------------------------------------------------- the client's tables
 
@@ -183,6 +187,12 @@ function boxAt(map, x, y) {
   return best?.zone;
 }
 
+// ---------------------------------------------------------------- the quests Forever has
+
+const corpusLines = JSON.parse(gunzipSync(await readFile(CORPUS)).toString("utf8")).lines;
+const FOREVER_QUESTS = foreverQuests(corpusLines, await table("QuestV2"));
+const notForever = new Set();
+
 // ---------------------------------------------------------------- what each is (lib/places.mjs)
 
 const iconPath = new Map((await table("ManifestInterfaceData")).map((r) => [Number(r.ID), (r.FilePath + r.FileName).toLowerCase()]));
@@ -201,32 +211,26 @@ const q = async (sql, params = []) => (await db.query(sql, params))[0];
 // An empty IN () is an error; -1 matches no id, where 0 would match every row left at 0.
 const list = (xs) => [...new Set(xs)].length ? [...new Set(xs)] : [-1];
 
-const sources = new Map(); // book -> Map(key -> { how, name: { enUS, ... }, zones: Set })
+const sources = new Map(); // book -> Set of zones it is had in, for those carried
 const bookItems = new Map(); // book -> [ item ids ]
 const where = new Map();   // book -> Set of zones it stands in, for those in the world
 const kind = new Map();    // book -> "world" | "carried"
-function add(book, how, name, zones) {
-  if (!sources.has(book)) sources.set(book, new Map());
-  const key = `${how}|${name?.enUS ?? ""}`;
-  const entry = sources.get(book).get(key) ?? { how, name, zones: new Set() };
-  for (const z of zones) if (z) entry.zones.add(z);
-  sources.get(book).set(key, entry);
+function add(book, zones) {
+  if (!sources.has(book)) sources.set(book, new Set());
+  for (const z of zones) if (z) sources.get(book).add(z);
 }
 
 async function names(tableName, idColumn, nameColumn, ids) {
   const out = new Map();
   if (!ids.length) return out;
-  for (const r of await q(`SELECT ${idColumn} AS id, ${nameColumn} AS name FROM ${tableName.base} WHERE ${idColumn} IN (?)`, [list(ids)])) {
+  for (const r of await q(`SELECT ${idColumn} AS id, ${nameColumn} AS name FROM ${tableName} WHERE ${idColumn} IN (?)`, [list(ids)])) {
     out.set(Number(r.id), { enUS: r.name });
-  }
-  for (const r of await q(`SELECT ${tableName.localeId} AS id, locale, ${tableName.localeName} AS name FROM ${tableName.locale} WHERE ${tableName.localeId} IN (?)`, [list(ids)])) {
-    if (r.name && out.has(Number(r.id)) && LOCALES.includes(r.locale)) out.get(Number(r.id))[r.locale] = r.name;
   }
   return out;
 }
-const CREATURE = { base: "creature_template", locale: "creature_template_locale", localeId: "entry", localeName: "Name" };
-const OBJECT = { base: "gameobject_template", locale: "gameobject_template_locale", localeId: "entry", localeName: "name" };
-const QUEST = { base: "quest_template", locale: "quest_template_locale", localeId: "ID", localeName: "LogTitle" };
+const CREATURE = "creature_template";
+const OBJECT = "gameobject_template";
+const QUEST = "quest_template";
 
 async function spawnZones(spawnTable, ids) {
   const out = new Map();
@@ -243,7 +247,7 @@ async function spawnZones(spawnTable, ids) {
 try {
   // Standing in the world: text objects whose page is a readable's.
   const texts = (await q("SELECT entry, name, Data0 AS page FROM gameobject_template WHERE type = 9"))
-    .filter((r) => pageBook.has(Number(r.page)));
+    .filter((r) => pageBook.has(Number(r.page)) && !NOT_PLACING.has(Number(r.entry)));
   const textZones = await spawnZones("gameobject", texts.map((r) => Number(r.entry)));
   for (const r of texts) {
     const book = pageBook.get(Number(r.page));
@@ -257,12 +261,10 @@ try {
 
   // Carried: the items whose first page is a readable's.
   const itemBook = new Map();
-  const itemName = new Map();
   for (const r of await table("ItemSparse")) {
     const page = Number(r.PageID || 0);
     if (pageBook.has(page)) {
       itemBook.set(Number(r.ID), pageBook.get(page));
-      itemName.set(Number(r.ID), r.Display_lang);
       if (!bookItems.has(pageBook.get(page))) bookItems.set(pageBook.get(page), []);
       bookItems.get(pageBook.get(page)).push(Number(r.ID));
     }
@@ -313,9 +315,8 @@ try {
     // Chests and other objects that hold them.
     const gloot = await lootEntries("gameobject_loot_template", wanted);
     const chests = await q("SELECT entry, Data1 FROM gameobject_template WHERE type = 3 AND Data1 IN (?)", [list([...gloot.keys()])]);
-    const chestNames = await names(OBJECT, "entry", "name", chests.map((r) => Number(r.entry)));
     const chestZones = await spawnZones("gameobject", chests.map((r) => Number(r.entry)));
-    for (const r of chests) for (const i of gloot.get(Number(r.Data1))) put(i, "object", chestNames.get(Number(r.entry)), chestZones.get(Number(r.entry)));
+    for (const r of chests) for (const i of gloot.get(Number(r.Data1))) put(i, "object", undefined, chestZones.get(Number(r.entry)));
     // Fishing: the loot table's entry is the area fished in.
     for (const r of await q("SELECT Entry, Item FROM fishing_loot_template WHERE Item IN (?)", [list(wanted)])) {
       put(Number(r.Item), "fishing", undefined, [zoneOfArea(Number(r.Entry))].filter(Boolean));
@@ -344,9 +345,11 @@ try {
       if (!questItems.has(Number(r.ID))) questItems.set(Number(r.ID), []);
       questItems.get(Number(r.ID)).push([mail.get(Number(r.t)), "mail"]);
     }
+    for (const quest of questItems.keys()) {
+      if (!FOREVER_QUESTS.has(quest)) { questItems.delete(quest); notForever.add(quest); }
+    }
     const quests = [...questItems.keys()];
     for (const r of await q("SELECT ID, QuestSortID FROM quest_template WHERE ID IN (?)", [list(quests)])) questSort.set(Number(r.ID), Number(r.QuestSortID));
-    const questNames = await names(QUEST, "ID", "LogTitle", quests);
     const givers = new Map();
     for (const [starter, spawn] of [["creature_queststarter", "creature"], ["gameobject_queststarter", "gameobject"]]) {
       const rows = await q(`SELECT id, quest FROM ${starter} WHERE quest IN (?)`, [list(quests)]);
@@ -359,7 +362,7 @@ try {
     for (const [quest, its] of questItems) {
       let zones = givers.get(quest);
       if (!zones?.size && questSort.get(quest) > 0) zones = [zoneOfArea(questSort.get(quest))].filter(Boolean);
-      for (const [i, how] of its) put(i, how, questNames.get(quest), zones);
+      for (const [i, how] of its) put(i, how, undefined, zones);
     }
     // Sold.
     const vendors = await q("SELECT entry, item FROM npc_vendor WHERE item IN (?)", [list(wanted)]);
@@ -373,18 +376,14 @@ try {
   }
 
   const direct = await sourcesOf(items);
-  // Inside another item: the container's sources, named after the container.
+  // Inside another item: the container's sources.
   const contained = await q("SELECT Entry, Item FROM item_loot_template WHERE Item IN (?)", [list(items)]);
-  const containerNames = new Map();
-  for (const r of await table("ItemSparse")) {
-    if (contained.some((c) => Number(c.Entry) === Number(r.ID))) containerNames.set(Number(r.ID), r.Display_lang);
-  }
   const viaContainer = await sourcesOf(contained.map((r) => Number(r.Entry)));
-  for (const [item, list_] of direct) for (const s of list_) add(itemBook.get(item), s.how, s.name, s.zones);
+  for (const [item, list_] of direct) for (const s of list_) add(itemBook.get(item), s.zones);
   for (const r of contained) {
     const book = itemBook.get(Number(r.Item));
     const zones = new Set((viaContainer.get(Number(r.Entry)) ?? []).flatMap((s) => s.zones));
-    add(book, "container", { enUS: containerNames.get(Number(r.Entry)) ?? `item ${r.Entry}` }, zones);
+    add(book, zones);
   }
 
   // And what the DB cannot see. A hand source that matches one the DB found gives it its zones.
@@ -396,7 +395,7 @@ try {
     for (const s of list_) {
       const name = s.quest ? handQuests.get(s.quest) : handObjects.get(s.object);
       if (!name) throw new Error(`book ${book}: no ${s.quest ? `quest ${s.quest}` : `object ${s.object}`} in the world DB`);
-      add(Number(book), s.how, name, s.zones ?? handObjectZones.get(s.object) ?? []);
+      add(Number(book), s.zones ?? handObjectZones.get(s.object) ?? []);
     }
     if (!kind.has(Number(book))) kind.set(Number(book), "carried");
   }
@@ -408,25 +407,13 @@ try {
 
 const gone = (id, book) => cannotBeHad(book.title, book.pages.map((page) => pageText.get(page) ?? ""), id);
 
-const nameIndex = new Map();
-const nameList = [];
-function nameRef(name) {
-  if (!name?.enUS) return null;
-  const key = JSON.stringify(name);
-  if (!nameIndex.has(key)) { nameList.push(name); nameIndex.set(key, nameList.length); }
-  return nameIndex.get(key);
-}
-
 const lines = [];
 const counts = { world: 0, carried: 0, wide: 0, event: 0, nowhere: 0, gone: 0, types: {}, inDungeon: 0, dungeons: new Map() };
 for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
   if (gone(id, book)) { counts.gone++; continue; }
   const k = kind.get(id);
   if (!k) { counts.nowhere++; continue; }
-  const list_ = [...(sources.get(id)?.values() ?? [])]
-    .map((s) => ({ ...s, spots: s.zones, zones: new Set([...s.zones].map(placeOf)) }))
-    .sort((a, b) => ORDER.indexOf(a.how) - ORDER.indexOf(b.how) || a.zones.size - b.zones.size || (a.name?.enUS ?? "").localeCompare(b.name?.enUS ?? ""));
-  const spots = new Set(k === "world" ? where.get(id) : list_.flatMap((s) => [...s.spots]));
+  const spots = new Set(k === "world" ? where.get(id) : sources.get(id));
   if (!spots.size) for (const zone of ZONES_BY_HAND[id] ?? []) spots.add(zone);
   const zones = new Set([...spots].map(placeOf));
   const dungeons = dungeonsOf(spots, INSTANCE_ZONE);
@@ -447,31 +434,17 @@ for (const [id, book] of [...books].sort((a, b) => a[0] - b[0])) {
       for (const d of dungeons) counts.dungeons.set(d, (counts.dungeons.get(d) ?? 0) + 1);
     }
   }
-  if (k === "carried" && list_.length) {
-    const from = list_.slice(0, SOURCES).map((s) => {
-      const ref = nameRef(s.name);
-      const z = [...s.zones].sort((a, b) => a - b).slice(0, 3);
-      return `{ "${s.how}", ${ref ?? "false"}${z.length ? ", " + z.join(", ") : ""} }`;
-    });
-    parts.push(`from = { ${from.join(", ")} }`);
-  }
   lines.push(`\t\t[${id}] = { ${parts.join(", ")} },`);
 }
-
-const nameLines = nameList.map((n, i) => {
-  const locs = LOCALES.filter((l) => n[l] && n[l] !== n.enUS).map((l) => `${l} = ${quote(n[l])}`);
-  return `\t\t[${i + 1}] = { ${[quote(n.enUS), ...locs].join(", ")} },`;
-});
 
 const out = `-- AUTO-GENERATED by pipelines/books/tools/places.mjs. Do not edit by hand.
 --
 -- Where each readable is, for Azeroth's Compendium: "world" ones stand in the zones listed (a
 -- plaque, a book on a shelf); "carried" ones are had in them (a letter dropped, a note handed
 -- over). \`type\` is what it is: book, journal, letter, note, scroll, tablet, plaque, grave,
--- exhibit, picture or other. \`from\` names how a carried one is had, most specific first: { how, name, zone... }, the name an index
--- into \`names\` (false where there is none, as for fishing). \`wide\` is a readable had in too many
--- zones to list under each. \`event\` is the seasonal event one is had only during, listed under
--- Holidays and Events, a line for each event, rather than its zones. Zones are uiMapIDs.
+-- exhibit, picture or other. \`wide\` is a readable had in too many zones to list under each.
+-- \`event\` is the seasonal event one is had only during, listed under Holidays and Events, a line
+-- for each event, rather than its zones. Zones are uiMapIDs.
 -- \`dungeons\` are the instance maps of the dungeons and raids a readable is had in from inside
 -- alone, in a zone it is had nowhere else in; Spoken's Data/Dungeons.lua names each, with the zone
 -- its entrance is in. Regenerate with:  make books-places
@@ -485,17 +458,14 @@ SpokenBooksPlaces = {
 \tbooks = {
 ${lines.join("\n")}
 \t},
-
-\tnames = {
-${nameLines.join("\n")}
-\t},
 }
 `;
 await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, out);
 console.log(`${counts.world} in the world, ${counts.carried} carried (${counts.wide} across Azeroth, ${counts.event} at events), ` +
-  `${counts.nowhere} with no place, ${counts.gone} that cannot be had; ${nameList.length} names`);
+  `${counts.nowhere} with no place, ${counts.gone} that cannot be had`);
 console.log(`${counts.inDungeon} in dungeons: ` + [...counts.dungeons].sort((a, b) => a[0] - b[0])
   .map(([d, n]) => `${n} in ${DUNGEONS[d].name}`).join(", "));
 console.log(Object.entries(counts.types).map(([t, n]) => `${n} ${t}`).join(", "));
+console.log(`${notForever.size} quests left out as not Forever's: ${[...notForever].sort((a, b) => a - b).join(", ")}`);
 console.log(`wrote ${OUT}`);

@@ -36,7 +36,7 @@ cp "$REPO/dist/descriptions/$slug.md" "$staging/$folder/README.md"
 cp "$WORK/Data/Sounds.lua" "$staging/$folder/Data/Sounds.lua"
 rsync -a --exclude '.DS_Store' "$WORK/Sounds/" "$staging/$folder/Sounds/"
 sed -i.bak \
-  -e "s|^## Title:.*|## Title: $title|" \
+  -e "s~^## Title:.*~## Title: ${title/#Spoken/|cffb48cffSpoken|r}~" \
   -e "s|^## Version:.*|## Version: $version|" \
   -e "s|^## IconTexture:.*|## IconTexture: Interface\\\\AddOns\\\\$folder\\\\Textures\\\\AddonIcon.tga|" \
   "$staging/$folder/$folder.toc"
@@ -47,4 +47,9 @@ zip_path="$DIST/$folder-$version.zip"
 rm -f "$zip_path"
 # Stored, not deflated, as English's: the payload is mp3.
 (cd "$staging" && zip -r -0 -q -X "$zip_path" "$folder" -x '*.DS_Store' '*/.*')
+# The manager channel publishes dist/<folder>/, so it must hold the tree the zip holds.
+rm -rf "$DIST/$folder"
+rsync -a --exclude '.[!.]*' "$staging/$folder/" "$DIST/$folder/"
+# rsync keeps mtimes, and publish.mjs reads a .toc older than the zip as a stale build.
+touch "$DIST/$folder/$folder.toc"
 echo "built dist/$folder-$version.zip ($count mp3, $(du -h "$zip_path" | cut -f1))"

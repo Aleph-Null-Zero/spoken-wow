@@ -256,22 +256,26 @@ Expect("J. ...and an object of the same id by its object address",
 Expect("J. another language's report goes to that language's page",
     VO.ReportButton:Link("quest/1/accept", "deDE"), "https://spoken.rusty.one/deDE/quests/r/quest/1/accept")
 
--- The Report action hands over the language the clip was answered in: line 2 is English
--- fallback under a Portuguese selection, and its report is about the English take.
+-- The Report action files under the voice language, whatever the clip was answered in: line 2
+-- is English fallback under a Portuguese selection, and its report is that Portuguese is missing.
 local function ReportFor(VO, questID)
     local _, clip = Resolve(VO, questID)
     VO.Player:Prepare(clip)
-    local target, language
+    local url
     VO.ReportButton.CurrentTarget = function() return "quest/" .. questID .. "/accept" end
-    VO.ReportButton.ShowLink = function(_, t, l) target, language = t, l end
+    local link = VO.ReportButton.Link
+    VO.ReportButton.Link = function(self, t, l) url = link(self, t, l); return url end
     for _, action in ipairs(clip.present.actions) do
         if action.id == "report" then action.onClick(clip) end
     end
-    return language
+    VO.ReportButton.Link = link
+    return url
 end
 VO = Install(PACKS, "ptBR")
-Expect("J. reporting a Portuguese clip files it in Portuguese", ReportFor(VO, 1), "ptBR")
-Expect("J. reporting a fallback clip files it in English", ReportFor(VO, 2), "enUS")
+Expect("J. reporting a Portuguese clip files it in Portuguese", ReportFor(VO, 1),
+    "https://spoken.rusty.one/ptBR/quests/r/quest/1/accept")
+Expect("J. reporting a fallback clip files it in Portuguese too", ReportFor(VO, 2),
+    "https://spoken.rusty.one/ptBR/quests/r/quest/2/accept")
 do
     -- With the quest window already shut, as it is by the time a subtitle's Report is clicked:
     -- the clip says which line it was.
@@ -304,6 +308,7 @@ Expect("K. a client claiming Italian is not taken at its word", VO.Language:GetC
 Expect("K. ...so Auto stays English", Resolve(VO, 1), "EnglishPack")
 Expect("K. Italian is not a client language", VO.Language:IsClientLanguage("itIT"), false)
 Expect("K. Portuguese is", VO.Language:IsClientLanguage("ptBR"), true)
+Expect("K. nor is Vietnamese", VO.Language:IsClientLanguage("viVN"), false)
 
 ---------------------------------------------------------------- L. the addon's own gossip text, and aliases
 -- Gossip/<locale>.lua gives every line's text in the client's locale, whatever the packs

@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { checkEnvelope } from "./contributions";
-import { checksum, decodeFragment, parseEnvelope } from "./envelope";
+import { checksum, decodeFragment, formatEnvelope, parseEnvelope } from "./envelope";
 
 const fixture = (name: string) =>
   readFileSync(new URL(`../../../../../tests/fixtures/contributions/${name}`, import.meta.url), "utf8");
@@ -177,4 +177,17 @@ describe("checksum", () => {
     const [, body, sum] = raw.match(/^([\s\S]*\n)sum=(\d+)\n$/)!;
     expect(checksum(body)).toBe(Number(sum));
   });
+});
+
+describe("formatEnvelope", () => {
+  it.each(["quests-accept.txt", "quests-fenced.txt", "books-page.txt", "zones-zone.txt"])(
+    "writes %s back byte for byte, as the addon wrote it",
+    (name) => {
+      const raw = fixture(name);
+      const parsed = parseEnvelope(raw);
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) return;
+      expect(formatEnvelope(parsed.value)).toBe(raw);
+    },
+  );
 });

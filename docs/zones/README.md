@@ -34,7 +34,6 @@ The notes for the module itself are in `docs/spoken/CHANGELOG.md`, because it ve
 | `addons/Spoken_Places` | The module: stories, lookup code, the map panel, the Places tab, settings page. |
 | `addons/SpokenZonesAudio` | The English voice pack. The repository holds `Data/Sounds.lua` (the clip lookup) and the `.toc`; the mp3s in `Sounds/` are gitignored and assembled from the site's takes. |
 | `SpokenZonesAudio_<locale>` | One pack per other language. Built into `build/zones/<locale>`, never committed. |
-| `addons/SpokenZones` | A tombstone: a `.toc` and no Lua, so an update replaces an old install. Never add code to it. |
 
 The addon still reads the packs that were published as `ZoneLoreAudio` and `ZoneLoreAudio64`
 (`Audio.lua`, `GetAudioPacks`), because those folders are on players' disks.
@@ -60,7 +59,7 @@ addons/Spoken_Places/
   Textures/Pictures/     the place pictures, 32 edge masks and CREDITS.md
   Textures/Art/          the spellbook and quest log art the page is drawn with
   UI/                    LoreWindow (the tab), LorePage, MapPanel, SubzoneClick, MapHighlight,
-                         Options, ContributeButton, CopyLink
+                         Options, CopyLink
 addons/Spoken/UI/        Compendium.lua, TextView.lua, Face.lua: shared with the other modules
 addons/Spoken/Data/Dungeons.lua   the dungeon and raid table every tab reads (generated)
 pipelines/zones/tools/   scrapers, the lore store and exporter, locale tools, pictures, voice

@@ -78,7 +78,7 @@ export function textHash(text) {
 
 /**
  * sha1 of text already in spoken form, exactly as it is. For a first page read with its
- * title, whose one newline is put there after flattening and has to count: textHash would
+ * title, whose newline is put there after flattening and has to count: textHash would
  * flatten it again, and a take made without the break would still read as current.
  */
 export function spokenHash(spoken) {

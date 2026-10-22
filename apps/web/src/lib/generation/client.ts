@@ -82,6 +82,12 @@ export type GenerationStatusResponse = {
   provider: Provider;
   /** fish.audio's balance in dollars, for a fish.audio user; null when it could not be read. */
   wallet?: { credit: number } | null;
+  /**
+   * For an ElevenLabs user, the voices pinned to fish.audio in this language, whose lines
+   * fish.audio speaks on their fish.audio key: its references, whether they have that key,
+   * and its rate. Absent or null when nothing is pinned.
+   */
+  pinned?: { voices: string[]; references: string[]; noApiKey: boolean; rate: Rate } | null;
 };
 
 export async function fetchGenerationStatus(

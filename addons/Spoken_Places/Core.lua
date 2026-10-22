@@ -289,9 +289,27 @@ end
 -- Falls through to the normalised name when there is no alias. That covers an
 -- English client, and every place whose name Blizzard left in English -- which
 -- is around one subzone in eight for German.
-function SpokenZones:ResolveAreaKey(name)
+--
+-- A name the client gives more than one place is told apart by `mapID`, the map
+-- the name was reported on: Spanish names Thunder Bluff's Spirit Rise and
+-- Forever's Rise of Spirits both "Alto de los Espíritus". Without `mapID`, or in
+-- an alias file built before it had that table, the flat table answers alone.
+function SpokenZones:ResolveAreaKey(name, mapID)
 	if type(name) ~= "string" then
 		return nil
+	end
+	local byZone = mapID and self.ZoneAliases and self.ZoneAliases[self.clientLocale]
+	local shared = byZone and byZone[name]
+	if shared then
+		if shared[mapID] then
+			return shared[mapID]
+		end
+		-- Found on another map than its story's (Data/AreaZones.lua, a dungeon's entrance).
+		for storyMapID, key in pairs(shared) do
+			if self:StoryPlace(mapID, key) == storyMapID then
+				return key
+			end
+		end
 	end
 	local aliases = self.Aliases[self.clientLocale]
 	local aliased = aliases and aliases[name]
@@ -329,8 +347,8 @@ function SpokenZones:SiteURL()
 	return _G.Spoken and _G.Spoken.SITE_URL
 end
 
--- `language` names the narration being reported, for a report made from the player about a
--- clip; the lore window's report is about the text on screen and passes none.
+-- `language` is the voice language, for a report made from the player about a clip; the lore
+-- window's report is about the text on screen and passes none.
 function SpokenZones:ReportURL(mapID, areaKey, language)
 	if not mapID or not self:SiteURL() then
 		return nil
@@ -473,7 +491,7 @@ end
 -- (SpokenZones:StoryPlace). The key is returned even on a miss so /spp debug can report what
 -- failed to match.
 function SpokenZones:GetSubzoneLore(parentMapID, areaName)
-	local key = self:ResolveAreaKey(areaName)
+	local key = self:ResolveAreaKey(areaName, parentMapID)
 	if not key then
 		return nil, nil
 	end
@@ -807,9 +825,9 @@ local function CmdStatus()
 
 	local pack = SpokenZones:GetActiveAudioPack()
 	if pack then
-		SpokenZones:Print("sound pack: %s -- %s", pack.addon, SpokenZones:GetAudioPackLabel(pack))
+		SpokenZones:Print("voice pack: %s -- %s", pack.addon, SpokenZones:GetAudioPackLabel(pack))
 	else
-		SpokenZones:Print("|cffffcc00no sound pack installed|r -- install Spoken Audio: Places to hear the lore")
+		SpokenZones:Print("|cffffcc00no voice pack installed|r -- install Spoken Audio: Places to hear the lore")
 	end
 
 	if SpokenZones:Get("debug") then
@@ -867,7 +885,7 @@ local function CmdAudioPack(arg)
 	if #packs == 0 then
 		-- Any pack would do -- packs are interchangeable across languages -- so an
 		-- empty list really does mean nothing is installed.
-		SpokenZones:Print("|cffffcc00no sound pack installed|r")
+		SpokenZones:Print("|cffffcc00no voice pack installed|r")
 		-- Named by CurseForge project, not by folder: a player with the pre-rename pack has a
 		-- ZoneLoreAudio folder, and saying that name sends them looking for a project that no
 		-- longer exists.
@@ -885,12 +903,12 @@ local function CmdAudioPack(arg)
 				return
 			end
 		end
-		SpokenZones:Print('|cffffcc00"%s" is not an installed sound pack|r', arg)
+		SpokenZones:Print('|cffffcc00"%s" is not an installed voice pack|r', arg)
 		return
 	end
 
 	local active = SpokenZones:GetActiveAudioPack()
-	SpokenZones:Print("sound packs:")
+	SpokenZones:Print("voice packs:")
 	for i = 1, #packs do
 		local pack = packs[i]
 		SpokenZones:Print(
