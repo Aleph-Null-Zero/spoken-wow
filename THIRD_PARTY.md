@@ -61,8 +61,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
   `pipelines/zones/tools/build-boss-stories.mjs`, `boss-history.mjs` and
   `assemble-boss-stories.mjs` make it, and `apply-boss-stories.mjs` writes it. Where the guide has no text
   for a boss, the story is that boss's History section on Warcraft Wiki, kept to Classic.
-  The Forever-only dungeons' stories come from the quest text in Efficient Games' EG Link output
-  (CC BY 4.0, see below), and the checks of the others use the vmangos quest corpus.
+  The Forever-only dungeons' stories come from Forever's quest text (credited below), and the
+  checks of the others use the vmangos quest corpus.
 - **Book, letter and in-world text** for Spoken_Readables comes from the same vmangos
   extraction as the quest corpus, and is likewise Blizzard's.
 - **Where each readable is** (`addons/Spoken_Readables/Data/Places.lua`): the spawns, loot, quests
@@ -74,20 +74,18 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **Italian quest, gossip and book text** comes from QuestIT, an Italian community
   translation by Drakanast whose addon code is MIT-licensed; the quest text it translates
   is Blizzard's. `pipelines/quests/tools/import_questit.py` imports it.
-- **BroadcastText rows from the Forever beta** (the `broadcast_text` table) partly come from
-  [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf) by JIVESCORP, published
-  under **CC BY 4.0**; the text itself is Blizzard's.
-- **Where Forever's quests are filed, who may take them and which quest follows which**
-  (`addons/Spoken_Quests/Data/Compendium.lua`), where the world DB has none of it, and the amount
-  a Craftsman's Writ asks for (`Data/QuestText.lua`), come from the quest and NPC data players'
-  Forever clients recorded.
-  Data from Efficient Games (https://efficient.games), licensed under CC BY 4.0.
-  `pipelines/quests/tools/export_compendium.py` reads it from
-  [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf).
-- **The text of a few Forever quests** that neither the world DB nor a player's contribution has
-  comes from the same EG Link output, entered as contributions sent by "Efficient Games (EG Link output)" and exported to
-  `corpus.json.gz` with the rest of `quest_line`. Data from Efficient Games
-  (https://efficient.games), licensed under CC BY 4.0.
+- **Some data that is not contributed by players** comes from the quest and NPC data Forever
+  clients recorded, published by Efficient Games (https://efficient.games) as
+  [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf) under **CC BY 4.0**:
+  - the text of a few Forever quests that neither the world DB nor a player has sent, entered as
+    contributions under its name;
+  - part of the Forever beta's BroadcastText rows (the `broadcast_text` table);
+  - where the world DB has none of it, where Forever's quests are filed, who may take them and which
+    quest follows which (`addons/Spoken_Quests/Data/Compendium.lua`), and the amount a Craftsman's
+    Writ asks for (`Data/QuestText.lua`), read by `pipelines/quests/tools/export_compendium.py`;
+  - the quest text the Forever-only dungeons' stories are written from.
+
+  The text itself is Blizzard's.
 - Text submitted through `/contribute` is game text as well: a player's client is showing it and
   they are sending a copy. It sits on the same footing as the corpus above, and the same terms
   apply to it.
