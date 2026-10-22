@@ -80,12 +80,6 @@ function Layout.Percent(value) return format("%d%%", value * 100) end
 function Layout.Seconds(value) return format("%.1fs", value) end
 function Layout.Number(value) return format("%d", math.floor(value + 0.5)) end
 
--- Where a font the game may not have falls back to one it does.
-local function Font(name, fallback)
-    if _G[name] then return name end
-    return fallback
-end
-
 -- The tooltip a row shows anywhere along it: what it is, what it does, and -- greyed out --
 -- why, under that. A control that does nothing, with no word on what would make it work,
 -- reads as broken. A row with nothing to say beyond its label shows only the band: a tooltip
@@ -133,7 +127,7 @@ end
 local function Chain(frame, script, fn)
     local before = frame.GetScript and frame:GetScript(script)
     if before then
-        Script(frame, script, function(a, b) before(a, b); fn(a, b) end)
+        Script(frame, script, function(...) before(...); fn(...) end)
     else
         Script(frame, script, fn)
     end
@@ -569,7 +563,7 @@ function Layout:Section(text, plain)
     -- Inside a group a section has no title: a divider stands where it would, and its name is
     -- still what search says its rows are under.
     if text and not self.group then
-        fs = parent:CreateFontString(nil, "ARTWORK", Font("GameFontHighlightLarge", "GameFontNormalLarge"))
+        fs = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightLarge")
         fs:SetJustifyH("LEFT")
         fs:SetJustifyV("TOP")
         fs:SetTextColor(WHITE[1], WHITE[2], WHITE[3])
@@ -580,7 +574,7 @@ function Layout:Section(text, plain)
     -- from it to where the boxes end (Reflow).
     local small
     if text and self.group then
-        small = parent:CreateFontString(nil, "ARTWORK", Font("GameFontHighlight", "GameFontNormal"))
+        small = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
         small:SetJustifyH("LEFT")
         small:SetText(text)
         small:Hide()
@@ -640,7 +634,7 @@ end
 function Layout:Group(title)
     self:Columns(nil)
     local parent = self.parent
-    local fs = parent:CreateFontString(nil, "ARTWORK", Font("GameFontHighlightLarge", "GameFontNormalLarge"))
+    local fs = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightLarge")
     fs:SetJustifyH("LEFT")
     fs:SetJustifyV("TOP")
     fs:SetTextColor(WHITE[1], WHITE[2], WHITE[3])
@@ -1451,10 +1445,6 @@ local function Hover(frame)
     Chain(frame, "OnLeave", function() if not Inside() then Leave() end end)
 end
 
-local function BackdropTemplate()
-    return BackdropTemplateMixin and "BackdropTemplate" or nil
-end
-
 -- The game's tooltip border and background, as the game's own cards and lists are drawn.
 local function TooltipBackdrop(frame)
     frame:SetBackdrop({ bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
@@ -1468,7 +1458,7 @@ end
 -- stands back, and comes forward under the pointer. `layoutFaceOff` marks an option that cannot
 -- be had (a module not installed), which stays furthest back and does not answer the pointer.
 local function Card(parent)
-    local card = CreateFrame("Button", nil, parent, BackdropTemplate())
+    local card = CreateFrame("Button", nil, parent, "BackdropTemplate")
     -- The wash is a faint light inside the border.
     if card.SetBackdrop then TooltipBackdrop(card) end
     local wash = Flat(card, "BORDER", 1, 1, 1, 0.05)
@@ -1507,7 +1497,7 @@ end
 -- game's tooltip edge, as the card round it is, thinner and in grey so the card's stays the
 -- one that says what is chosen.
 local function InputFrame(parent)
-    local frame = CreateFrame("Frame", nil, parent, BackdropTemplate())
+    local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     local backing = Flat(frame, "BACKGROUND", 0, 0, 0, 0.55)
     backing:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -2)
     backing:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -2, 2)
@@ -1613,7 +1603,7 @@ end
 -- options_frame_child), or the tooltip border where the client has not got it.
 local BRONZE = "options_frame_child"
 local function ListPanel(parent)
-    local panel = CreateFrame("Frame", nil, parent, BackdropTemplate())
+    local panel = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     if HasAtlas(BRONZE) then
         local frame = panel:CreateTexture(nil, "BACKGROUND")
         frame:SetAtlas(BRONZE)
@@ -2251,7 +2241,7 @@ function Layout:Intro(icon, title, text)
     local scroller = self.parent.layoutScroller
     local parent = scroller and scroller.outer or self.parent
     if scroller then scroller:SetTop(HEADER_HEIGHT + 2) end
-    local name = parent:CreateFontString(nil, "ARTWORK", Font("GameFontHighlightHuge", "GameFontHighlightLarge"))
+    local name = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightHuge")
     name:SetJustifyH("LEFT")
     name:SetText(title)
     local rule = Rule(parent)

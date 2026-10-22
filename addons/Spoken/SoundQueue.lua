@@ -165,7 +165,7 @@ local function StopRetryTicker()
     end
 end
 
--- Leaving combat fires no event worth binding a handler to, so this is a poll.
+-- A gate is any source's own callback, and nothing tells the queue when one opens, so this is a poll.
 local function StartRetryTicker()
     if retryTicker then
         return

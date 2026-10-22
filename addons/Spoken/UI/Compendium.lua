@@ -770,7 +770,7 @@ function C.NewList(panel, opts)
 		end
 	end
 	searchBox:HookScript("OnTextChanged", function(self)
-		list.filter = string.lower(strtrim and strtrim(self:GetText() or "") or (self:GetText() or ""))
+		list.filter = string.lower(strtrim(self:GetText() or ""))
 		if opts.onSearch then opts.onSearch(list.filter) end
 		Rescroll()
 	end)
@@ -1361,11 +1361,9 @@ end
 function List:ScrollToChosen(items)
 	if self.scroll.UpdateScrollChildRect then self.scroll:UpdateScrollChildRect() end
 	self:ScrollToSelection(items)
-	if C_Timer and C_Timer.After then
-		C_Timer.After(0, function()
-			if self.filter == "" and self.items then self:ScrollToSelection(self.items) end
-		end)
-	end
+	C_Timer.After(0, function()
+		if self.filter == "" and self.items then self:ScrollToSelection(self.items) end
+	end)
 end
 
 --------------------------------------------------------------------------------

@@ -20,7 +20,7 @@ end
 local panel
 
 function SettingsPanel:Setup()
-    if panel or not (Settings and Settings.RegisterCanvasLayoutCategory) then
+    if panel then
         return
     end
     panel = CreateFrame("Frame", "SpokenQuestsOptionsPanel", UIParent)

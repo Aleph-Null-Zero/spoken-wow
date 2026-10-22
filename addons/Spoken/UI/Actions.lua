@@ -958,7 +958,7 @@ end
 --- the windows over it or not.
 function Actions.WatchDialogs(fn)
     local function Later()
-        if C_Timer and C_Timer.After then C_Timer.After(0, fn) else fn() end
+        C_Timer.After(0, fn)
     end
     for _, name in ipairs({ "DUIQuestFrame", "DUIBookFrame" }) do
         local dialog = _G[name]

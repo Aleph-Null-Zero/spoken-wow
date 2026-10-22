@@ -385,7 +385,7 @@ function Followup:Setup()
     local events = { "CHAT_MSG_MONSTER_SAY", "CHAT_MSG_MONSTER_YELL", "CHAT_MSG_MONSTER_WHISPER",
         "CHAT_MSG_RAID_BOSS_WHISPER", "QUEST_TURNED_IN", "QUEST_ACCEPTED" }
     for _, event in ipairs(events) do
-        pcall(frame.RegisterEvent, frame, event)
+        frame:RegisterEvent(event)
     end
     frame:SetScript("OnEvent", function(_, event, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)
         if event == "QUEST_TURNED_IN" then

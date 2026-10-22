@@ -26,7 +26,7 @@ local function GossipName()
 end
 
 function GossipSettingsPanel:Setup()
-    if panel or not (Settings and Settings.RegisterCanvasLayoutCategory) then
+    if panel then
         return
     end
     panel = CreateFrame("Frame", "SpokenGossipOptionsPanel", UIParent)

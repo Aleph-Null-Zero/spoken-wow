@@ -226,7 +226,7 @@ function Spoken:AddDialogueUISettings(build)
 end
 
 --- The Settings category, so a feature addon can nest its panel under it with
---- Settings.RegisterCanvasLayoutSubcategory. Nil on clients without the Settings API.
+--- Settings.RegisterCanvasLayoutSubcategory. Nil until Spoken has registered its page.
 function Spoken:GetSettingsCategory()
     return Options.category
 end
@@ -244,8 +244,7 @@ end
 --- A feature addon's settings page, shown under Spoken's own in the game's settings as `name`,
 --- listed in `order` (Quests 1, Gossip 2, Places 3, Readables 4, Bosses 5). Pass the page's SpokenLayout and its
 --- scroller to make its rows searchable from Home. Returns a table whose `category` is
---- filled in once the page is registered, for Settings.OpenToCategory; nil where the client
---- cannot nest pages, in which case the addon registers a top-level page as before.
+--- filled in once the page is registered, for Settings.OpenToCategory.
 function Spoken:AddSettingsPage(panel, name, order, layout, scroller)
     return Options:AddPage(panel, name, order, layout, scroller)
 end
@@ -269,9 +268,8 @@ function Spoken:PartVoice(key)
 end
 
 --- How Spoken's settings are laid out: "pages", each page an entry nested under Spoken in the
---- game's settings list, on a client with the settings canvas; nil without one.
+--- game's settings list.
 function Spoken:SettingsStyle()
-    if not (Settings and Settings.RegisterCanvasLayoutCategory) then return nil end
     return "pages"
 end
 

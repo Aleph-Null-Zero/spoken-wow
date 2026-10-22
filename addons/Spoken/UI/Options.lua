@@ -212,7 +212,7 @@ function Options:Preview(style)
     Addon.previewStyle = style
     PlayerFrame:RefreshConfig()
     Transcript:RefreshConfig()
-    if Subtitle then Subtitle:ShowSample(style == "subtitle") end
+    Subtitle:ShowSample(style == "subtitle")
     PlayerFrame:ShowSample(style == "minimal" or style == "classic" or style == "dialogueui")
 end
 
@@ -386,9 +386,7 @@ local function Build()
 
     -- Every Spoken page is searchable from here; the game's own settings search cannot see
     -- inside an addon's canvas.
-    if Search then
-        layout:Custom(Search:Build(host), Search.height, function(width) Search:Fit(width) end)
-    end
+    layout:Custom(Search:Build(host), Search.height, function(width) Search:Fit(width) end)
 
     -- The page in two halves. First what most players change: what Spoken reads, how a line
     -- is shown, in which language, how loud, the keys, the Compendium, and where to go when
@@ -397,9 +395,7 @@ local function Build()
     -- What Spoken reads, first: it decides which of the pages under this one matter. A list
     -- with a row each, saying what is installed. No box round the list: it is a box itself.
     layout:Section(L.OPT_PARTS_TITLE, true)
-    if Welcome then
-        layout:HeadingButton(L.OPT_WELCOME_AGAIN, function() Welcome:Show() end)
-    end
+    layout:HeadingButton(L.OPT_WELCOME_AGAIN, function() Welcome:Show() end)
     local modules = {}
     for _, part in ipairs(Options:Parts()) do
         local key, order = part.key, part.order
@@ -540,7 +536,6 @@ local function Build()
     -- Each action by its name, with its key beside it where a setting's control would be: read
     -- at a glance down the box, the way the game's own bindings list reads, and set right there.
     local function KeyText(key)
-        if not GetBindingText then return key end
         return GetBindingText(key) or key
     end
     local function Bind(name, key)
@@ -620,8 +615,8 @@ local function Build()
     end
 
     -- Where a player goes when something is wrong, for every module at once. Each module's page
-    -- keeps its own Play a Test Line, beside its voice packs. With contributing loaded it is on the
-    -- Contribute & Report page (ContributeRows); otherwise a section here.
+    -- keeps its own Play a Test Line, beside its voice packs. It sits on the Contribute & Report
+    -- page (ContributeRows).
     local function FixRows(rows)
         rows:Section(L.OPT_FIX_TITLE)
         rows:Columns(2)
@@ -634,8 +629,6 @@ local function Build()
         rows:Columns(nil)
         rows:ShowWhen(rows:Button(L.OPT_RESET, 200, function() Options:ResetPositions() end), Shown)
     end
-    if not Spoken.Contribute then FixRows(layout) end
-
     -- The finer settings from here on.
 
     -- How the window and the subtitles look.
@@ -674,16 +667,6 @@ local function Build()
         function(v) transcript().SubtitleProgress = v end, function() refreshSubtitle(); refresh() end)
     Only(progress, function() return Subtitles() or InWindow() end)
     Requires(progress, function() return not Subtitles() or Narrator() end, L.REASON_NARRATOR)
-    -- Report on the window and the subtitles.
-    local function ReportRow(rows)
-        return rows:Checkbox(L.OPT_HIDE_REPORT, nil,
-            function() return cfg().HiddenActions.report end,
-            function(v) cfg().HiddenActions.report = v or nil end, function()
-                refresh()
-                Subtitle:Update()
-                Callbacks:Fire("REPORT_SETTINGS_CHANGED")
-            end)
-    end
     -- Forever only, where it matches the game's own frames: every frame Spoken draws, whatever
     -- the style.
     if Version.IsCamelot then
@@ -786,43 +769,45 @@ local function Build()
 
     -- The buttons live on Blizzard's quest, book and map frames, not on the player, but
     -- they all open the player's box, so the one switch for them is Spoken's. They have a page
-    -- of their own under Spoken's, in the list beside the modules'. Absent where Contribute.xml
-    -- is not loaded: nothing there to hide.
+    -- of their own under Spoken's, in the list beside the modules'.
     local function ContributeRows(rows)
         -- How much there is to send, first, so a player knows when it is worth sending.
-        if Gather then
-            rows:Badge(L.OPT_GATHER_ROW, function()
-                if not Gather:IsEnabled() then return "off", L.GATHER_OFF end
-                local count = Gather:Count()
-                if count == 0 then return "off", L.GATHER_NONE end
-                return "ok", format(L.GATHER_BADGE_FMT, count)
-            end, nil, true)
-            -- The opt-out the first Contribute click promises. Independent of hiding the
-            -- buttons: a player who collects has no use for them, and hiding them must not stop it.
-            rows:Checkbox(L.OPT_GATHER, L.OPT_GATHER_TIP,
-                function() return Gather:IsEnabled() end,
-                function(v)
-                    -- Choosing here is an answer to the first-click question too.
-                    Gather:SetIntroduced()
-                    Gather:SetEnabled(v)
-                end, function() Options:UpdateRows() end)
-            rows:Columns(2)
-            rows:Button(L.OPT_GATHER_SHARE, 200, function() Spoken:ShowGatherInstructions() end)
-            rows:Button(L.OPT_GATHER_CLEAR, 200, function() Gather:Clear(); Options:UpdateRows() end)
-            rows:Columns(nil)
-        end
+        rows:Badge(L.OPT_GATHER_ROW, function()
+            if not Gather:IsEnabled() then return "off", L.GATHER_OFF end
+            local count = Gather:Count()
+            if count == 0 then return "off", L.GATHER_NONE end
+            return "ok", format(L.GATHER_BADGE_FMT, count)
+        end, nil, true)
+        -- The opt-out the first Contribute click promises. Independent of hiding the
+        -- buttons: a player who collects has no use for them, and hiding them must not stop it.
+        rows:Checkbox(L.OPT_GATHER, L.OPT_GATHER_TIP,
+            function() return Gather:IsEnabled() end,
+            function(v)
+                -- Choosing here is an answer to the first-click question too.
+                Gather:SetIntroduced()
+                Gather:SetEnabled(v)
+            end, function() Options:UpdateRows() end)
+        rows:Columns(2)
+        rows:Button(L.OPT_GATHER_SHARE, 200, function() Spoken:ShowGatherInstructions() end)
+        rows:Button(L.OPT_GATHER_CLEAR, 200, function() Gather:Clear(); Options:UpdateRows() end)
+        rows:Columns(nil)
         rows:Checkbox(L.OPT_HIDE_CONTRIBUTE, nil,
             function() return Addon.db.profile.Contribute.HideButtons end,
             function(v) Addon.db.profile.Contribute.HideButtons = v end,
             function() Callbacks:Fire("CONTRIBUTE_SETTINGS_CHANGED") end)
-        ReportRow(rows)
+        -- Report on the window and the subtitles.
+        rows:Checkbox(L.OPT_HIDE_REPORT, nil,
+            function() return cfg().HiddenActions.report end,
+            function(v) cfg().HiddenActions.report = v or nil end, function()
+                refresh()
+                Subtitle:Update()
+                Callbacks:Fire("REPORT_SETTINGS_CHANGED")
+            end)
     end
-    if Spoken.Contribute then
-        BuildContributePage(function(rows)
-            ContributeRows(rows)
-            FixRows(rows)
-        end)
-    end
+    BuildContributePage(function(rows)
+        ContributeRows(rows)
+        FixRows(rows)
+    end)
 
     layout:Section(L.OPT_MINIMAP_TITLE)
     layout:Checkbox(L.OPT_MINIMAP_SHOW, nil,
@@ -873,7 +858,7 @@ local function Build()
         panel:HookScript("OnShow", function() Options:UpdateRows() end)
         -- The sample is for placing the subtitle while the settings are open, not after.
         panel:HookScript("OnHide", function()
-            if Subtitle and Subtitle:IsShowingSample() then Subtitle:ShowSample(false) end
+            if Subtitle:IsShowingSample() then Subtitle:ShowSample(false) end
             if Options.previewing or Addon.previewStyle then Options:SetPreviewing(false) end
         end)
     end
@@ -1083,7 +1068,7 @@ function Options:ShowRow(page, row)
         page.layout:Highlight(row)
     end
     -- The canvas has no size until the window lays it out, so the scroll waits a moment.
-    if C_Timer and C_Timer.After then C_Timer.After(0.05, Land) else Land() end
+    C_Timer.After(0.05, Land)
 end
 
 local function FitScroller()
@@ -1139,7 +1124,7 @@ release:RegisterEvent("PLAYER_ENTERING_WORLD")
 release:SetScript("OnEvent", function()
     release:UnregisterEvent("PLAYER_ENTERING_WORLD")
     -- The next frame: after every module's own PLAYER_ENTERING_WORLD.
-    if C_Timer then C_Timer.After(0, function() Options:ReleasePages() end) else Options:ReleasePages() end
+    C_Timer.After(0, function() Options:ReleasePages() end)
 end)
 
 function Options:RegisterPage(page)

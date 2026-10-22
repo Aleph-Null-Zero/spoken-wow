@@ -141,9 +141,8 @@ function ReportButton:ShowLink(target, clip)
         ShowCopy(url)
         return
     end
-    local contribute = rawget(VoiceOver, "Contribute")
     Spoken:ShowReport(url, function()
-        return contribute and contribute:ReportContext(clip)
+        return Contribute:ReportContext(clip)
     end)
 end
 

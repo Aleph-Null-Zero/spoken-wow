@@ -309,6 +309,6 @@ watcher:SetScript("OnEvent", function(_, event, unit)
     for _, clip in ipairs(SoundQueue.sounds) do StaticPortrait:Capture(clip, refreshGUID) end
     local skin = PlayerFrame.Skin and PlayerFrame:Skin()
     if skin and skin:HasClip() then skin:ConfigurePortrait() end
-    if Subtitle and Subtitle.wanted and Subtitle.clip then Subtitle:ConfigurePicture(Subtitle.clip) end
+    if Subtitle.wanted and Subtitle.clip then Subtitle:ConfigurePicture(Subtitle.clip) end
 end)
 StaticPortrait.watcher = watcher

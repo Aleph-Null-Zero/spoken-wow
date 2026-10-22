@@ -64,16 +64,6 @@ if not _G.SetDesaturation then
     end
 end
 
--- Asked of the API rather than the project id: Forever took this shim as mainline until
--- build 70170 gave it a project id of its own, and the next build may change it again.
-if C_GossipInfo and not GetGossipText then
-
-    GetGossipText = C_GossipInfo.GetText
-    GetNumGossipActiveQuests = C_GossipInfo.GetNumActiveQuests
-    GetNumGossipAvailableQuests = C_GossipInfo.GetNumAvailableQuests
-
-end
-
 -- The Forever client (1.60.1, interface 16001) reports itself as mainline and draws the
 -- modern map-attached quest log. `QuestLogFrame`, `QuestLog_Update`, `GetQuestLogTitle` and
 -- `QUESTS_DISPLAYED` do not exist there, and the rows are pooled frames with no names, so
@@ -320,22 +310,21 @@ if QuestLogQuests_Update and QuestScrollFrame and QuestScrollFrame.titleFramePoo
 
             -- No sound: Contribute in the pair's place, where this client can contribute at all
             -- (Contribute:CanOfferFromLog); otherwise Play greyed out and nothing to report.
-            local contribute = rawget(VoiceOver, "Contribute")
             contributeButton:Hide()
             if DataModules:PrepareSound({ event = Enums.SoundEvent.QuestAccept, questID = questID }) then
                 playButton:Enable()
                 playButton:Show()
                 report:SetShown(not (Spoken.AreReportButtonsHidden and Spoken:AreReportButtonsHidden()))
-            elseif contribute and contribute.CanOfferFromLog and contribute:CanOfferFromLog() then
+            elseif Contribute:CanOfferFromLog() then
                 playButton:Hide()
                 report:Hide()
                 contributeButton:SetScript("OnClick", function()
-                    contribute:ShowFromLog(questID, title)
+                    Contribute:ShowFromLog(questID, title)
                 end)
                 contributeButton:SetScript("OnEnter", function(button)
-                    contribute:ShowTooltip(button)
+                    Contribute:ShowTooltip(button)
                 end)
-                if contribute.OfferLogMenu then contribute:OfferLogMenu(contributeButton) end
+                Contribute:OfferLogMenu(contributeButton)
                 contributeButton:Show()
             else
                 playButton:Disable()

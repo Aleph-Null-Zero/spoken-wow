@@ -334,8 +334,7 @@ end
 --- What to paste into a bug report: the client, the sound settings, and what loaded.
 function Options:PrintDiagnostics()
             print(format("|cFF00CCFFSpoken Quests %s|r - client %s, interface %d",
-                AddonVersion, Version.Client or "unknown", Version.Interface or 0))
-            print("AddOn API: " .. (C_AddOns and "C_AddOns compatibility layer" or "legacy globals"))
+                AddonVersion, Version.Client, Version.Interface))
 
             local channel = Player.source and Player.source:GetChannel() or "unknown"
             print(format("Playback: channel=%s, paused=%s, queue=%d, player=%s", channel,
@@ -406,13 +405,12 @@ function Options:Initialize()
 
     -- Create options table
     Debug:Print("Registering options table...", "Options")
-    local AceConfig = LibStub("AceConfig-3.0")
     RunOptionalStep("AceConfig slash registration", function()
         -- A table, not a string: AceConfig registers each as a slash command for the same
         -- options table. The pre-rename "vo" is not among them: the addon answers to one
         -- name, and a command that still worked would keep the retired one alive in macros
         -- and in what players tell each other.
-        AceConfig:RegisterOptionsTable("SpokenQuests", self.table, { "spokenquests", "spq" })
+        LibStub("AceConfig-3.0"):RegisterOptionsTable("SpokenQuests", self.table, { "spokenquests", "spq" })
     end)
     RunOptionalStep("settings panel", function()
         -- One canvas panel of sections rather than a Blizzard category per group. The

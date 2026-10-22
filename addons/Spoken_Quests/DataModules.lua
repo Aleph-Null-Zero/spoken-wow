@@ -381,28 +381,21 @@ end
 -- We deliberately use a high ##Interface version in TOC to ensure that all clients will load it.
 -- Here we temporarily enable "Load out of date AddOns" to load the module, and restore the user's setting afterwards.
 -- These cvars can be nil, so have to store the fact of them being changed in a separate variable.
-local prev_checkAddonVersion, changed_checkAddonVersion
-local prev_lastAddonVersion, changed_lastAddonVersion
-local function EnableOutOfDate(addon)
-    if not changed_checkAddonVersion then
+local prev_checkAddonVersion, prev_lastAddonVersion, changed
+local function EnableOutOfDate()
+    if not changed then
         prev_checkAddonVersion = GetCVar("checkAddonVersion")
-        SetCVar("checkAddonVersion", 0)
-        changed_checkAddonVersion = true
-    end
-    if not changed_lastAddonVersion then
         prev_lastAddonVersion = GetCVar("lastAddonVersion")
+        SetCVar("checkAddonVersion", 0)
         SetCVar("lastAddonVersion", Version.Interface)
-        changed_lastAddonVersion = true
+        changed = true
     end
 end
-local function RestoreOutOfDate(addon)
-    if changed_checkAddonVersion then
+local function RestoreOutOfDate()
+    if changed then
         SetCVar("checkAddonVersion", prev_checkAddonVersion)
-        changed_checkAddonVersion = nil
-    end
-    if changed_lastAddonVersion then
         SetCVar("lastAddonVersion", prev_lastAddonVersion)
-        changed_lastAddonVersion = nil
+        changed = nil
     end
 end
 
@@ -421,9 +414,9 @@ function DataModules:LoadModule(module)
         return false, self.loadErrors[module.AddonName]
     end
 
-    EnableOutOfDate(module.AddonName)
+    EnableOutOfDate()
     local callSucceeded, loaded, reason = pcall(LoadAddOn, module.AddonName)
-    RestoreOutOfDate(module.AddonName)
+    RestoreOutOfDate()
 
     if not callSucceeded then
         reason = tostring(loaded)
@@ -446,9 +439,9 @@ function DataModules:GetModuleLoadError(name)
 end
 
 function DataModules:GetModuleAddOnInfo(module)
-    EnableOutOfDate(module.AddonName)
+    EnableOutOfDate()
     local name, title, notes, loadable, reason = GetAddOnInfo(module.AddonName)
-    RestoreOutOfDate(module.AddonName)
+    RestoreOutOfDate()
     return name, title, notes, loadable, reason
 end
 
