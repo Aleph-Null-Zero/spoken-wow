@@ -229,14 +229,15 @@ async function main() {
 
   const wanted = new Set(Object.values(maps).flat().map((boss) => boss.id));
   const englishOf = new Map(english.map((row) => [Number(row.ID), row.Name_lang]));
+  let retailEnglish;
   const names = {};
   for (const locale of LOCALES) {
     names[locale] = {};
     let rows = await wagoTable("DungeonEncounter", { build: FOREVER_BUILD, locale });
     // A build wago has no strings of for the locale serves English (Forever's itIT): retail's then.
     if (rows.every((row) => row.Name_lang === englishOf.get(Number(row.ID)))) {
-      rows = retailRows(english, await wagoTable("DungeonEncounter", { build: RETAIL_BUILD, locale: "enUS" }),
-        await wagoTable("DungeonEncounter", { build: RETAIL_BUILD, locale }));
+      retailEnglish ??= await wagoTable("DungeonEncounter", { build: RETAIL_BUILD, locale: "enUS" });
+      rows = retailRows(english, retailEnglish, await wagoTable("DungeonEncounter", { build: RETAIL_BUILD, locale }));
     }
     for (const row of rows) {
       const id = Number(row.ID);

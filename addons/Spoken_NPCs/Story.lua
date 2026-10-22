@@ -39,24 +39,8 @@ local MEMBERS = {
 -- The fight the creature `id` is a member of, where the player is in its map: { map, key }, or nil.
 local function Member(id)
 	local member = MEMBERS[id]
-	if not (member and GetInstanceInfo) then return nil end
-	if Spoken.NotSecret((select(8, GetInstanceInfo()))) ~= member[1] then return nil end
+	if not member or NPCs:InstanceMap() ~= member[1] then return nil end
 	return { map = member[1], key = member[2] }
-end
-
--- [map] = true where one of its bosses is met when targeted (`onTarget`), built on first use.
-local targetMaps
-local function MeetsOnTargetHere()
-	if not GetInstanceInfo then return false end
-	if not targetMaps then
-		targetMaps = {}
-		for map, bosses in pairs(_G.SpokenBosses and SpokenBosses.maps or {}) do
-			for _, boss in ipairs(bosses) do
-				if boss.onTarget then targetMaps[map] = true end
-			end
-		end
-	end
-	return targetMaps[Spoken.NotSecret((select(8, GetInstanceInfo())))] == true
 end
 
 --- Registers the bosses' stories with Spoken as a part of its own, after the settings are read.
@@ -95,13 +79,10 @@ function NPCs:TargetChanged()
 	local reads = SpokenNPCsSettings and SpokenNPCsSettings.storyTrigger == "target"
 	local boss = Creatures()[id] or reads and Member(id)
 	-- A boss only Forever has is not among Data/Creatures.lua's: known by its name in the dungeon
-	-- the player is in, looked for where a story would show or one of its bosses is met on target.
-	if not boss and (reads or MeetsOnTargetHere()) then
-		boss = self:BossNamed(Spoken.NotSecret(UnitName and UnitName("target")))
-	end
+	-- the player is in.
+	boss = boss or self:BossNamed(Spoken.NotSecret(UnitName and UnitName("target")))
 	if not boss then return end
-	-- Townsfolk until a quest or a theft turns them (the Grim Guzzler's): met once they can be fought.
-	if UnitCanAttack and Spoken.NotSecret(UnitCanAttack("player", "target")) then self:FoundTarget(boss.map, boss.key) end
+	self:FoundTarget(boss.map, boss.key)
 	if reads then self:ReadStory(boss.map, boss.key) end
 end
 

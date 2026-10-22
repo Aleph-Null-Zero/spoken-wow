@@ -561,7 +561,7 @@ NPCs:TargetChanged()
 Expect("...and in Blackwing Lair shows Nefarian's story", Showing(), "boss:469:nefarian")
 Expect("...without meeting Nefarian", NPCs:IsBossFound(469, "nefarian"), false)
 Clear()
-_G.GetInstanceInfo, _G.UnitName = instanceInfo, unitName
+_G.UnitName = unitName
 _G.GetInstanceInfo = function() return "Eastern Kingdoms", "none", 0, "", 0, 0, false, 0 end
 world.npcGUID = "Creature-0-1-2-3-12397-0000ABCDEF"
 NPCs:TargetChanged()

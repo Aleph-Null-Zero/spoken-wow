@@ -45,17 +45,19 @@ local function Key(map, key)
 end
 
 -- [encounter id] = { { map, key }, ... }, from Data/Bosses.lua, built on first use. A fight against
--- two bosses at once (the Weaver and Dreamscythe) is one encounter of both.
-local byEncounter
+-- two bosses at once (the Weaver and Dreamscythe) is one encounter of both. onTarget["map:key"] =
+-- true for a boss met when targeted, built alongside.
+local byEncounter, onTarget
 local function Encounters()
 	if byEncounter then return byEncounter end
-	byEncounter = {}
+	byEncounter, onTarget = {}, {}
 	for map, bosses in pairs(_G.SpokenBosses and SpokenBosses.maps or {}) do
 		for _, boss in ipairs(bosses) do
 			for _, id in ipairs(boss.ids) do
 				byEncounter[id] = byEncounter[id] or {}
 				table.insert(byEncounter[id], { map = map, key = boss.key })
 			end
+			if boss.onTarget then onTarget[Key(map, boss.key)] = true end
 		end
 	end
 	return byEncounter
@@ -93,8 +95,17 @@ function NPCs:FoundEncounter(encounterID)
 end
 
 --- The player targeted the boss `key` of `map`: met where it is one whose fight may start no
---- encounter (`onTarget` in Data/Bosses.lua). Returns whether it was not met before.
+--- encounter (`onTarget` in Data/Bosses.lua), once it can be fought, as the Grim Guzzler's townsfolk
+--- are only after a quest or a theft turns them. Returns whether it was not met before.
 function NPCs:FoundTarget(map, key)
-	local boss = SpokenNPCsCharacter and self.Boss and self:Boss(map, key)
-	return boss and boss.onTarget == true and Meet(self, { { map = map, key = key } }) or false
+	if not SpokenNPCsCharacter or self:IsBossFound(map, key) then return false end
+	Encounters()
+	if not onTarget[Key(map, key)] then return false end
+	if not (UnitCanAttack and Spoken.NotSecret(UnitCanAttack("player", "target"))) then return false end
+	return Meet(self, { { map = map, key = key } })
+end
+
+--- The instance map the player is in, or nil.
+function NPCs:InstanceMap()
+	return GetInstanceInfo and Spoken.NotSecret((select(8, GetInstanceInfo()))) or nil
 end

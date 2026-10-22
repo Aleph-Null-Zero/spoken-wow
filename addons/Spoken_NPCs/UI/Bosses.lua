@@ -19,9 +19,6 @@ local CONTINENTS, CITY_IN = C.CONTINENTS, C.CITY_IN
 local MapName, ContinentOf = C.MapName, C.ContinentOf
 local Dungeon, DungeonName = C.Dungeon, C.DungeonName
 
--- A value the game hands over as a secret, in an instance or in combat, reads as nil.
-local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
-
 local list, page
 local selection          -- { boss = true, map = map, key = key } | { mapID = zone, dungeon = map }
                          -- | { mapID = zone or continent } | { lands = true } | nil
@@ -324,8 +321,8 @@ end
 --- The boss named `name`, in the client's language or English, of the dungeon or raid the player
 --- is in: { map, key }, or nil.
 function NPCs:BossNamed(name)
-	if type(name) ~= "string" or not GetInstanceInfo then return nil end
-	local map = NotSecret((select(8, GetInstanceInfo())))
+	if type(name) ~= "string" then return nil end
+	local map = NPCs:InstanceMap()
 	for _, boss in ipairs(map and Index().all[map] or {}) do
 		if Name(boss) == name or boss[1] == name then return { map = map, key = boss.key } end
 	end
@@ -337,11 +334,6 @@ local REPORT = { has = function() return false end, open = function() end, title
 
 local function Boss(map, key)
 	return Index().byKey[map .. ":" .. key]
-end
-
---- The boss `key` of the dungeon `map`, as Data/Bosses.lua lists it, or nil.
-function NPCs:Boss(map, key)
-	return Boss(map, key)
 end
 
 -- The zone a boss is filed under: its own where the map's bosses stand in several, else the map's.
@@ -598,8 +590,7 @@ end
 
 -- The dungeon or raid the player is in, and the zone it is filed under.
 local function PlayerDungeon()
-	if not GetInstanceInfo then return nil end
-	local map = NotSecret((select(8, GetInstanceInfo())))
+	local map = NPCs:InstanceMap()
 	local zone = map and Index().zoneOf[map]
 	if zone then return map, zone end
 end
