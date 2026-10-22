@@ -1,8 +1,8 @@
 !SPOKEN1 places
-addon=SpokenZones/9.9.9
+addon=Spoken_Places/9.9.9
 build=1.60.1/70338
 locale=enUS
 pack=enUS
 map=1537
 zone=Ironforge
-sum=1279772089
+sum=1386060804

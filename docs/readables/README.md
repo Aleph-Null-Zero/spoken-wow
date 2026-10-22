@@ -5,14 +5,13 @@ vmangos world database, reviewable at `/readables` on the site, and
 read aloud in game by Spoken's Readables module (`addons/Spoken_Readables`).
 
 Players see this section as **Readables**: the module, its page and tab, its commands (`/spr`; `/spw`
-and `/spb` still work), the sound packs' titles and the site's labels. Most of what they never
-see says readables too: the folders, the `make readables-*` targets, the database's `readables`
-source, the site's `/readables` routes, the `SPOKEN_READABLES_*` variables, and the addon's
-`readables` source and part key, its `SpokenReadables` namespace, saved variables, frames and table
-in Spoken's profile (the old `SpokenBooksSettings` and `SpokenBooksCharacter` are read once and
-carried over). Still saying books: the `SpokenBooksData`, `SpokenBooksPlaces` and
-`SpokenBooksAudioPacks` globals, the `SpokenBooksAudio` pack folders with their `books-audio`
-tags, the `publishers/books/` pages and CurseForge slugs, and the `b:{pageTextID}` line ids.
+and `/spb` still work), the sound packs' titles and the site's labels. Until 2026-10 everything they
+never see said books; it all says readables now but the `b:{pageTextID}` line ids (frozen), the
+retired `spoken-books` CurseForge project and the history. What players already have under the old
+names is still read: `SpokenBooksSettings` and `SpokenBooksCharacter` are carried over once, packs
+released as `SpokenBooksAudio*` (writing `SpokenBooksAudioPacks`) still play until their
+`SpokenReadablesAudio*` replacement is installed, the site redirects `/books` and reads
+`!SPOKEN1 books` envelopes, and the manager counts `books-audio*` releases as the packs'.
 
 ## Where the words come from, and why not from anywhere else
 
@@ -342,7 +341,7 @@ Unlock Unfound Readables on (`SpokenReadables:CompendiumHas`).
 ### Installing it in a client
 
 ```bash
-CLIENT=forever make readables-deploy   # symlink Spoken_Readables and SpokenBooksAudio into the Forever beta (wow_classic_beta)
+CLIENT=forever make readables-deploy   # symlink Spoken_Readables and SpokenReadablesAudio into the Forever beta (wow_classic_beta)
 make readables-status                  # what is installed where, and how many mp3s exist
 ```
 
@@ -366,7 +365,7 @@ The first is retired and gets no more uploads. The second is the sound pack, whi
 `spoken` as its required dependency. Cutting a pack:
 
 ```bash
-make readables-package-audio           # -> dist/SpokenBooksAudio-<version>.zip
+make readables-package-audio           # -> dist/SpokenReadablesAudio-<version>.zip
 make readables-release-dry             # what would be uploaded, uploading nothing
 make readables-release                 # needs CURSEFORGE_TOKEN
 ```
@@ -374,34 +373,35 @@ make readables-release                 # needs CURSEFORGE_TOKEN
 The pack's version is the `## Version:` line in its `.toc`, and its release notes are the
 matching `## <version>` section of `docs/readables/CHANGELOG.md` — a version with no section there
 fails before anything is sent. `make readables-package` builds `Spoken_Readables` alone, for a
-`books/v<version>` tag, which `.github/workflows/release-addons.yaml` still builds. `scripts/readables/release.sh` carries the two ids in
+`readables/v<version>` tag, which `.github/workflows/release-addons.yaml` still builds.
+`scripts/readables/release.sh` carries the two ids in
 `target_curseforge()`, and an unknown target fails on the empty id rather than defaulting, for
 the reason `docs/quests/CLAUDE.md` gives: an id left in that function is an id something
 eventually uploads to, and uploading a readables pack over another project is not recoverable
 from this side.
 
-The project pages themselves are `publishers/books/*.md`, one body per project for both
+The project pages themselves are `publishers/readables/*.md`, one body per project for both
 stores; after `make descriptions`, paste `dist/descriptions/<slug>.md` into CurseForge and
 `dist/descriptions-wago/<slug>.md` — the same text with its cross-links pointed at Wago —
 into Wago, then record it with `make descriptions-published`.
 
 `make readables-release` uploads the pack to CurseForge alone: at 452 MB it meets a 413 from Cloudflare before Wago sees it, which `scripts/lib/wago.sh` says
 in as many words. `make audio-release` then publishes it as a GitHub release under
-`books-audio/vX.Y.Z`, which is where the pack's Wago page sends anyone looking for
+`readables-audio/vX.Y.Z`, which is where the pack's Wago page sends anyone looking for
 the narration.
 
 ### A language's pack
 
-A page under `publishers/books/`, `spoken-books-audio-<lang>.md`, is what makes a language's
+A page under `publishers/readables/`, `spoken-readables-audio-<lang>.md`, is what makes a language's
 pack exist — its `curseforge:`, `version:` and `slug:` are what `scripts/lib/packs.mjs` reads,
 rather than a case a script would grow per language. `LOCALE=` moves the whole chain to that
-language, staged under `build/readables/<lang>/` rather than the committed `addons/SpokenBooksAudio/`:
+language, staged under `build/readables/<lang>/` rather than the committed `addons/SpokenReadablesAudio/`:
 
 ```bash
 make readables-pull-live LOCALE=esMX      # this language's live takes
 make readables-sounds LOCALE=esMX         # build/readables/esMX/Sounds, from the archive
 make readables-lookup LOCALE=esMX         # build/readables/esMX/Data/Sounds.lua
-LOCALE=esMX ./scripts/readables/package-audio.sh  # dist/SpokenBooksAudio_esMX-<v>.zip
+LOCALE=esMX ./scripts/readables/package-audio.sh  # dist/SpokenReadablesAudio_esMX-<v>.zip
 make readables-release-audio LOCALE=esMX  # uploads it, CurseForge only
 ```
 

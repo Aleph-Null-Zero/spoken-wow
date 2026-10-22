@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes addons/Spoken_Readables and addons/SpokenBooksAudio visible to a WoW client.
+# Makes addons/Spoken_Readables and addons/SpokenReadablesAudio visible to a WoW client.
 #
 #   ./scripts/deploy.sh          # symlink (edits are live, just /reload in-game)
 #   ./scripts/deploy.sh --copy   # rsync a real copy instead
@@ -25,7 +25,7 @@
 #
 # The narration itself is NOT in the repository -- audio lives outside git -- so the pack
 # folder here carries the lookup and the mp3s are whatever has been pulled into
-# addons/SpokenBooksAudio/Sounds. --status says how many that is.
+# addons/SpokenReadablesAudio/Sounds. --status says how many that is.
 #
 # SavedVariables live under WTF/, not in the addon folder, so neither mode can
 # destroy saved settings.
@@ -34,7 +34,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WOW="/Applications/World of Warcraft"
-NAMES=(Spoken_Readables SpokenBooksAudio)
+NAMES=(Spoken_Readables SpokenReadablesAudio)
 
 # Client key -> the flavour directory Blizzard installs it under.
 CLIENTS=(era anniversary forever)
@@ -84,7 +84,7 @@ case "$mode" in
 
     # The count is the quickest answer to "why is there no narration", which is
     # otherwise indistinguishable from a broken lookup.
-    sounds="$REPO/addons/SpokenBooksAudio/Sounds"
+    sounds="$REPO/addons/SpokenReadablesAudio/Sounds"
     if [[ -d "$sounds" ]]; then
       count="$(find "$sounds" -name '*.mp3' | wc -l | tr -d ' ')"
       echo "voicelines      $count mp3 in $sounds"

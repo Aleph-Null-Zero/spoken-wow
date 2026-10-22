@@ -6,14 +6,14 @@
 # English's pack is still zipped in place by `make readables-package-audio`: its folder is the pack.
 # Another language's is not in the tree at all -- its clips and table are build output under
 # build/readables/<lang>/ (make readables-sounds / readables-lookup LOCALE=..) -- so this copies English's
-# folder around them, and its page under publishers/books/ says what it is called and which
+# folder around them, and its page under publishers/readables/ says what it is called and which
 # version it is.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOCALE="${LOCALE:?set LOCALE, e.g. LOCALE=esMX}"
 [[ "$LOCALE" != enUS ]] || { echo "error: English's pack is \`make readables-package-audio\`" >&2; exit 1; }
 
-SRC="$REPO/addons/SpokenBooksAudio"
+SRC="$REPO/addons/SpokenReadablesAudio"
 WORK="$REPO/build/readables/$LOCALE"
 DIST="$REPO/dist"
 pack_field() { node "$REPO/scripts/lib/packs.mjs" get readables "$LOCALE" - "$1"; }
@@ -31,7 +31,7 @@ mkdir -p "$staging/$folder/Data"
 rsync -a --exclude 'Sounds/' --exclude 'Data/Sounds.lua' --exclude '.DS_Store' "$SRC/" "$staging/$folder/"
 # English's icon with this language's badge (`make readables-icon`).
 cp "$REPO/pipelines/readables/assets/spoken-books-$LOCALE.tga" "$staging/$folder/Textures/AddonIcon.tga"
-mv "$staging/$folder/SpokenBooksAudio.toc" "$staging/$folder/$folder.toc"
+mv "$staging/$folder/SpokenReadablesAudio.toc" "$staging/$folder/$folder.toc"
 cp "$REPO/dist/descriptions/$slug.md" "$staging/$folder/README.md"
 cp "$WORK/Data/Sounds.lua" "$staging/$folder/Data/Sounds.lua"
 rsync -a --exclude '.DS_Store' "$WORK/Sounds/" "$staging/$folder/Sounds/"

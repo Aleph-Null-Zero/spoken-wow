@@ -24,8 +24,8 @@ local function Boot(client, taxi, flight, greeting)
     onTaxi, flying = taxi, flight
     SpokenPlacesSettings = nil
     SpokenPlacesCharacter = greeting and {} or { greeted = true }
-    SpokenZonesAudioPacks = {
-        SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
+    SpokenPlacesAudioPacks = {
+        SpokenPlacesAudio = { version = 1, addon = "SpokenPlacesAudio", language = "enUS",
             zones = { [1411] = { file = "1411\\zone", len = 80 } },
             subzones = { [1411] = { ["valley of trials"] = { file = "1411\\valley", len = 35 } } } },
     }

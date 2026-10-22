@@ -19,7 +19,7 @@ local function LanguageName(code)
     return SpokenReadables:GetLanguageName(code)
 end
 -- The voice pack this addon is made for, and where to get it.
-local AUDIO_ADDON = "SpokenBooksAudio"
+local AUDIO_ADDON = "SpokenReadablesAudio"
 local AUDIO_URL = "https://www.curseforge.com/wow/addons/spoken-audio-readables"
 
 local panel

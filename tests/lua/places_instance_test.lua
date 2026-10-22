@@ -41,8 +41,8 @@ local function Boot(opts)
     SpokenPlacesCharacter = { greeted = true }
     local subzones = { [1420] = { [RUINS] = { file = "1420\\ruins-of-lordaeron", len = 85 } } }
     if opts.noClip then subzones = {} end
-    SpokenZonesAudioPacks = {
-        SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
+    SpokenPlacesAudioPacks = {
+        SpokenPlacesAudio = { version = 1, addon = "SpokenPlacesAudio", language = "enUS",
             zones = { [1420] = { file = "1420\\zone", len = 80 } }, subzones = subzones },
     }
     local env = stub.LoadSpoken(SPOKEN)

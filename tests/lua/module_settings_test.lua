@@ -71,7 +71,7 @@ Expect("Readables: going back finds the first profile's values", SpokenReadables
 db:SetProfile("Places profile")
 db.global.ModulesLegacy = nil
 _G.SpokenPlacesSettings = { language = "deDE", showPictures = false, dump = { 1, 2, 3 } }
-_G.SpokenZonesAudioPacks = {}
+_G.SpokenPlacesAudioPacks = {}
 local Z = H.LoadPlaces(PLACES, {})
 local places = db.profile.Modules.Places
 Expect("Places: the language and switches are copied under the same keys",
@@ -97,7 +97,7 @@ do
     callbacks.OnProfileChanged("OnProfileChanged", db, "Places German")
     local langs = { { code = "enUS", ready = true }, { code = "deDE", ready = true } }
     _G.SpokenPlacesSettings = db.profile.Modules.Places
-    _G.SpokenZonesAudioPacks = {}
+    _G.SpokenPlacesAudioPacks = {}
     Z = H.LoadPlaces(PLACES, { Languages = langs })
     assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     stub.FireEvent("ADDON_LOADED", "Spoken_Places")
@@ -139,7 +139,7 @@ db.global.ModulesLegacy = nil
 local narrated = {}
 _G.SpokenPlacesSettings, _G.SpokenPlacesCharacter = nil, nil
 _G.SpokenZonesSettings, _G.SpokenZonesCharacter = { language = "frFR" }, narrated
-_G.SpokenZonesAudioPacks = {}
+_G.SpokenPlacesAudioPacks = {}
 H.LoadPlaces(PLACES, {})
 Expect("Places: the settings saved as SpokenZonesSettings are the profile's", db.profile.Modules.Places.language, "frFR")
 Expect("...the character's as SpokenZonesCharacter is kept", SpokenPlacesCharacter, narrated)

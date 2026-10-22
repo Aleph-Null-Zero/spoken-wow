@@ -29,7 +29,7 @@ local function BaseFields(self)
         -- SpokenPlaces.VERSION does not exist -- Core.lua computes the real .toc version into
         -- the lowercase SpokenPlaces.version; "dev" is what a source checkout with no .toc
         -- metadata at all reads back as.
-        { "addon", format("SpokenZones/%s", self.version or "dev") },
+        { "addon", format("%s/%s", ADDON_NAME, self.version or "dev") },
         { "build", format("%s/%s", (GetBuildInfo and select(1, GetBuildInfo())) or "?",
                                    (GetBuildInfo and select(2, GetBuildInfo())) or "?") },
         { "locale", (GetLocale and GetLocale()) or "enUS" },

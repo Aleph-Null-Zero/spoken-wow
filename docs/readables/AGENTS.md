@@ -3,14 +3,13 @@
 The root `AGENTS.md` applies. This file covers only the Readables section. `docs/readables/README.md`
 is the detailed reference.
 
-## Players see Readables; some addon names still say books
+## Readables was books
 
 The module is Readables wherever a player reads its name, and its folder is `Spoken_Readables`.
-The site, database, pipelines and folders say readables, and so do the addon's `readables` source
-and part key, its `SpokenReadables` namespace, saved variables and profile table. Its globals, pack
-folders, tags, store pages and line ids still say books (the README lists them). A renamed saved
-variable or pack folder has to read the old one too, or players lose their settings or packs; the
-line ids are frozen.
+Everything else was keyed books until 2026-10 and says readables now, but the line ids, which are
+frozen. The old names players already have are still read (the README lists them): a renamed saved
+variable, pack folder or address has to read the old one too, or players lose their settings, packs
+or links.
 
 ## The table is the corpus; the Lua is an export of it
 
@@ -61,5 +60,5 @@ is skipped. Otherwise Spoken would read the player's own post aloud.
 
 `make readables-full-release` chains sync, pull-live and package-audio, then asks once before
 uploading. `package-audio` runs `check-synced`, `sounds` and `lookup` itself.
-`addons/SpokenBooksAudio/Data/Sounds.lua` is regenerated locally and committed. The site no
+`addons/SpokenReadablesAudio/Data/Sounds.lua` is regenerated locally and committed. The site no
 longer writes it.

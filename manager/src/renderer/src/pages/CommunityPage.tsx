@@ -11,7 +11,7 @@ import { formatBytes } from '../format'
 import { useGame, useStore } from '../store'
 import { COMMUNITY_README_URL, S } from '../strings'
 
-const SECTIONS: Section[] = ['quests', 'zones', 'books']
+const SECTIONS: Section[] = ['quests', 'places', 'readables']
 const NOTICE_KEY = 'spoken-manager.community-notice-dismissed'
 function noticeDismissed(): boolean {
   try {

@@ -41,7 +41,7 @@ Expect("the subzone is carried", envelope:match("\nsubzone=A Nook With No Lore\n
 Expect("no position: every place is already known", envelope:match("\nx=") == nil and envelope:match("\ny=") == nil, true)
 Expect("there is no text block -- the description is written on the page", envelope:match("text<<") == nil, true)
 Expect("the addon field carries the real .toc version, not the \"dev\" fallback",
-    envelope:match("\naddon=SpokenZones/9%.9%.9\n") ~= nil, true)
+    envelope:match("\naddon=Spoken_Places/9%.9%.9\n") ~= nil, true)
 
 local zoneOnly = Z:CaptureContribution(1537, nil)
 H.WriteCapturedFixture(here, "places-zone", zoneOnly)

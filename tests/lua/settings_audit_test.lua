@@ -25,9 +25,9 @@ local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local env = _G.SpokenEnv
 env.Sources:Register("readables", { title = "Spoken Readables", addon = "Spoken_Readables", order = 2,
-    packs = function() return { "SpokenBooksAudio" } end })
+    packs = function() return { "SpokenReadablesAudio" } end })
 env.Sources:Register("places", { title = "Spoken Places", addon = "Spoken_Places", order = 3,
-    packs = function() return { "SpokenZonesAudio" } end })
+    packs = function() return { "SpokenPlacesAudio" } end })
 _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()
 local QuestsPanel = stub.LoadQuestsPanel(QUESTS, VO)

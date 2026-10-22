@@ -125,14 +125,14 @@ shift-click still read there.
 ## Voice packs
 
 A pack is an addon folder with `Data/Sounds.lua`, which registers itself in
-`SpokenZonesAudioPacks[<folder>]`. The addon also reads `ZoneLoreAudioPacks` and
+`SpokenPlacesAudioPacks[<folder>]`. The addon also reads `ZoneLoreAudioPacks` and
 `ZoneLoreAudioData`, which packs published before the rename write to.
 
 - `Sounds.lua` has `version = 1`. `PACK_FORMAT` in `Audio.lua` is 1. A pack with another number
   is skipped with a message in chat, because guessing at an unknown layout plays silence and says
   nothing. Bump `PACK_FORMAT` only when the pack's data shape changes.
-- The pack reads its folder name, `X-SpokenZones-Quality`, `X-SpokenZones-Bitrate`,
-  `X-SpokenZones-Language` and `Version` from its `.toc`, so one generated `Sounds.lua` serves
+- The pack reads its folder name, `X-SpokenPlaces-Quality`, `X-SpokenPlaces-Bitrate`,
+  `X-SpokenPlaces-Language` and `Version` from its `.toc`, so one generated `Sounds.lua` serves
   every pack. A pack with no language key is English.
 - The pack that reads is the best one in the voice language, else the best in the fallback
   language. Between two packs of one language, `/spp audio <folder>` chooses (stored per language

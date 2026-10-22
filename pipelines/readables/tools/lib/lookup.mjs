@@ -34,7 +34,7 @@ const LANG = "enUS";
  */
 export function lookupPath(lang) {
   return lang === LANG
-    ? join(ROOT, "addons/SpokenBooksAudio/Data/Sounds.lua")
+    ? join(ROOT, "addons/SpokenReadablesAudio/Data/Sounds.lua")
     : join(ROOT, "build/readables", lang, "Data/Sounds.lua");
 }
 
@@ -139,8 +139,8 @@ export function packLua(lang, clips, entries = null) {
   lines.push(
     "}",
     "",
-    "SpokenBooksAudioPacks = SpokenBooksAudioPacks or {}",
-    "SpokenBooksAudioPacks[ADDON_NAME] = pack",
+    "SpokenReadablesAudioPacks = SpokenReadablesAudioPacks or {}",
+    "SpokenReadablesAudioPacks[ADDON_NAME] = pack",
     "",
   );
   return lines.join("\n");

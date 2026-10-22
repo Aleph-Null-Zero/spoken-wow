@@ -13,7 +13,7 @@
 -- A global rather than a private namespace, as Books.lua is: a data file cannot reach into the
 -- addon's environment.
 
-SpokenBooksPlaces = {
+SpokenReadablesPlaces = {
 	version = 1,
 
 	books = {

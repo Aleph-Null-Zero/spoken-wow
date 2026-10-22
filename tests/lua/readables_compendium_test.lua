@@ -62,20 +62,20 @@ dofile(READABLES .. "Data/Books.lua")
 dofile(READABLES .. "Data/Places.lua")
 local L = B.L
 -- One readable whose event the data does not name, as an older export left every one.
-SpokenBooksPlaces.books[2878].event = true
+SpokenReadablesPlaces.books[2878].event = true
 
 -- A note on the isle, and one in Warsong Gulch: the shipped data has neither.
 local ISLE_NOTE, GULCH_NOTE = 990001, 990002
 for id, place in pairs({ [ISLE_NOTE] = { "Isle Tide Tables", 9001 }, [GULCH_NOTE] = { "Gulch Orders", 1460 } }) do
-    SpokenBooksData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
-    SpokenBooksData.books[id] = { title = place[1], pages = { id } }
-    SpokenBooksPlaces.books[id] = { kind = "world", type = "note", zones = { place[2] } }
+    SpokenReadablesData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
+    SpokenReadablesData.books[id] = { title = place[1], pages = { id } }
+    SpokenReadablesPlaces.books[id] = { kind = "world", type = "note", zones = { place[2] } }
 end
 -- A note of no known origin: the shipped data places every readable.
 local STRAY_NOTE = 990007
-SpokenBooksData.pages[STRAY_NOTE] = { book = STRAY_NOTE, number = 1, text = "Words of a stray note." }
-SpokenBooksData.books[STRAY_NOTE] = { title = "Stray Note", pages = { STRAY_NOTE } }
-SpokenBooksPlaces.books[STRAY_NOTE] = { kind = "carried", type = "note" }
+SpokenReadablesData.pages[STRAY_NOTE] = { book = STRAY_NOTE, number = 1, text = "Words of a stray note." }
+SpokenReadablesData.books[STRAY_NOTE] = { title = "Stray Note", pages = { STRAY_NOTE } }
+SpokenReadablesPlaces.books[STRAY_NOTE] = { kind = "carried", type = "note" }
 -- Cragmoor's two dungeons and Fenwatch's one, a readable inside each, a plaque outside in Cragmoor,
 -- and an epitaph had inside Fenwatch's dungeon and outside in Cragmoor.
 SpokenDungeons.dungeons[9101] = { zone = 9004, "Hollow Vault", deDE = "Hohles Gewölbe" }
@@ -88,9 +88,9 @@ for id, place in pairs({
     [SIGNPOST] = { "Cragmoor Signpost", "plaque", { 9004 } },
     [EPITAPH] = { "Crypt Epitaph", "grave", { 9004, 9005 }, { 9103 } },
 }) do
-    SpokenBooksData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
-    SpokenBooksData.books[id] = { title = place[1], pages = { id } }
-    SpokenBooksPlaces.books[id] = { kind = "world", type = place[2], zones = place[3], dungeons = place[4] }
+    SpokenReadablesData.pages[id] = { book = id, number = 1, text = "Words of " .. place[1] .. "." }
+    SpokenReadablesData.books[id] = { title = place[1], pages = { id } }
+    SpokenReadablesPlaces.books[id] = { kind = "world", type = place[2], zones = place[3], dungeons = place[4] }
 end
 
 -- Kurdran Wildhammer and Alleria Windrunner stand in Stormwind; A Dusty Unsent Letter is carried
@@ -193,7 +193,7 @@ end
 do
     local function FirstKindIn(mapID)
         for _, type in ipairs(B.TYPES) do
-            for _, place in pairs(SpokenBooksPlaces.books) do
+            for _, place in pairs(SpokenReadablesPlaces.books) do
                 if place.type == type and not place.event and not place.wide then
                     for _, zone in ipairs(place.zones or {}) do
                         if zone == mapID then return L[B.TYPE_NAMES[type].all] end
@@ -533,14 +533,14 @@ Expect("...no line before its words saying it is in the world", (page.body.text.
 Expect("...and its words", page.body.text.text ~= nil and #page.body.text.text > 40, true)
 -- A page that names its reader shows this character's name, class and gender word, as in the game.
 do
-    local kurdranPage = SpokenBooksData.books[KURDRAN].pages[1]
-    local words = SpokenBooksData.pages[kurdranPage].text
-    SpokenBooksData.pages[kurdranPage].text = "Greetings, $gbrother:sister;. You, $N the $c, are ready."
+    local kurdranPage = SpokenReadablesData.books[KURDRAN].pages[1]
+    local words = SpokenReadablesData.pages[kurdranPage].text
+    SpokenReadablesData.pages[kurdranPage].text = "Greetings, $gbrother:sister;. You, $N the $c, are ready."
     stub.world.playerName, stub.world.playerClass, stub.world.unitSex = "Torno", "Warrior", 3
     B:ShowReadables(KURDRAN)
     Expect("...a page's tokens filled in for this character", page.body.text.text,
         "Greetings, sister. You, Torno the Warrior, are ready.")
-    SpokenBooksData.pages[kurdranPage].text = words
+    SpokenReadablesData.pages[kurdranPage].text = words
     stub.world.playerName, stub.world.playerClass, stub.world.unitSex = nil, nil, 2
     B:ShowReadables(KURDRAN)
 end
@@ -890,7 +890,7 @@ end
 -- The readables places.mjs leaves out (the Deprecated and TEST items, whose page is "Missing
 -- Text") are neither listed nor counted, so every count can reach all.
 local placed = 0
-for _ in pairs(SpokenBooksPlaces.books) do placed = placed + 1 end
+for _ in pairs(SpokenReadablesPlaces.books) do placed = placed + 1 end
 
 _, choices = Menu()
 choices[5].func()
@@ -980,9 +980,9 @@ do
     B.ClipFor = function() return {} end
     B.IsQueued = function() return false end
     SpokenReadablesCharacter.read[KURDRAN] = nil
-    B:SyncTo(SpokenBooksData.books[KURDRAN].pages[1], true)
+    B:SyncTo(SpokenReadablesData.books[KURDRAN].pages[1], true)
     Expect("Play in the Compendium does not count for Read Only Once", B:HasReadBook(KURDRAN), false)
-    B:SyncTo(SpokenBooksData.books[KURDRAN].pages[1])
+    B:SyncTo(SpokenReadablesData.books[KURDRAN].pages[1])
     Expect("...a book read in the world does", B:HasReadBook(KURDRAN), true)
     B.source, B.ClipFor, B.IsQueued = source, clipFor, isQueued
 end

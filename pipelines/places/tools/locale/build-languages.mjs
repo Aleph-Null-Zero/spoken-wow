@@ -34,7 +34,7 @@ const read = async (path) => (await readFile(path, "utf8")).replace(/\r\n/g, "\n
 const DATA = join(ROOT, "addons/Spoken_Places/Data");
 const OUT_PATH = join(DATA, "Languages.lua");
 
-// Whether a language has a pack: its page under publishers/zones/ is what says so, since a
+// Whether a language has a pack: its page under publishers/places/ is what says so, since a
 // page is what the release scripts upload from. Not whether the masters are on this disk.
 const AUDIO_PUBLISHED = new Set(
   loadPacks().filter((pack) => pack.section === "places").map((pack) => pack.lang),

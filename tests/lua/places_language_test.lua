@@ -34,9 +34,9 @@ end
 --- Load the addon with these packs installed.
 local function Install(packs)
     Legacy({})
-    _G.SpokenZonesAudioPacks = {}
+    _G.SpokenPlacesAudioPacks = {}
     for _, pack in ipairs(packs) do
-        _G.SpokenZonesAudioPacks[pack.addon] = pack
+        _G.SpokenPlacesAudioPacks[pack.addon] = pack
     end
     return H.LoadPlaces(PLACES)
 end
@@ -46,15 +46,15 @@ local function Pack(addon, language, subzones)
         zones = {}, subzones = { [MAP] = subzones } }
 end
 
-local ENGLISH = Pack("SpokenZonesAudio", "enUS", {
+local ENGLISH = Pack("SpokenPlacesAudio", "enUS", {
     [BOTH] = { file = "en-valley", len = 3 }, [ONLY_ENGLISH] = { file = "en-senjin", len = 3 } })
 ENGLISH.zones[MAP] = { file = "en-durotar", len = 5 }
-local GERMAN = Pack("SpokenZonesAudio_deDE", "deDE", { [BOTH] = { file = "de-valley", len = 3 } })
-local FRENCH = Pack("SpokenZonesAudio_frFR", "frFR", { [ONLY_ENGLISH] = { file = "fr-senjin", len = 3 } })
+local GERMAN = Pack("SpokenPlacesAudio_deDE", "deDE", { [BOTH] = { file = "de-valley", len = 3 } })
+local FRENCH = Pack("SpokenPlacesAudio_frFR", "frFR", { [ONLY_ENGLISH] = { file = "fr-senjin", len = 3 } })
 
 ---------------------------------------------------------------- A. the active pack, then English
 local Z = Install({ ENGLISH, GERMAN, FRENCH })
-stub.SetAddOns({ { folder = "SpokenZonesAudio_deDE", meta = { ["X-SpokenZones-Language"] = "deDE" } } })
+stub.SetAddOns({ { folder = "SpokenPlacesAudio_deDE", meta = { ["X-SpokenPlaces-Language"] = "deDE" } } })
 Z:RegisterLoreData("enUS", "zones", { [MAP] = { name = "Durotar", full = "English zone lore." } })
 Z:RegisterLoreData("enUS", "subzones", { [MAP] = {
     [BOTH] = { full = "English valley lore." }, [ONLY_ENGLISH] = { full = "English village lore." } } })
@@ -69,17 +69,17 @@ Expect("A. captions match the chosen voice, even when reading another language",
 Expect("A. fallback captions match the English audio",
     Z:NewLoreSound(MAP, ONLY_ENGLISH).present.transcript, "English village lore.")
 local _, _, pack = Z:GetAudioClip(MAP, BOTH)
-Expect("A. the active pack answers what it has", pack and pack.addon, "SpokenZonesAudio_deDE")
+Expect("A. the active pack answers what it has", pack and pack.addon, "SpokenPlacesAudio_deDE")
 _, _, pack = Z:GetAudioClip(MAP, ONLY_ENGLISH)
-Expect("A. an entry it lacks falls back to English, not to French", pack and pack.addon, "SpokenZonesAudio")
+Expect("A. an entry it lacks falls back to English, not to French", pack and pack.addon, "SpokenPlacesAudio")
 Voice("deDE", "frFR")
 _, _, pack = Z:GetAudioClip(MAP, ONLY_ENGLISH)
-Expect("A. ...to French where If a Voice Is Missing says French", pack and pack.addon, "SpokenZonesAudio_frFR")
+Expect("A. ...to French where If a Voice Is Missing says French", pack and pack.addon, "SpokenPlacesAudio_frFR")
 Voice("deDE", "none")
 Expect("A. ...and to nothing with Stay Silent", Z:GetAudioClip(MAP, ONLY_ENGLISH), nil)
 Voice("frFR")
 _, _, pack = Z:GetAudioClip(MAP, ONLY_ENGLISH)
-Expect("A. the voice language picks the pack, whatever the text is in", pack and pack.addon, "SpokenZonesAudio_frFR")
+Expect("A. the voice language picks the pack, whatever the text is in", pack and pack.addon, "SpokenPlacesAudio_frFR")
 
 Z = Install({ ENGLISH, FRENCH })
 Voice(nil)
@@ -133,7 +133,7 @@ local function InstallOn(locale, db)
     stub.SetLocale(locale)
     if db ~= lastInstalled then Legacy(db) end
     lastInstalled = db
-    _G.SpokenZonesAudioPacks = {}
+    _G.SpokenPlacesAudioPacks = {}
     return H.LoadPlaces(PLACES, { Languages = READY })
 end
 
@@ -164,7 +164,7 @@ local WITH_ITALIAN = { { code = "enUS", ready = true }, { code = "itIT", ready =
 local function InstallItalian(locale, db)
     stub.SetLocale(locale)
     Legacy(db)
-    _G.SpokenZonesAudioPacks = {}
+    _G.SpokenPlacesAudioPacks = {}
     return H.LoadPlaces(PLACES, { Languages = WITH_ITALIAN })
 end
 Z = InstallItalian("enUS", {})
@@ -235,15 +235,15 @@ Expect("H. Vietnamese, which the page's font cannot draw, is written in Arial Na
 -- The captions set a font file too: a clip of Korean lore on a German client names the one to use.
 local realNormal = _G.GameFontNormal
 _G.GameFontNormal = { GetFont = function() return "Fonts\\FRIZQT__.TTF", 12 end }
-local KOREAN = Pack("SpokenZonesAudio_koKR", "koKR", {})
+local KOREAN = Pack("SpokenPlacesAudio_koKR", "koKR", {})
 KOREAN.zones[MAP] = { file = "ko-durotar", len = 5 }
-local GERMAN_ZONE = Pack("SpokenZonesAudio_deDE", "deDE", {})
+local GERMAN_ZONE = Pack("SpokenPlacesAudio_deDE", "deDE", {})
 GERMAN_ZONE.zones[MAP] = { file = "de-durotar", len = 5 }
 local function Lore(pack)
     Voice(pack.language)
     stub.SetLocale("deDE")
     Legacy({ language = pack.language })
-    _G.SpokenZonesAudioPacks = { [pack.addon] = pack }
+    _G.SpokenPlacesAudioPacks = { [pack.addon] = pack }
     Z = H.LoadPlaces(PLACES, { Languages = { { code = "enUS", ready = true }, { code = "deDE", ready = true },
         { code = "koKR", ready = true } } })
     local clip = Z:NewLoreSound(MAP, nil)

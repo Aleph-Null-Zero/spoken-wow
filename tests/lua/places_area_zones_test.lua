@@ -71,8 +71,8 @@ local function Boot(where, client)
     end
     SpokenPlacesSettings = nil
     SpokenPlacesCharacter = { greeted = true }
-    SpokenZonesAudioPacks = {
-        SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS", zones = {},
+    SpokenPlacesAudioPacks = {
+        SpokenPlacesAudio = { version = 1, addon = "SpokenPlacesAudio", language = "enUS", zones = {},
             subzones = { [HILLSBRAD] = { strahnbrad = { file = "1424\\strahnbrad", len = 40 } },
                 [NEEDLES] = { ["great lift"] = { file = "1441\\great-lift", len = 30 } } } },
     }

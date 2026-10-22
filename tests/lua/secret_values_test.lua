@@ -253,8 +253,8 @@ local function BootPlaces()
     world.playerLevel = 1
     _G.SpokenPlacesSettings = nil
     _G.SpokenPlacesCharacter = {}
-    _G.SpokenZonesAudioPacks = {
-        SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
+    _G.SpokenPlacesAudioPacks = {
+        SpokenPlacesAudio = { version = 1, addon = "SpokenPlacesAudio", language = "enUS",
             zones = { [1411] = { file = "1411\\zone", len = 80 } },
             subzones = { [1411] = { ["valley of trials"] = { file = "1411\\valley", len = 35 } } } },
     }

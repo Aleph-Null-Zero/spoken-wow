@@ -14,7 +14,7 @@ covers how they are made. Spoken has no guide; `docs/spoken/` holds its changelo
   - `Spoken_Developer` is for developers only: the debug log and the Developer page. It is
     not in Spoken's zip and has no store page or release; a developer links it from a checkout
     or builds it with `scripts/developer/package.sh` (`addons/Spoken_Developer/README.md`).
-  - `SpokenZonesAudio` and `SpokenBooksAudio` are sound packs. The quests packs have no folder
+  - `SpokenPlacesAudio` and `SpokenReadablesAudio` are sound packs. The quests packs have no folder
     here; they are built into `pipelines/quests/audio/`, which is gitignored.
 - `apps/web`: the site, `spoken.rusty.one`, a Next.js app backed by Postgres. It imports
   `pipelines/places` and `pipelines/readables` (`@tools/*` and `@readables-tools/*`), so a change there is

@@ -12,9 +12,9 @@
 --
 -- More than one pack can be installed at a time -- one per language, plus the
 -- retired 64 kbps English pack for anyone who kept it. Each registers itself into
--- SpokenZonesAudioPacks (and, while packs built for the old name are still in
--- circulation, ZoneLoreAudioPacks) under its own folder name; this file picks which
--- one to play from.
+-- SpokenPlacesAudioPacks (and, while packs built for the old names are still in
+-- circulation, SpokenZonesAudioPacks or ZoneLoreAudioPacks) under its own folder name;
+-- this file picks which one to play from.
 --
 -- Every pack has the same structure and the same keys, so any installed pack is
 -- playable regardless of the language being read: a player reading German with
@@ -189,10 +189,12 @@ local warnedFormat = {}
 -- narrow the answer to one language.
 function SpokenPlaces:GetAudioPacks(lang)
 	local packs = {}
-	-- Two generations of the registry, newest first. ZoneLoreAudioPacks is what every pack
-	-- published before the rename writes into, and those files are on players' disks and
-	-- cannot be changed, so reading it is permanent. Packs built from now on write only
-	-- SpokenZonesAudioPacks. Both are keyed by folder name, so a pack in both is seen once.
+	-- Three generations of the registry, newest first. SpokenZonesAudioPacks and before it
+	-- ZoneLoreAudioPacks are what packs published under those names write into, and those files
+	-- are on players' disks and cannot be changed, so reading them is permanent. Packs built from
+	-- now on write only SpokenPlacesAudioPacks. All are keyed by folder name, so a pack in two is
+	-- seen once, and a SpokenZonesAudio folder beside its SpokenPlacesAudio replacement is
+	-- not seen at all: the same pack, one release older.
 	local seen = {}
 	local found = false
 
@@ -203,8 +205,8 @@ function SpokenPlaces:GetAudioPacks(lang)
 			return
 		end
 		for name, pack in pairs(registry) do
-			if type(pack) ~= "table" or seen[name] then
-				-- Already taken from the newer registry, or not a pack at all.
+			if type(pack) ~= "table" or seen[name] or seen[(name:gsub("^SpokenZonesAudio", "SpokenPlacesAudio"))] then
+				-- Already taken from a newer registry, replaced by its renamed folder, or not a pack.
 			elseif pack.version == PACK_FORMAT then
 				seen[name] = true
 				found = true
@@ -229,6 +231,7 @@ function SpokenPlaces:GetAudioPacks(lang)
 			end
 		end
 	end
+	Collect(_G.SpokenPlacesAudioPacks)
 	Collect(_G.SpokenZonesAudioPacks)
 	Collect(_G.ZoneLoreAudioPacks)
 

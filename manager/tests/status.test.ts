@@ -54,10 +54,10 @@ describe('computeStatuses', () => {
     expect(all[0]!.installedVersion).toBeUndefined()
     expect(all[0]!.blockedReason).toBeUndefined()
 
-    write(path.join(game.addOnsPath, 'SpokenZonesAudio', 'SpokenZonesAudio.toc'), toc('x', '1.0.0'))
+    write(path.join(game.addOnsPath, 'SpokenPlacesAudio', 'SpokenPlacesAudio.toc'), toc('x', '1.0.0'))
     const again = await computeStatuses(game, catalogOf({ spoken: [rel('spoken', '3.5.0')] }), settings(), state())
-    expect(again.map((s) => s.productId).sort()).toEqual(['spoken', 'zones-audio'])
-    expect(again.find((s) => s.productId === 'zones-audio')).toMatchObject({ state: 'unknown', installedVersion: '1.0.0' })
+    expect(again.map((s) => s.productId).sort()).toEqual(['places-audio', 'spoken'])
+    expect(again.find((s) => s.productId === 'places-audio')).toMatchObject({ state: 'unknown', installedVersion: '1.0.0' })
   })
 
   const versions: [string, string, string][] = [
@@ -109,10 +109,10 @@ describe('computeStatuses', () => {
 
   it('falls back to the manager record when the toc has no usable version', async () => {
     const game = await makeGame(tmpDir())
-    write(path.join(game.addOnsPath, 'SpokenZonesAudio', 'SpokenZonesAudio.toc'), '## Title: x\n')
+    write(path.join(game.addOnsPath, 'SpokenPlacesAudio', 'SpokenPlacesAudio.toc'), '## Title: x\n')
     const st = state()
-    setRecord(st, game.id, 'zones-audio', { version: '1.0.0', folders: ['SpokenZonesAudio'], installedAt: '', tag: 'zones-audio/v1.0.0' })
-    const s = await statusOf(game, catalogOf({ 'zones-audio': [rel('zones-audio', '1.1.0')] }), 'zones-audio', settings(), st)
+    setRecord(st, game.id, 'places-audio', { version: '1.0.0', folders: ['SpokenPlacesAudio'], installedAt: '', tag: 'places-audio/v1.0.0' })
+    const s = await statusOf(game, catalogOf({ 'places-audio': [rel('places-audio', '1.1.0')] }), 'places-audio', settings(), st)
     expect(s).toMatchObject({ state: 'update-available', installedVersion: '1.0.0' })
   })
 

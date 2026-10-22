@@ -9,7 +9,7 @@
 -- A global rather than a private namespace, as the places data files are: a data file
 -- cannot reach into the addon's environment.
 
-SpokenBooksData = {
+SpokenReadablesData = {
 	version = 1,
 
 	index = {

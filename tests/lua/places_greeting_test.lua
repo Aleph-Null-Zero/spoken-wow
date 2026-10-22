@@ -19,8 +19,8 @@ local function Boot(where, level, record)
     stub.world.playerLevel = level
     SpokenPlacesSettings = nil
     SpokenPlacesCharacter = record
-    SpokenZonesAudioPacks = {
-        SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
+    SpokenPlacesAudioPacks = {
+        SpokenPlacesAudio = { version = 1, addon = "SpokenPlacesAudio", language = "enUS",
             zones = { [1411] = { file = "1411\\zone", len = 80 }, [1453] = { file = "1453\\zone", len = 80 } },
             subzones = { [1411] = {
                 ["valley of trials"] = { file = "1411\\valley-of-trials", len = 35 },

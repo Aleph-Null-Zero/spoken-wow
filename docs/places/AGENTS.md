@@ -1,14 +1,13 @@
 # AGENTS.md: Places
 
 The root `AGENTS.md` applies, including its credit, data and versioning rules. This file covers
-only the Places section. Its folders, make targets, database source, site routes and
-`SPOKEN_PLACES_*` variables say places, and so does the addon's `places` source and part key and
-its `SpokenPlaces` namespace, saved variables, frames and table in Spoken's profile (the old
-`SpokenZonesSettings` and `SpokenZonesCharacter` are read once and carried over). Still saying
-zones: the `SpokenZonesAudio` pack folders and `SpokenZonesAudioPacks` global, the
-`X-SpokenZones-*` `.toc` fields, the `zones-audio` and `zones/v*` tags, the
-`publishers/zones/` pages and CurseForge slugs, the `addon=SpokenZones/<version>` envelope field and
-the `z:`/`s:` line ids.
+only the Places section, which was keyed zones until 2026-10. Everything says places now but the
+`z:`/`s:` line ids (frozen), the retired `spoken-zones` CurseForge project and the history. What
+players already have under the old names is still read: `SpokenZonesSettings` and
+`SpokenZonesCharacter` are carried over once, packs released as `SpokenZonesAudio*` (writing
+`SpokenZonesAudioPacks`, `X-SpokenZones-*`) still play until their `SpokenPlacesAudio*` replacement
+is installed, the site redirects `/zones` and reads `!SPOKEN1 zones` envelopes, and the manager
+counts `zones-audio*` releases as the packs'.
 Before changing a part, read its file:
 
 - the module, its settings, languages and voice packs: [ADDON.md](ADDON.md)
@@ -30,8 +29,8 @@ Fix the source and regenerate. Never hand-edit the output.
   (`make places-forever-areas`) come from their own build tools. Run `make places-languages` after
   a change to a translation or to the keys of `Locale/enUS.lua`.
 - `addons/Spoken/Data/Dungeons.lua` comes from `pipelines/lib/dungeons.json` (`make dungeons`).
-- `addons/SpokenZonesAudio/Data/Sounds.lua` is the pack's lookup table (`make places-lookup`).
-- `addons/SpokenZonesAudio/Sounds/` and `build/places/<lang>/` are assembled by `make places-sounds`
+- `addons/SpokenPlacesAudio/Data/Sounds.lua` is the pack's lookup table (`make places-lookup`).
+- `addons/SpokenPlacesAudio/Sounds/` and `build/places/<lang>/` are assembled by `make places-sounds`
   from the live takes. They are not a store.
 
 Kept by hand: `Data/AreaZones.lua`, `pipelines/places/tools/seed/forever-places.json`,
@@ -57,8 +56,8 @@ make lint                 # what CI gates on
 
 - The `Spoken_Places` module ships inside Spoken and follows Spoken's version
   (see root `AGENTS.md`).
-- `SpokenZonesAudio` versions on its own, and its notes go in `docs/places/CHANGELOG.md` under
-  `## <version> — audio`. Language packs use `## <version> — zones-audio-<lang>`.
+- `SpokenPlacesAudio` versions on its own, and its notes go in `docs/places/CHANGELOG.md` under
+  `## <version> — audio`. Language packs use `## <version> — places-audio-<lang>`.
   `changelog_for()` in `scripts/places/release.sh` matches on version and kind, and exits on a
   missing or duplicate section.
 - Do not re-cut a pack for a change to the module alone. A pack upload takes hours.

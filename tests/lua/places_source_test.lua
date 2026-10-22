@@ -253,7 +253,7 @@ _G.Spoken = saved
 -- why the packs kept their names through the rename. The table is being renamed, so both
 -- are read, and a pack that writes into both is listed once.
 local function Packs(spokenZones, zoneLore, legacy)
-	_G.SpokenZonesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData = spokenZones, zoneLore, legacy
+	_G.SpokenPlacesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData = spokenZones, zoneLore, legacy
 	local Z = select(2, Boot())
 	return Z:GetAudioPacks(), Z
 end
@@ -267,26 +267,39 @@ local found = Packs(nil, { ZoneLoreAudio = Pack("ZoneLoreAudio") }, nil)
 Expect("a pack in the inherited registry is found", #found, 1)
 Expect("...by its folder", found[1] and found[1].addon, "ZoneLoreAudio")
 
-found = Packs({ SpokenZonesAudio = Pack("SpokenZonesAudio") }, nil, nil)
+found = Packs({ SpokenPlacesAudio = Pack("SpokenPlacesAudio") }, nil, nil)
 Expect("a pack in the new registry is found", #found, 1)
-Expect("...by its folder", found[1] and found[1].addon, "SpokenZonesAudio")
+Expect("...by its folder", found[1] and found[1].addon, "SpokenPlacesAudio")
 
 -- A pack that ended up in both registries -- one written by an older build of this
 -- pipeline, which wrote both -- is one installed folder and must be offered once.
-local shared = Pack("SpokenZonesAudio")
-found = Packs({ SpokenZonesAudio = shared }, { SpokenZonesAudio = shared }, nil)
+local shared = Pack("SpokenPlacesAudio")
+found = Packs({ SpokenPlacesAudio = shared }, { SpokenPlacesAudio = shared }, nil)
 Expect("a pack in both registries is listed once", #found, 1)
 
-found = Packs({ SpokenZonesAudio = Pack("SpokenZonesAudio", 128) },
+found = Packs({ SpokenPlacesAudio = Pack("SpokenPlacesAudio", 128) },
 	{ ZoneLoreAudio64 = Pack("ZoneLoreAudio64", 64) }, nil)
 Expect("two packs across the two registries are both found", #found, 2)
-Expect("...still ordered by bitrate", found[1] and found[1].addon, "SpokenZonesAudio")
+Expect("...still ordered by bitrate", found[1] and found[1].addon, "SpokenPlacesAudio")
 
 -- The pre-registry global, which only ever named one folder.
 found = Packs(nil, nil, Pack("ZoneLoreAudio"))
 Expect("a pack predating either registry is still found", #found, 1)
 
-_G.SpokenZonesAudioPacks, _G.ZoneLoreAudioData = nil, nil
+-- Packs released while the module was Zones write SpokenZonesAudioPacks, and are read too; one
+-- beside its renamed replacement is the same pack a release older, and is not.
+_G.SpokenZonesAudioPacks = { SpokenZonesAudio_deDE = Pack("SpokenZonesAudio_deDE") }
+found = Packs(nil, nil, nil)
+Expect("a pack released as SpokenZonesAudio is found", found[1] and found[1].addon, "SpokenZonesAudio_deDE")
+_G.SpokenZonesAudioPacks.SpokenZonesAudio = Pack("SpokenZonesAudio")
+found = Packs({ SpokenPlacesAudio_deDE = Pack("SpokenPlacesAudio_deDE") }, nil, nil)
+local names = {}
+for _, pack in ipairs(found) do table.insert(names, pack.addon) end
+table.sort(names)
+Expect("...but not beside its SpokenPlacesAudio replacement", table.concat(names, " "), "SpokenPlacesAudio_deDE SpokenZonesAudio")
+_G.SpokenZonesAudioPacks = nil
+
+_G.SpokenPlacesAudioPacks, _G.ZoneLoreAudioData = nil, nil
 _G.ZoneLoreAudioPacks = savedPacks
 
 ---------------------------------------------------------------- the login greeting
@@ -329,21 +342,21 @@ _G.SpokenPlacesCharacter = nil
 -- The shipped Data/Sounds.lua, loaded for real. Everything above uses hand-built tables, so
 -- nothing until here notices if the generator writes a registry name the addon does not read
 -- -- which is exactly what a rename does, and the generator is the half that moves.
-local PACK_FOLDER = "SpokenZonesAudio"
-local packSaved = { _G.SpokenZonesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData }
-_G.SpokenZonesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData = nil, nil, nil
+local PACK_FOLDER = "SpokenPlacesAudio"
+local packSaved = { _G.SpokenPlacesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData }
+_G.SpokenPlacesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData = nil, nil, nil
 
 stub.SetAddOns({ { folder = PACK_FOLDER, meta = {
-    ["X-SpokenZones-Quality"] = "high",
-    ["X-SpokenZones-Bitrate"] = "128",
-    ["X-SpokenZones-Language"] = "enUS",
+    ["X-SpokenPlaces-Quality"] = "high",
+    ["X-SpokenPlaces-Bitrate"] = "128",
+    ["X-SpokenPlaces-Language"] = "enUS",
     ["Version"] = "2.0.0",
 } } })
-local shipped = assert(loadfile(here .. "/../../addons/SpokenZonesAudio/Data/Sounds.lua"))
+local shipped = assert(loadfile(here .. "/../../addons/SpokenPlacesAudio/Data/Sounds.lua"))
 shipped(PACK_FOLDER)
 
-Expect("the shipped pack registers itself", type(_G.SpokenZonesAudioPacks), "table")
-local registered = _G.SpokenZonesAudioPacks and _G.SpokenZonesAudioPacks[PACK_FOLDER]
+Expect("the shipped pack registers itself", type(_G.SpokenPlacesAudioPacks), "table")
+local registered = _G.SpokenPlacesAudioPacks and _G.SpokenPlacesAudioPacks[PACK_FOLDER]
 Expect("...under its folder name", registered and registered.addon, PACK_FOLDER)
 Expect("...in a format this build reads", registered and registered.version, 1)
 Expect("...reading its quality out of the .toc", registered and registered.quality, "high")
@@ -354,9 +367,9 @@ Expect("...with lore to play", registered and registered.zones and registered.zo
 Expect("...and nowhere else", _G.ZoneLoreAudioPacks, nil)
 Expect("...including the pre-registry global", _G.ZoneLoreAudioData, nil)
 
-found = Packs(_G.SpokenZonesAudioPacks, nil, nil)
+found = Packs(_G.SpokenPlacesAudioPacks, nil, nil)
 Expect("the addon finds the shipped pack", #found, 1)
-_G.SpokenZonesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData =
+_G.SpokenPlacesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData =
     packSaved[1], packSaved[2], packSaved[3]
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end

@@ -67,7 +67,7 @@ Text. The stories are written on the site in that language, and the interface st
    `luajit tests/lua/settings_fit_test.lua <code>`.
 
 Voice. Cut the takes on the site, then follow "Languages" in [VOICE.md](VOICE.md). Add the
-language's page under `publishers/zones/` (the project id comes from creating it on CurseForge by
+language's page under `publishers/places/` (the project id comes from creating it on CurseForge by
 hand), its row in `PACK_PAGES` in `addons/Spoken/API.lua`, and run `tests/lua/packs_test.lua`.
 
 ## Finding what is missing

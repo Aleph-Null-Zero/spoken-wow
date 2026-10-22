@@ -2157,7 +2157,7 @@ git commit -m "Books packs: pages English lacks, placed in the pack, and every t
 
 ```lua
 local MINTED = "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"
-local PACK_ES = { addon = "SpokenBooksAudio_esES", language = "esES",
+local PACK_ES = { addon = "SpokenReadablesAudio_esES", language = "esES",
     pages = { [MINTED] = { file = MINTED, len = 2, text = "Trotamundos." } },
     index = {}, loose = {},
     extraIndex = { ["Instrucciones"] = { [1] = { [stub.Checksum("Trotamundos.")] = MINTED } } },

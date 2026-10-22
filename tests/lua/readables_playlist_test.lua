@@ -13,9 +13,9 @@ local Expect, Failures = H.Expecter(print)
 local REGISTRY = { 261, 262, 263, 265 }
 
 -- A pack covering three of its four pages, so the fourth exercises the skip.
-_G.SpokenBooksAudioPacks = {
-    SpokenBooksAudio = {
-        version = 1, addon = "SpokenBooksAudio", quality = "high", bitrate = 128,
+_G.SpokenReadablesAudioPacks = {
+    SpokenReadablesAudio = {
+        version = 1, addon = "SpokenReadablesAudio", quality = "high", bitrate = 128,
         pages = {
             [261] = { file = "261", len = 30.5 },
             [262] = { file = "262", len = 41.0 },
@@ -78,10 +78,10 @@ local clip = B:ClipFor(261)
 Expect("a page has a clip when the pack carries it", clip ~= nil, true)
 Expect("...keyed the way the corpus names the line", clip.key, "b:261")
 Expect("...pointing into the pack's own folder",
-    clip.path, [[Interface\AddOns\SpokenBooksAudio\Sounds\261.mp3]])
+    clip.path, [[Interface\AddOns\SpokenReadablesAudio\Sounds\261.mp3]])
 Expect("...carrying the recorded duration", clip.length, 30.5)
 Expect("...carrying the first page's saved captions", clip.present.transcript,
-    SpokenBooksData.pages[261].text)
+    SpokenReadablesData.pages[261].text)
 Expect("...with readable text even before opening the book", #clip.present.transcript > 0, true)
 Expect("...under what it is, as the Compendium sorts it, as a speaker over a quest", clip.present.header, "Book")
 Expect("...named by the book, whatever page of it this is: the book is one line", clip.present.label,
@@ -134,8 +134,8 @@ Expect("...the rest to follow it", Same(Coming(), { 262, 265 }), true)
 Expect("turning to a page still to come changes nothing", B:SyncTo(262), 0)
 Expect("...and leaves the queue alone", Same(QueuedPages(), { 261 }), true)
 Expect("...and leaves the current clip's captions on its own page",
-    Spoken:GetQueue()[1].present.transcript, SpokenBooksData.pages[261].text)
-Expect("the next page carries its own captions", B:ClipFor(262).present.transcript, SpokenBooksData.pages[262].text)
+    Spoken:GetQueue()[1].present.transcript, SpokenReadablesData.pages[261].text)
+Expect("the next page carries its own captions", B:ClipFor(262).present.transcript, SpokenReadablesData.pages[262].text)
 Expect("turning to the last page also changes nothing", B:SyncTo(265), 0)
 
 ---------------------------------------------------------------- a page finishing
@@ -237,7 +237,7 @@ Expect("the next page's bar starts where the last page's ended",
     secondPage.pageId .. " " .. tostring(secondPage.span and secondPage.span.before), "262 30.5")
 B:StopReading()
 -- A page with no length: the bar runs across each page, not a wrong share of the book.
-local pages = SpokenBooksAudioPacks.SpokenBooksAudio.pages
+local pages = SpokenReadablesAudioPacks.SpokenReadablesAudio.pages
 pages[262].len = 0
 B:PlayFrom(261)
 Expect("a page with no length leaves the bar to each page", Spoken:GetQueue()[1].span, nil)
@@ -275,7 +275,7 @@ SpokenReadablesSettings.bookAsOneLine = true
 B:StopReading()
 
 ---------------------------------------------------------------- with no pack at all
-_G.SpokenBooksAudioPacks = {}
+_G.SpokenReadablesAudioPacks = {}
 Expect("no pack means no clips", B:ClipFor(261), nil)
 Expect("...and a message that names the download rather than blaming the page",
     B:DescribeMissingAudio(), "No Readables voice pack is installed.")

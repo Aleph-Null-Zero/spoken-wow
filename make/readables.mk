@@ -124,9 +124,9 @@ package: ## Zip the addon into dist/ (for a release)
 # -X drops the extended attributes macOS attaches, so the zip is the same bytes wherever it
 # is built.
 #
-# ZIPPED FROM INSIDE addons/, so the archive's top level is SpokenBooksAudio/ and it
+# ZIPPED FROM INSIDE addons/, so the archive's top level is SpokenReadablesAudio/ and it
 # unpacks straight into a client's AddOns directory. Zipped from the repo root instead it
-# carries an addons/ prefix, and unzipping lands it at AddOns/addons/SpokenBooksAudio,
+# carries an addons/ prefix, and unzipping lands it at AddOns/addons/SpokenReadablesAudio,
 # where the client will never look.
 # From the database, against production's data: the lookup table is rebuilt here rather than
 # on the droplet after every generation, which is what the site used to do.
@@ -136,15 +136,15 @@ package-audio: check-synced sounds lookup ## Zip the sound pack into dist/ (LOCA
 else
 package-audio: check-synced sounds lookup
 	@mkdir -p dist
-	@version=$$(sed -n 's/^## Version: //p' addons/SpokenBooksAudio/SpokenBooksAudio.toc); \
-	 zip_path="$$PWD/dist/SpokenBooksAudio-$$version.zip"; \
+	@version=$$(sed -n 's/^## Version: //p' addons/SpokenReadablesAudio/SpokenReadablesAudio.toc); \
+	 zip_path="$$PWD/dist/SpokenReadablesAudio-$$version.zip"; \
 	 rm -f "$$zip_path"; \
-	 (cd addons && zip -r -0 -q -X "$$zip_path" SpokenBooksAudio \
+	 (cd addons && zip -r -0 -q -X "$$zip_path" SpokenReadablesAudio \
 	   -x '*.DS_Store' '*/.*'); \
-	 rm -rf dist/SpokenBooksAudio && \
-	 rsync -a --exclude '.[!.]*' addons/SpokenBooksAudio/ dist/SpokenBooksAudio/ && \
-	 touch dist/SpokenBooksAudio/SpokenBooksAudio.toc || exit 1; \
-	 printf '%s\n' "built dist/SpokenBooksAudio-$$version.zip"; \
+	 rm -rf dist/SpokenReadablesAudio && \
+	 rsync -a --exclude '.[!.]*' addons/SpokenReadablesAudio/ dist/SpokenReadablesAudio/ && \
+	 touch dist/SpokenReadablesAudio/SpokenReadablesAudio.toc || exit 1; \
+	 printf '%s\n' "built dist/SpokenReadablesAudio-$$version.zip"; \
 	 printf '  %s mp3, %s\n' \
 	   "$$(unzip -Z1 "$$zip_path" | grep -c '\.mp3$$')" \
 	   "$$(du -h "$$zip_path" | cut -f1)"; \
@@ -161,8 +161,8 @@ endif
 # scripts/readables/package-audio.sh copies spoken-books-<locale>.tga over it.
 icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/readables/assets (needs ffmpeg)
 	@python3 pipelines/places/tools/make-icon.py pipelines/readables/assets/spoken-books-512.png addons/Spoken_Readables/Textures/AddonIcon.tga
-	@cp addons/Spoken_Readables/Textures/AddonIcon.tga addons/SpokenBooksAudio/Textures/AddonIcon.tga
-	@echo "==> copied to addons/SpokenBooksAudio/Textures/AddonIcon.tga"
+	@cp addons/Spoken_Readables/Textures/AddonIcon.tga addons/SpokenReadablesAudio/Textures/AddonIcon.tga
+	@echo "==> copied to addons/SpokenReadablesAudio/Textures/AddonIcon.tga"
 	@for png in pipelines/readables/assets/spoken-books-??[A-Z][A-Z]-512.png; do python3 pipelines/places/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 deploy: ## Symlink the addon into a client (CLIENT=era|anniversary|forever)
@@ -203,7 +203,7 @@ release-audio: ## Upload the sound pack (LOCALE=xx for a language's)
 # The whole pack release, from production's data to the stores, with one question before
 # anything is uploaded. Each step is its own target and still runs alone; this is their order.
 #
-# The version is SpokenBooksAudio.toc's, so bump it and add its `## <version>` section to
+# The version is SpokenReadablesAudio.toc's, so bump it and add its `## <version>` section to
 # docs/readables/CHANGELOG.md first; both uploads quote that section. The pack goes to CurseForge
 # only -- Wago answers 413 to a file this size (scripts/lib/wago.sh) -- and to GitHub, which
 # is where a Wago player gets it.

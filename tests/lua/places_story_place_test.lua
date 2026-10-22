@@ -21,8 +21,8 @@ local function Boot()
     stub.world.playerLevel = 40
     SpokenPlacesSettings = nil
     SpokenPlacesCharacter = { greeted = true }
-    SpokenZonesAudioPacks = {
-        SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS", zones = {},
+    SpokenPlacesAudioPacks = {
+        SpokenPlacesAudio = { version = 1, addon = "SpokenPlacesAudio", language = "enUS", zones = {},
             subzones = { [NEEDLES] = { ["razorfen downs"] = { file = "1441\\razorfen-downs", len = 40 } } } },
     }
     local env = stub.LoadSpoken(SPOKEN)

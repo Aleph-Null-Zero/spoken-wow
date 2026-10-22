@@ -15,14 +15,14 @@ local function Install(packs, locale)
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetLocale(locale or "enUS")
     _G.SpokenReadablesSettings = nil
-    _G.SpokenBooksAudioPacks = {}
+    _G.SpokenReadablesAudioPacks = {}
     for _, pack in ipairs(packs) do
-        _G.SpokenBooksAudioPacks[pack.addon] = { version = 1, addon = pack.addon,
+        _G.SpokenReadablesAudioPacks[pack.addon] = { version = 1, addon = pack.addon,
             language = pack.language, pages = pack.pages, index = pack.index, loose = pack.loose,
             extraIndex = pack.extraIndex, extraLoose = pack.extraLoose, places = pack.places,
             books = pack.books }
     end
-    _G.SpokenBooksData = {
+    _G.SpokenReadablesData = {
         version = 1,
         index = { ["Registry"] = { [1] = {} } },
         loose = {},
@@ -38,16 +38,16 @@ local function Install(packs, locale)
     return B
 end
 
-local ENGLISH = { addon = "SpokenBooksAudio", pages = {
+local ENGLISH = { addon = "SpokenReadablesAudio", pages = {
     [PAGE] = { file = "15", len = 2 }, [ONLY_ENGLISH] = { file = "16", len = 2 } } }
-local GERMAN = { addon = "SpokenBooksAudio_deDE", language = "deDE", pages = {
+local GERMAN = { addon = "SpokenReadablesAudio_deDE", language = "deDE", pages = {
     [PAGE] = { file = "15", len = 2 } } }
 
 ---------------------------------------------------------------- A. the install that exists today
 local B = Install({ ENGLISH })
 local clip = B:ClipFor(PAGE)
 Expect("A. an English pack declaring nothing reads on an English client",
-    clip and clip.path, [[Interface\AddOns\SpokenBooksAudio\Sounds\15.mp3]])
+    clip and clip.path, [[Interface\AddOns\SpokenReadablesAudio\Sounds\15.mp3]])
 Expect("A. ...as English", clip and clip.language, "enUS")
 B = Install({ ENGLISH }, "deDE")
 Expect("A. a German client with only English packs still hears English",
@@ -56,7 +56,7 @@ Expect("A. a German client with only English packs still hears English",
 ---------------------------------------------------------------- B. the voice language, then the fallback
 B = Install({ ENGLISH, GERMAN }, "deDE")
 Expect("B. a German client hears the German pack", B:ClipFor(PAGE).path,
-    [[Interface\AddOns\SpokenBooksAudio_deDE\Sounds\15.mp3]])
+    [[Interface\AddOns\SpokenReadablesAudio_deDE\Sounds\15.mp3]])
 Expect("B. a page the German pack lacks falls back to English", B:ClipFor(ONLY_ENGLISH).language, "enUS")
 SpokenReadablesSettings.fallbackLanguage = "none"
 Expect("B. ...and is silent with no fallback", B:ClipFor(ONLY_ENGLISH), nil)
@@ -75,7 +75,7 @@ Expect("C. ...and German once a German pack is installed", B:GetPackLanguage(), 
 ---------------------------------------------------------------- D. the page on screen, in the client's words
 local GERMAN_TEXT = "Das Register der Stadt Hillsbrad."
 local GERMAN_INDEX = { ["Stadtregister"] = { [1] = { [B:ChecksumOf(GERMAN_TEXT)] = PAGE } } }
-local INDEXED = { addon = "SpokenBooksAudio_deDE", language = "deDE", pages = GERMAN.pages,
+local INDEXED = { addon = "SpokenReadablesAudio_deDE", language = "deDE", pages = GERMAN.pages,
     index = GERMAN_INDEX, loose = {} }
 B = Install({ ENGLISH }, "deDE")
 stub.ShowPage({ title = "Stadtregister", number = 1, text = GERMAN_TEXT })
@@ -97,11 +97,11 @@ Expect("D. choosing an English voice uses the saved English words",
 B = Install({ ENGLISH, INDEXED }, "enUS")
 stub.ShowPage({ title = "Stadtregister", number = 1, text = GERMAN_TEXT })
 Expect("D. ...and only on a German client", B:PageOnScreen(), nil)
-B = Install({ ENGLISH, { addon = "SpokenBooksAudio_deDE", language = "deDE", pages = GERMAN.pages,
+B = Install({ ENGLISH, { addon = "SpokenReadablesAudio_deDE", language = "deDE", pages = GERMAN.pages,
     index = {}, loose = { [B:ChecksumOf(GERMAN_TEXT)] = PAGE } } }, "deDE")
 stub.ShowPage({ title = "Ein anderer Titel", number = 1, text = GERMAN_TEXT })
 Expect("D. a German checksum no other page shares is found under any title", B:PageOnScreen(), PAGE)
-B = Install({ ENGLISH, { addon = "SpokenBooksAudio_frFR", language = "frFR", pages = GERMAN.pages,
+B = Install({ ENGLISH, { addon = "SpokenReadablesAudio_frFR", language = "frFR", pages = GERMAN.pages,
     index = GERMAN_INDEX, loose = {} } }, "deDE")
 stub.ShowPage({ title = "Stadtregister", number = 1, text = GERMAN_TEXT })
 Expect("D. a pack in another language is not asked", B:PageOnScreen(), nil)
@@ -110,7 +110,7 @@ Expect("D. a pack in another language is not asked", B:PageOnScreen(), nil)
 B = Install({ ENGLISH, GERMAN }, "deDE")
 Expect("E. a translated page with no text never shows English under German audio",
     B:ClipFor(PAGE).present.transcript, nil)
-SpokenBooksAudioPacks.SpokenBooksAudio_deDE.pages = { [PAGE] = {
+SpokenReadablesAudioPacks.SpokenReadablesAudio_deDE.pages = { [PAGE] = {
     file = "15", len = 2, text = "Gespeicherte deutsche Seite." } }
 Expect("E. new packs provide captions before a page is opened",
     B:ClipFor(PAGE).present.transcript, "Gespeicherte deutsche Seite.")
@@ -128,12 +128,12 @@ _G.Spoken, _G.SpokenEnv = nil, nil
 ---------------------------------------------------------------- F. a language no client runs in
 -- Italian has no index of its own: the page is found by the English client's and read from
 -- the Italian pack, captions included.
-local ITALIAN = { addon = "SpokenBooksAudio_itIT", language = "itIT", pages = {
+local ITALIAN = { addon = "SpokenReadablesAudio_itIT", language = "itIT", pages = {
     [PAGE] = { file = "15", len = 2, text = "Prima pagina italiana." } } }
 B = Install({ ENGLISH, ITALIAN }, "enUS")
 Expect("F. on Auto an English client hears English", B:GetVoiceLanguage(), "enUS")
 SpokenReadablesSettings.voiceLanguage = "itIT"
-SpokenBooksData.index["Registry"][1][B:ChecksumOf("English first page.")] = PAGE
+SpokenReadablesData.index["Registry"][1][B:ChecksumOf("English first page.")] = PAGE
 stub.ShowPage({ title = "Registry", number = 1, text = "English first page." })
 Expect("F. the English index finds the page", B:PageOnScreen(), PAGE)
 Expect("F. ...and the Italian pack reads it", B:ClipFor(PAGE).present.transcript, "Prima pagina italiana.")
@@ -147,7 +147,7 @@ do
     local TEXT = "Trotamundos."
     local sum = Install({}, "esES"):ChecksumOf(TEXT)
     local function Pack(extra)
-        local pack = { addon = "SpokenBooksAudio_esES", language = "esES",
+        local pack = { addon = "SpokenReadablesAudio_esES", language = "esES",
             pages = { [MINTED] = { file = MINTED, len = 2, text = TEXT } },
             extraIndex = { ["Instrucciones"] = { [1] = { [sum] = MINTED } } },
             extraLoose = {},
@@ -163,7 +163,7 @@ do
     Expect("G. ...and has its audio", B:HasAudio(MINTED), true)
     local minted = B:ClipFor(MINTED)
     Expect("G. ...read from the pack's own file", minted and minted.path,
-        [[Interface\AddOns\SpokenBooksAudio_esES\Sounds\]] .. MINTED .. ".mp3")
+        [[Interface\AddOns\SpokenReadablesAudio_esES\Sounds\]] .. MINTED .. ".mp3")
     Expect("G. ...queued under its lineId", minted and minted.key, "b:" .. MINTED)
     Expect("G. ...titled as the client shows it", (B:ClipFor(MINTED) or {}).present.label, "Instrucciones")
     Expect("G. ...placed in the pack's book", B:PlaceOf(MINTED), "n1")
@@ -196,7 +196,7 @@ do
     Expect("G. ...whichever page it is asked from", table.concat(B:BookOf(MINTED).pages, ","),
         PAGE .. "," .. ONLY_ENGLISH .. "," .. MINTED)
     Expect("G. ...with the corpus's title", B:BookOf(MINTED).title, "Registry")
-    Expect("G. ...and the corpus's list left alone", #SpokenBooksData.books[1].pages, 2)
+    Expect("G. ...and the corpus's list left alone", #SpokenReadablesData.books[1].pages, 2)
     both.books[1].pages = { MINTED, ONLY_ENGLISH }
     Expect("G. a page both list is not repeated", #B:BookOf(PAGE).pages, 3)
 end
@@ -235,7 +235,7 @@ end
 
 ---------------------------------------------------------------- the words a token page's clip says
 B = Install({ ENGLISH })
-SpokenBooksData.pages[PAGE].text = "Greetings, $gbrother:sister;. $N, you are ready."
+SpokenReadablesData.pages[PAGE].text = "Greetings, $gbrother:sister;. $N, you are ready."
 Expect("an English caption's tokens are subtitled as the clip says them",
     B:ClipFor(PAGE).present.transcript, "Greetings, brother. Adventurer, you are ready.")
 

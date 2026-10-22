@@ -27,7 +27,7 @@ import { fileURLToPath } from "node:url";
 
 // The monorepo root, two levels up from scripts/places/.
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const SOURCE_DIR = join(ROOT, "publishers/zones");
+const SOURCE_DIR = join(ROOT, "publishers/places");
 
 const decodeEntities = (text) =>
   text

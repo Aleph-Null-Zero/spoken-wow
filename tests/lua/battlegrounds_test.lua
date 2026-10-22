@@ -180,7 +180,7 @@ end
 B:InitDB()
 B:SetupSource()
 dofile(READABLES .. "Data/Books.lua")
-_G.SpokenBooksAudioPacks = { SpokenBooksAudio = { version = 1, addon = "SpokenBooksAudio", language = "enUS",
+_G.SpokenReadablesAudioPacks = { SpokenReadablesAudio = { version = 1, addon = "SpokenReadablesAudio", language = "enUS",
     pages = { [261] = { file = "261", len = 30 } } } }
 _G.SpokenEnv.Addon.db.profile.Audio.ReadInBattlegrounds = false
 instanceType = "pvp"

@@ -63,18 +63,28 @@ stub.FireEvent("PLAYER_ENTERING_WORLD")
 Expect("...and a second loading screen does not replace it", B0.source, claimed)
 
 -- The test line plays a page ClipFor can place, whichever key the pack lists first.
-_G.SpokenBooksData = { version = 1, index = {}, loose = {}, books = { [1] = { title = "T", pages = { 15 } } },
+_G.SpokenReadablesData = { version = 1, index = {}, loose = {}, books = { [1] = { title = "T", pages = { 15 } } },
     pages = { [15] = { book = 1, number = 1, text = "x" } } }
 -- Packs are tried in addon-name order: the unplaceable key is alone in the first.
-_G.SpokenBooksAudioPacks = {
-    SpokenBooksAudio_a = { version = 1, addon = "SpokenBooksAudio_a", pages = {
+_G.SpokenReadablesAudioPacks = {
+    SpokenReadablesAudio_a = { version = 1, addon = "SpokenReadablesAudio_a", pages = {
         ["n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"] = { file = "n", len = 1 } } },
-    SpokenBooksAudio_b = { version = 1, addon = "SpokenBooksAudio_b", pages = { [15] = { file = "15", len = 1 } } } }
+    SpokenReadablesAudio_b = { version = 1, addon = "SpokenReadablesAudio_b", pages = { [15] = { file = "15", len = 1 } } } }
 B0:PlayTestLine()
 local queued = _G.Spoken:GetQueue()
 Expect("the test line skips a page nothing places and queues one that is placed",
     queued[1] and queued[1].key, "b:15")
-_G.SpokenBooksData, _G.SpokenBooksAudioPacks = nil, nil
+_G.SpokenReadablesData, _G.SpokenReadablesAudioPacks = nil, nil
+
+-- Packs released as SpokenBooksAudio write SpokenBooksAudioPacks, and are read too, unless their
+-- SpokenReadablesAudio replacement is installed beside them.
+_G.SpokenBooksAudioPacks = { SpokenBooksAudio = { version = 1, pages = {} }, SpokenBooksAudio_deDE = { version = 1, pages = {} } }
+_G.SpokenReadablesAudioPacks = { SpokenReadablesAudio = { version = 1, pages = {} } }
+local listed = {}
+for _, pack in ipairs(B0:GetAudioPacks()) do table.insert(listed, pack.addon) end
+Expect("a pack released as SpokenBooksAudio is found, unless replaced", table.concat(listed, " "),
+    "SpokenBooksAudio_deDE SpokenReadablesAudio")
+_G.SpokenBooksAudioPacks, _G.SpokenReadablesAudioPacks = nil, nil
 
 local env, B = Boot()
 local Spoken = _G.Spoken

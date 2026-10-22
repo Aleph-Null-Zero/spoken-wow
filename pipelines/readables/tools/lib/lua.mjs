@@ -136,7 +136,7 @@ export function booksLua(entries) {
     books.get(entry.bookId).pages.push(entry.pageId);
   }
 
-  const lines = [HEADER, "SpokenBooksData = {", "\tversion = 1,", "", ...indexLua(pageIndex(sorted))];
+  const lines = [HEADER, "SpokenReadablesData = {", "\tversion = 1,", "", ...indexLua(pageIndex(sorted))];
 
   lines.push("", "\tpages = {");
   for (const entry of [...sorted].sort((a, b) => a.pageId - b.pageId)) {

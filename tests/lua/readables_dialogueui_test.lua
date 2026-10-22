@@ -12,9 +12,9 @@ local Expect, Failures = H.Expecter(print)
 -- The Hillsbrad Town Registry: four real pages of one real book, 261 through 265; a pack with
 -- the first three, and the first page of A Dusty Unsent Letter (16).
 local REGISTRY = { 261, 262, 263, 265 }
-_G.SpokenBooksAudioPacks = {
-    SpokenBooksAudio = {
-        version = 1, addon = "SpokenBooksAudio", quality = "high", bitrate = 128,
+_G.SpokenReadablesAudioPacks = {
+    SpokenReadablesAudio = {
+        version = 1, addon = "SpokenReadablesAudio", quality = "high", bitrate = 128,
         pages = { [261] = { file = "261", len = 30.5 }, [262] = { file = "262", len = 41.0 },
             [263] = { file = "263", len = 20.0 }, [16] = { file = "16", len = 12.0 } },
     },
@@ -243,7 +243,7 @@ Expect("...Skip and Play moving up to the close button", row.skip.anchor.relativ
 
 ---------------------------------------------------------------- a book only a pack has
 local MINTED = "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"
-_G.SpokenBooksAudioPacks.SpokenBooksAudio_zz = { version = 1, addon = "SpokenBooksAudio_zz",
+_G.SpokenReadablesAudioPacks.SpokenReadablesAudio_zz = { version = 1, addon = "SpokenReadablesAudio_zz",
     pages = { [MINTED] = { file = MINTED, len = 5 } },
     places = { [MINTED] = { book = "n1", number = 1 } },
     books = { n1 = { pages = { MINTED } } } }
@@ -254,7 +254,7 @@ Expect("...and has a report", row.report:IsShown(), true)
 row.report.scripts.OnClick(row.report)
 box = Spoken.ContributeBox
 Expect("...to its key", box and box.editBox:GetText(), B:ReportURL(MINTED))
-_G.SpokenBooksAudioPacks.SpokenBooksAudio_zz = nil
+_G.SpokenReadablesAudioPacks.SpokenReadablesAudio_zz = nil
 
 ---------------------------------------------------------------- closing
 view:Hide()

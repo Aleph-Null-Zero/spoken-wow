@@ -597,13 +597,27 @@ end
 -- Each one found is switched off for the next login, and the player is offered the reload that
 -- finishes it. The Forever client accepts DisableAddOn from an addon (checked 2026-10-04); the
 -- pcall is for a client that does not, where the popup still names the folders to delete.
+--
+-- The sound packs were SpokenZonesAudio* and SpokenBooksAudio* before their modules were Places and
+-- Readables. One is old only once its SpokenPlacesAudio* or SpokenReadablesAudio* replacement is
+-- loaded beside it, the same pack one release later; alone it is the player's pack, and stays.
 local OLD_FOLDERS = { "SpokenPlayer", "VoiceOverRedux", "ZoneLore", "SpokenQuests", "SpokenZones", "SpokenBooks",
     "Spoken_Books", "Spoken_Zones", "Spoken_Writings" }
+local RENAMED_PACKS = { SpokenZonesAudio = "SpokenPlacesAudio", SpokenBooksAudio = "SpokenReadablesAudio" }
 function Addon:FindOldFolders()
     local found = {}
     if not IsAddOnLoaded then return found end
     for _, folder in ipairs(OLD_FOLDERS) do
         if IsAddOnLoaded(folder) then table.insert(found, folder) end
+    end
+    local count = (C_AddOns and C_AddOns.GetNumAddOns) or GetNumAddOns
+    local info = (C_AddOns and C_AddOns.GetAddOnInfo) or GetAddOnInfo
+    for index = 1, (count and info) and count() or 0 do
+        local folder = info(index)
+        for old, new in pairs(RENAMED_PACKS) do
+            local rest = type(folder) == "string" and folder:match("^" .. old .. "(.*)$")
+            if rest and IsAddOnLoaded(folder) and IsAddOnLoaded(new .. rest) then table.insert(found, folder) end
+        end
     end
     return found
 end

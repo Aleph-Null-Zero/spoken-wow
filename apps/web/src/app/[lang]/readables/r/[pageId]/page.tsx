@@ -13,7 +13,7 @@ import { Contained } from "@/components/Width";
 /**
  * One page of one book, and the form to complain about it.
  *
- * Where SpokenBooks' Report button sends people. The client cannot open a URL or post
+ * Where Spoken Readables' Report button sends people. The client cannot open a URL or post
  * anywhere, so what the addon can offer is an address to copy, and this is the page at the
  * end of it: the words they were just reading, the narration they were just hearing, and the
  * form already pointed at the right line -- which is the whole saving over telling them to
@@ -26,7 +26,7 @@ import { Contained } from "@/components/Width";
  * The address is /readables/r/{key}: the pageTextID, or a minted page's n{uuid}. The key and
  * nothing else -- because the addon can build it from what it already has, with no per-page
  * table to ship and nothing to escape. docs/readables/AGENTS.md freezes both forms, which is
- * what makes the address safe to bake into a release. See SpokenBooks' ReportURL.
+ * what makes the address safe to bake into a release. See SpokenReadables:ReportURL.
  */
 type Params = { lang: string; pageId: string };
 

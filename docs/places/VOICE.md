@@ -84,16 +84,16 @@ files when it is empty. The make targets here pass it empty unless it is set on 
 
 ## Languages
 
-A language's pack is a folder `SpokenZonesAudio_<locale>`, built in `build/places/<locale>`, with
+A language's pack is a folder `SpokenPlacesAudio_<locale>`, built in `build/places/<locale>`, with
 its takes archived apart from English's. Add `LOCALE=<code>` to `places-sounds`, `places-pull-live`,
 `places-lookup` and `places-package-audio` to act on one. A language's name, folder, version and
-store ids come from its page under `publishers/zones/` (`scripts/lib/packs.mjs`). Nine languages
+store ids come from its page under `publishers/places/` (`scripts/lib/packs.mjs`). Nine languages
 have a page: deDE, esES, esMX, frFR, koKR, ptBR, ruRU, zhCN, zhTW. Spoken's settings link to
 those pages, from the table `PACK_PAGES` in `addons/Spoken/API.lua`, which
 `tests/lua/packs_test.lua` keeps in step with them.
 
 A language pack ships at one quality and has no second tier. The English pack is
-`addons/SpokenZonesAudio`: its `.toc` and `Data/Sounds.lua` are committed and its `Sounds/` folder
+`addons/SpokenPlacesAudio`: its `.toc` and `Data/Sounds.lua` are committed and its `Sounds/` folder
 is not. `ZoneLoreAudio64`, a 64 kbps tier, is retired and never uploaded to again.
 
 ## Building and releasing a pack
@@ -115,7 +115,7 @@ make places-full-release             # all of the above, with one question befor
   differ. `places-package-audio` runs it first.
 - The pack's version is the `.toc`'s, and the release notes come from `docs/places/CHANGELOG.md`.
   Bump the version and add its section first. A section headed `## <version> — audio` is the
-  English pack's and `## <version> — zones-audio-<locale>` is a language's.
+  English pack's and `## <version> — places-audio-<locale>` is a language's.
 - `places-release-audio` uploads to CurseForge only. `places-full-release` also runs
   `scripts/audio-github-release.sh`, which publishes the pack on GitHub. Wago refuses a file that
   size, so a Wago player gets the pack from GitHub.
@@ -126,7 +126,7 @@ make places-full-release             # all of the above, with one question befor
   `make places-release` with no target uploads the English pack.
 
 `make places-acted` builds an overlay pack from the voice actors' recordings, as
-`SpokenZonesAudioOverlays`. No code in the addon reads that registry yet, so an overlay does
+`SpokenPlacesAudioOverlays`. No code in the addon reads that registry yet, so an overlay does
 not play.
 
 ## The site

@@ -9,9 +9,9 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
-_G.SpokenBooksAudioPacks = {
-    SpokenBooksAudio = {
-        version = 1, addon = "SpokenBooksAudio", quality = "high", bitrate = 128,
+_G.SpokenReadablesAudioPacks = {
+    SpokenReadablesAudio = {
+        version = 1, addon = "SpokenReadablesAudio", quality = "high", bitrate = 128,
         pages = {
             [15] = { file = "15", len = 2 },
             [261] = { file = "261", len = 2 },
@@ -42,7 +42,7 @@ local B = LoadReadables()
 B:InitDB()
 B:SetupSource()
 dofile(READABLES .. "Data/Books.lua")
-SpokenBooksData.index["William's Shipment"][1][B:ChecksumOf(LETTER)] = 15
+SpokenReadablesData.index["William's Shipment"][1][B:ChecksumOf(LETTER)] = 15
 
 -- The client's CloseItemText: the window goes and ITEM_TEXT_CLOSED follows.
 local closed = 0
@@ -134,13 +134,13 @@ SpokenReadablesSettings.readWholeBook = true
 Reset()
 
 -- Its last page silent: nothing is left to hear once page 2 has been read.
-local voiced = SpokenBooksAudioPacks.SpokenBooksAudio.pages[265]
-SpokenBooksAudioPacks.SpokenBooksAudio.pages[265] = nil
+local voiced = SpokenReadablesAudioPacks.SpokenReadablesAudio.pages[265]
+SpokenReadablesAudioPacks.SpokenReadablesAudio.pages[265] = nil
 OpenRegistry()
 Expect("a book whose last page is silent queues the rest", Queued(), 2)
 stub.Advance(6)
 Expect("...and closes once its last voiced page has been heard", closed, 1)
-SpokenBooksAudioPacks.SpokenBooksAudio.pages[265] = voiced
+SpokenReadablesAudioPacks.SpokenReadablesAudio.pages[265] = voiced
 Reset()
 
 ---------------------------------------------------------------- the command

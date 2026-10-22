@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes addons/Spoken_Places and addons/SpokenZonesAudio visible to a WoW client.
+# Makes addons/Spoken_Places and addons/SpokenPlacesAudio visible to a WoW client.
 #
 #   ./scripts/deploy.sh          # symlink (edits are live, just /reload in-game)
 #   ./scripts/deploy.sh --copy   # rsync a real copy instead
@@ -28,7 +28,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WOW="/Applications/World of Warcraft"
-NAMES=(Spoken_Places SpokenZonesAudio)
+NAMES=(Spoken_Places SpokenPlacesAudio)
 
 # Client key -> the flavour directory Blizzard installs it under.
 CLIENTS=(era anniversary)
@@ -77,7 +77,7 @@ case "$mode" in
 
     # The count is the quickest answer to "why is there no narration", which is
     # otherwise indistinguishable from a broken lookup.
-    sounds="$REPO/addons/SpokenZonesAudio/Sounds"
+    sounds="$REPO/addons/SpokenPlacesAudio/Sounds"
     if [[ -d "$sounds" ]]; then
       count="$(find "$sounds" -name '*.mp3' | wc -l | tr -d ' ')"
       echo "voicelines      $count mp3 in $sounds"

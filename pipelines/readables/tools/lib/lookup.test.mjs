@@ -5,7 +5,7 @@ import { localeEntries, lookupPath, packLua } from "./lookup.mjs";
 import { pageChecksum } from "./naming.mjs";
 
 test("English's lookup stays in the pack folder", () => {
-  assert.match(lookupPath("enUS"), /addons\/SpokenBooksAudio\/Data\/Sounds\.lua$/);
+  assert.match(lookupPath("enUS"), /addons\/SpokenReadablesAudio\/Data\/Sounds\.lua$/);
 });
 
 test("a voiced page carries caption text from its current language row", () => {

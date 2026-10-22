@@ -29,10 +29,6 @@ export const PUBLISHERS_DIR = join(ROOT, "publishers");
 
 export const SECTIONS = ["quests", "places", "readables"];
 
-// What places and readables' releases are still tagged and their stores grouped under: the
-// sections' old keys. Released Spoken Manager builds find a pack's releases by this prefix.
-export const RELEASE_PREFIX = { quests: "quests", places: "zones", readables: "books" };
-
 // tts_cli/factions.py PACK_SUFFIXES, for the four that ship to CurseForge.
 const QUESTS_PACKS = { alliance: "Alliance", horde: "Horde", shared: "Shared", gossip: "Gossip" };
 // English's `all` is a BUNDLE, released on GitHub alone: one zip holding the four split packs'
@@ -51,8 +47,8 @@ const ENGLISH_QUESTS_BUNDLE = Object.values(QUESTS_PACKS).map((suffix) => "Spoke
 const LANGUAGE_QUESTS_PACKS = { ...QUESTS_PACKS, all: "" };
 
 function englishFolder(section, pack) {
-  if (section === "places") return "SpokenZonesAudio";
-  if (section === "readables") return "SpokenBooksAudio";
+  if (section === "places") return "SpokenPlacesAudio";
+  if (section === "readables") return "SpokenReadablesAudio";
   return "SpokenQuestsAudio" + ENGLISH_QUESTS_PACKS[pack];
 }
 
@@ -62,7 +58,7 @@ export function languageFolder(section, pack) {
 }
 
 function englishRelease(section, pack) {
-  if (section !== "quests") return `${RELEASE_PREFIX[section]}-audio`;
+  if (section !== "quests") return `${section}-audio`;
   return pack === "all" ? "quests-audio" : `quests-audio-${pack}`;
 }
 
@@ -247,7 +243,7 @@ export function metaFor(lang, packs = loadPacks(), dir = PUBLISHERS_DIR) {
   };
 }
 
-// `## 1.0.0 — zones-audio-esMX`: a release tag ending in a language code. English headings
+// `## 1.0.0 — places-audio-esMX`: a release tag ending in a language code. English headings
 // name a kind (`— audio`, `— pack`) or nothing, never a tag, so this is how an English matcher
 // steps over a language pack's notes that happen to share its version number.
 const LANGUAGE_HEADING = /^## \S+ — [a-z]+(?:-[a-z]+)+-[a-z]{2}[A-Z]{2}(?:\s|$)/;

@@ -9,9 +9,9 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
-_G.SpokenBooksAudioPacks = {
-    SpokenBooksAudio = {
-        version = 1, addon = "SpokenBooksAudio", quality = "high", bitrate = 128,
+_G.SpokenReadablesAudioPacks = {
+    SpokenReadablesAudio = {
+        version = 1, addon = "SpokenReadablesAudio", quality = "high", bitrate = 128,
         pages = {
             [261] = { file = "261", len = 30.5 },
             [262] = { file = "262", len = 41.0 },

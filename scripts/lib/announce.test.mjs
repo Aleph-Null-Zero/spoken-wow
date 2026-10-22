@@ -25,10 +25,10 @@ function repo(pages, changelogs) {
 }
 
 const pages = [
-  ["zones", "addon.md", { slug: "spoken-zones", name: "Spoken Zones" }],
-  ["zones", "a.md", { section: "places", lang: "enUS", release: "zones-audio",
+  ["places", "addon.md", { slug: "spoken-zones", name: "Spoken Zones" }],
+  ["places", "a.md", { section: "places", lang: "enUS", release: "places-audio",
     slug: "spoken-audio-places", name: "Spoken Zones Audio" }],
-  ["zones", "b.md", { section: "places", lang: "frFR", version: "2.0.0", release: "zones-audio-frFR",
+  ["places", "b.md", { section: "places", lang: "frFR", version: "2.0.0", release: "places-audio-frFR",
     slug: "spoken-french-audio-places", name: "Spoken Zones Audio: French" }],
   ["quests", "player.md", { slug: "spoken-quests", name: "Spoken Quests" }],
   ["quests", "h.md", { section: "quests", lang: "enUS", pack: "horde", release: "quests-audio-horde",
@@ -48,7 +48,7 @@ const places = `# Changelog
 
 - Addon notes.
 
-## 2.0.0 — zones-audio-frFR — 2026-09-26
+## 2.0.0 — places-audio-frFR — 2026-09-26
 
 - French notes.
 `;
@@ -78,7 +78,7 @@ const spoken = `## 3.5.1 — 2026-10-19
 const run = repo(pages, { places, quests, spoken });
 
 test("an addon takes the store page's name and its own heading, not its audio's", () => {
-  assert.deepEqual(run("zones/v2.0.1"), { name: "Spoken Zones", version: "2.0.1", notes: "- Addon notes." });
+  assert.deepEqual(run("places/v2.0.1"), { name: "Spoken Zones", version: "2.0.1", notes: "- Addon notes." });
 });
 
 test("spoken is named by its own page, not by a meta addon beside it", () => {
@@ -86,7 +86,7 @@ test("spoken is named by its own page, not by a meta addon beside it", () => {
 });
 
 test("English audio takes the heading its kind word marks", () => {
-  assert.equal(run("zones-audio/v2.0.1").notes, "- Audio notes.");
+  assert.equal(run("places-audio/v2.0.1").notes, "- Audio notes.");
   assert.equal(run("quests-audio-horde/v2.1.0").notes, "Pack notes.");
   assert.equal(run("quests/v2.1.0").notes, "Player notes.");
   // The heading quests' packs are written under since 2.2.0.
@@ -95,12 +95,12 @@ test("English audio takes the heading its kind word marks", () => {
 });
 
 test("a language pack takes its tag's heading, and the heading line is dropped", () => {
-  assert.deepEqual(run("zones-audio-frFR/v2.0.0"),
+  assert.deepEqual(run("places-audio-frFR/v2.0.0"),
     { name: "Spoken Zones Audio: French", version: "2.0.0", notes: "- French notes." });
 });
 
 test("a version with no changelog section still announces, without notes", () => {
-  assert.deepEqual(run("zones/v9.9.9"), { name: "Spoken Zones", version: "9.9.9", notes: null });
+  assert.deepEqual(run("places/v9.9.9"), { name: "Spoken Zones", version: "9.9.9", notes: null });
 });
 
 test("a tag with no store page behind it is skipped", () => {

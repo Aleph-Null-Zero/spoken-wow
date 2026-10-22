@@ -50,7 +50,7 @@ RELEASE_TYPE="${RELEASE_TYPE:-release}"
 
 # project key -> CurseForge project ID, addon folder the version is read from,
 # and the zip basename package*.sh produces. `audio`'s come from LANG_CODE's page under
-# publishers/zones/ -- the registry a language's pack is created in by hand on CurseForge
+# publishers/places/ -- the registry a language's pack is created in by hand on CurseForge
 # before it can be released, so an unregistered language fails on the empty project id
 # below rather than uploading over the English project.
 target_curseforge() { case "$1" in audio) pack_field curseforge;; esac; }
@@ -333,7 +333,7 @@ done
 # from what was last pasted, and say so at the moment somebody is already looking
 # at the project pages.
 echo
-stale="$(node "$REPO/scripts/descriptions.mjs" --drift --group=zones)"
+stale="$(node "$REPO/scripts/descriptions.mjs" --drift --group=places)"
 if [[ -n "$stale" ]]; then
   echo "descriptions that differ from what was last pasted into the site:"
   echo "$stale" | while IFS=$'\t' read -r slug why; do

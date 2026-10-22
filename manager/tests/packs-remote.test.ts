@@ -12,7 +12,7 @@ afterEach(async () => {
 })
 
 const keys = channelKeys()
-const pack = { packId: 'SpokenZonesAudio_deDE', rev: '20261018T000000Z', files: { 'SpokenZonesAudio_deDE.toc': 'toc', 'Sounds/1.ogg': 'one' } }
+const pack = { packId: 'SpokenPlacesAudio_deDE', rev: '20261018T000000Z', files: { 'SpokenPlacesAudio_deDE.toc': 'toc', 'Sounds/1.ogg': 'one' } }
 
 describe('openEnvelope', () => {
   it('returns the signed text when the signature checks out', () => {
@@ -42,7 +42,7 @@ describe('parseManifest', () => {
   it('accepts the manifest the index names', () => {
     const fx = channelFixture(keys, [pack])
     const m = parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, parseIndex(JSON.stringify(fx.index)).packs[pack.packId]!)
-    expect(m.files.map((f) => f.path)).toEqual(['SpokenZonesAudio_deDE.toc', 'Sounds/1.ogg'])
+    expect(m.files.map((f) => f.path)).toEqual(['SpokenPlacesAudio_deDE.toc', 'Sounds/1.ogg'])
   })
   it('refuses an older, validly signed manifest in place of the current one', () => {
     const old = channelFixture(keys, [{ ...pack, rev: '20261001T000000Z' }])
@@ -50,15 +50,15 @@ describe('parseManifest', () => {
     expect(() => parseManifest(old.manifestSigned[pack.packId]!, pack.packId, now.index.packs[pack.packId]!)).toThrow(/not the one the index names/)
   })
   it('refuses a path listed twice in different case', () => {
-    const fx = channelFixture(keys, [{ ...pack, files: { 'SpokenZonesAudio_deDE.toc': 't', 'a.ogg': '1', 'A.ogg': '2' } }])
+    const fx = channelFixture(keys, [{ ...pack, files: { 'SpokenPlacesAudio_deDE.toc': 't', 'a.ogg': '1', 'A.ogg': '2' } }])
     expect(() => parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, fx.index.packs[pack.packId]!)).toThrow(/twice/)
   })
   it('refuses a manifest with no .toc at its root', () => {
-    const fx = channelFixture(keys, [{ ...pack, files: { 'Sounds/1.ogg': 'one', 'Sub/SpokenZonesAudio_deDE.toc': 'nested' } }])
-    expect(() => parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, fx.index.packs[pack.packId]!)).toThrow(/no SpokenZonesAudio_deDE\.toc/)
+    const fx = channelFixture(keys, [{ ...pack, files: { 'Sounds/1.ogg': 'one', 'Sub/SpokenPlacesAudio_deDE.toc': 'nested' } }])
+    expect(() => parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, fx.index.packs[pack.packId]!)).toThrow(/no SpokenPlacesAudio_deDE\.toc/)
   })
   it('refuses an unsafe path', () => {
-    const fx = channelFixture(keys, [{ ...pack, files: { 'SpokenZonesAudio_deDE.toc': 't', '../Spoken/evil.lua': 'x' } }])
+    const fx = channelFixture(keys, [{ ...pack, files: { 'SpokenPlacesAudio_deDE.toc': 't', '../Spoken/evil.lua': 'x' } }])
     expect(() => parseManifest(fx.manifestSigned[pack.packId]!, pack.packId, fx.index.packs[pack.packId]!)).toThrow(/file entry/)
   })
 })

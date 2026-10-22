@@ -15,7 +15,7 @@ local function LanguageName(code)
     return SpokenPlaces:GetLanguageName(code)
 end
 -- The voice pack this addon is made for, and where to get it.
-local AUDIO_ADDON = "SpokenZonesAudio"
+local AUDIO_ADDON = "SpokenPlacesAudio"
 local AUDIO_URL = "https://www.curseforge.com/wow/addons/spoken-audio-places"
 
 local panel

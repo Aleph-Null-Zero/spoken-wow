@@ -98,7 +98,7 @@ local function Index()
 	if index then return index end
 	index = { zones = {}, dungeons = {}, events = {}, wide = {}, unknown = {}, types = {}, all = {}, typeOf = {},
 		at = {}, eventOf = {} }
-	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books or {}
+	local places = _G.SpokenReadablesPlaces and SpokenReadablesPlaces.books or {}
 	local function Add(mapID, type, id, map)
 		local zone = index.zones[mapID] or {}
 		index.zones[mapID] = zone
@@ -113,7 +113,7 @@ local function Index()
 	end
 	for id in pairs(Books()) do
 		local place = places[id]
-		if place or not _G.SpokenBooksPlaces then
+		if place or not _G.SpokenReadablesPlaces then
 			index.all[id] = true
 			local type = place and TYPE_NAMES[place.type] and place.type or "other"
 			index.typeOf[id] = type
@@ -837,7 +837,7 @@ local function ShowEntry()
 	end
 	if selection.book then
 		local id = selection.book
-		local place = _G.SpokenBooksPlaces and SpokenBooksPlaces.books[id] or {}
+		local place = _G.SpokenReadablesPlaces and SpokenReadablesPlaces.books[id] or {}
 		local where
 		if place.event then
 			where = L.GROUP_EVENTS

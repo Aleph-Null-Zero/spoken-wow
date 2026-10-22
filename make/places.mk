@@ -37,8 +37,8 @@ validate: ## Sanity-check the generated Lua data files
 # the shield with its badge: scripts/places/package-audio.sh copies spoken-zones-<locale>.tga over it.
 icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/places/assets/*-512.png (needs ffmpeg)
 	@python3 pipelines/places/tools/make-icon.py pipelines/places/assets/spoken-zones-512.png addons/Spoken_Places/Textures/AddonIcon.tga
-	@cp addons/Spoken_Places/Textures/AddonIcon.tga addons/SpokenZonesAudio/Textures/AddonIcon.tga
-	@echo "==> copied to addons/SpokenZonesAudio/Textures/AddonIcon.tga"
+	@cp addons/Spoken_Places/Textures/AddonIcon.tga addons/SpokenPlacesAudio/Textures/AddonIcon.tga
+	@echo "==> copied to addons/SpokenPlacesAudio/Textures/AddonIcon.tga"
 	@for png in pipelines/places/assets/spoken-zones-??[A-Z][A-Z]-512.png; do python3 pipelines/places/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 lint: ## Block-balance check on the addon's Lua
@@ -69,7 +69,7 @@ clean: ## Remove build output
 #-------------------------------------------------------------------------------
 
 # Which language's takes and pack the voice targets act on: English, or LOCALE=esMX for
-# another language's pack (addons/SpokenZonesAudio_esMX). pipelines/places/tools/voice/store.mjs
+# another language's pack (addons/SpokenPlacesAudio_esMX). pipelines/places/tools/voice/store.mjs
 # reads it; sounds, pull-live and package-audio take the same LOCALE, so one variable on the
 # command line moves the whole chain and a run cannot build one language's lookup over
 # another's clips.
@@ -319,7 +319,7 @@ release-audio: ## Upload the sound pack (LOCALE=xx for a language's)
 # The whole pack release, from production's data to the stores, with one question before
 # anything is uploaded. Each step is its own target and still runs alone; this is their order.
 #
-# The version is SpokenZonesAudio.toc's, so bump it and add its `## <version> — audio` section
+# The version is SpokenPlacesAudio.toc's, so bump it and add its `## <version> — audio` section
 # to docs/places/CHANGELOG.md first; both uploads quote that section. The pack goes to
 # CurseForge only -- Wago answers 413 to a file this size (scripts/lib/wago.sh) -- and to
 # GitHub, which is where a Wago player gets it.

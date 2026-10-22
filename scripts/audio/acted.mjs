@@ -8,8 +8,8 @@
 // AN OVERLAY, NOT A PACK. It carries only the recorded lines, and the player prefers it where
 // it has one and falls back to the generated pack for the rest:
 //   quests     a data module at DataModule-Priority 200, over the generated packs' 100
-//   places     an entry in SpokenZonesAudioOverlays, which no release reads as a whole pack
-//   readables  an entry in SpokenBooksAudioOverlays, the same way
+//   places     an entry in SpokenPlacesAudioOverlays, which no release reads as a whole pack
+//   readables  an entry in SpokenReadablesAudioOverlays, the same way
 // So none of it is the TTS packs' machinery -- no corpus tables, no faction split, no tiers --
 // and it is built here, in one place for all three, rather than as a flag through each.
 //
@@ -127,10 +127,10 @@ export function placesLua(lang, clips, credits) {
     "",
     "overlay.addon = ADDON_NAME",
     "",
-    "-- Its own registry, never SpokenZonesAudioPacks: a release that reads only that one would",
+    "-- Its own registry, never SpokenPlacesAudioPacks: a release that reads only that one would",
     "-- take this for a whole pack and could choose it as the one to play from.",
-    "SpokenZonesAudioOverlays = SpokenZonesAudioOverlays or {}",
-    "SpokenZonesAudioOverlays[ADDON_NAME] = overlay",
+    "SpokenPlacesAudioOverlays = SpokenPlacesAudioOverlays or {}",
+    "SpokenPlacesAudioOverlays[ADDON_NAME] = overlay",
     "",
   );
   return lines.join("\n");
@@ -161,8 +161,8 @@ export function readablesLua(lang, clips, credits) {
     "}",
     "",
     "-- Its own registry, for the reason the places overlay gives.",
-    "SpokenBooksAudioOverlays = SpokenBooksAudioOverlays or {}",
-    "SpokenBooksAudioOverlays[ADDON_NAME] = overlay",
+    "SpokenReadablesAudioOverlays = SpokenReadablesAudioOverlays or {}",
+    "SpokenReadablesAudioOverlays[ADDON_NAME] = overlay",
     "",
   );
   return lines.join("\n");

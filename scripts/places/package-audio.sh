@@ -54,8 +54,8 @@ english() { [[ "$LOCALE" == "enUS" ]]; }
 
 # The source is always English's folder: the .toc, README and everything but the audio and
 # the lookup come from it regardless of language.
-SRC="$REPO/addons/SpokenZonesAudio"
-TOC="$SRC/SpokenZonesAudio.toc"
+SRC="$REPO/addons/SpokenPlacesAudio"
+TOC="$SRC/SpokenPlacesAudio.toc"
 DIST="$REPO/dist"
 
 if english; then
@@ -108,7 +108,7 @@ JOBS="${JOBS:-$( (command -v nproc >/dev/null 2>&1 && nproc) || sysctl -n hw.ncp
 # the old one. "copy" means no transcode.
 tier_folder() {
   if ! english; then echo "$PACK_FOLDER"; return; fi
-  case "$1" in standard) echo "ZoneLoreAudio64";; high) echo "SpokenZonesAudio";; esac
+  case "$1" in standard) echo "ZoneLoreAudio64";; high) echo "SpokenPlacesAudio";; esac
 }
 tier_bitrate()  { case "$1" in standard) echo "64";; high) echo "128";; esac; }
 tier_encoding() { case "$1" in standard) echo "vbr-v6";; high) echo "copy";; esac; }
@@ -164,8 +164,8 @@ fi
 
 # The language is set by rewriting this line, so a .toc without it would ship a
 # pack that reports itself as English and plays under English text only.
-if ! grep -q '^## X-SpokenZones-Language:' "$TOC"; then
-  echo "error: $TOC has no '## X-SpokenZones-Language:' line to rewrite" >&2
+if ! grep -q '^## X-SpokenPlaces-Language:' "$TOC"; then
+  echo "error: $TOC has no '## X-SpokenPlaces-Language:' line to rewrite" >&2
   exit 1
 fi
 
@@ -198,11 +198,11 @@ node "$REPO/scripts/descriptions.mjs" --write >/dev/null
 # The retired 64 kbps page is gone, so every tier without a page of its own falls back to the
 # one shipping description rather than to a page nobody maintains.
 #
-# A language's pack has a page of its own, publishers/zones/spoken-zones-audio-<lang>.md, and
+# A language's pack has a page of its own, publishers/places/spoken-places-audio-<lang>.md, and
 # ships that; until one exists it falls back the same way.
 tier_readme() {
   if ! english; then echo "$REPO/dist/descriptions/$PACK_SLUG.md"; return; fi
-  echo "$REPO/dist/descriptions/spoken-zones-audio.md"
+  echo "$REPO/dist/descriptions/spoken-places-audio.md"
 }
 
 # Transcoding needs ffmpeg, but only for the tiers that are not a straight copy.
@@ -263,9 +263,9 @@ for tier in "${tiers[@]}"; do
     -e "s|^## IconTexture:.*|## IconTexture: Interface\\\\AddOns\\\\$folder\\\\Textures\\\\AddonIcon.tga|" \
     -e "s~^## Title:.*~## Title: ${title/#Spoken/|cffb48cffSpoken|r}~" \
     -e "s|^## Version:.*|## Version: $version|" \
-    -e "s|^## X-SpokenZones-Quality:.*|## X-SpokenZones-Quality: $tier|" \
-    -e "s|^## X-SpokenZones-Bitrate:.*|## X-SpokenZones-Bitrate: $bitrate|" \
-    -e "s|^## X-SpokenZones-Language:.*|## X-SpokenZones-Language: $LOCALE|" \
+    -e "s|^## X-SpokenPlaces-Quality:.*|## X-SpokenPlaces-Quality: $tier|" \
+    -e "s|^## X-SpokenPlaces-Bitrate:.*|## X-SpokenPlaces-Bitrate: $bitrate|" \
+    -e "s|^## X-SpokenPlaces-Language:.*|## X-SpokenPlaces-Language: $LOCALE|" \
     "$staging/$folder/$folder.toc"
   rm -f "$staging/$folder/$folder.toc.bak"
 

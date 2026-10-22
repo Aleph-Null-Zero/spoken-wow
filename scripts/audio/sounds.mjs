@@ -43,8 +43,8 @@ const BASE_LANG = "enUS";
 
 const SECTIONS = {
   quests: { archive: archiveOf("quests"), out: join(ROOT, "pipelines/quests/audio") },
-  places: { archive: archiveOf("places"), out: join(ROOT, "addons/SpokenZonesAudio/Sounds") },
-  readables: { archive: archiveOf("readables"), out: join(ROOT, "addons/SpokenBooksAudio/Sounds") },
+  places: { archive: archiveOf("places"), out: join(ROOT, "addons/SpokenPlacesAudio/Sounds") },
+  readables: { archive: archiveOf("readables"), out: join(ROOT, "addons/SpokenReadablesAudio/Sounds") },
 };
 
 // --list prints, relative to the archive, every file this would copy, and copies nothing.

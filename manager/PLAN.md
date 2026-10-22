@@ -35,8 +35,8 @@ GitHub Releases of `rusty-key/spoken-wow` (public, no token). Product tags, from
 | Quests voices, English, all | `quests-audio/vX` | `SpokenQuestsAudioAll-X.zip` (1.4 GB) | the four split folders |
 | Quests voices, English, split | `quests-audio-{alliance,horde,shared,gossip}/vX` | | `SpokenQuestsAudio<Side>` |
 | Quests voices, a language | `quests-audio-<lang>/vX` | | `SpokenQuestsAudio_<lang>` |
-| Places voices | `zones-audio[-<lang>]/vX` | `SpokenZonesAudio[_<lang>]-X.zip` | `SpokenZonesAudio[_<lang>]` |
-| Readables voices | `books-audio[-<lang>]/vX` | | `SpokenBooksAudio[_<lang>]` |
+| Places voices | `places-audio[-<lang>]/vX` (`zones-audio[-<lang>]/vX` before the rename) | `SpokenPlacesAudio[_<lang>]-X.zip` | `SpokenPlacesAudio[_<lang>]` |
+| Readables voices | `readables-audio[-<lang>]/vX` (`books-audio[-<lang>]/vX` before) | | `SpokenReadablesAudio[_<lang>]` |
 
 A pre-release (`-alpha`, `-beta`) is offered only when "Include pre-releases" is on. The manager
 reads the installed version from each folder's `.toc` (`## Version:`) and keeps its own record of

@@ -61,18 +61,18 @@ const TABLE: Record<string, Row[]> = {
   'quests-audio-horde': [['2.4.0', '2026-10-09', 531]],
   'quests-audio-shared': [['2.4.0', '2026-10-09', 134]],
   'quests-audio-gossip': [['2.4.0', '2026-10-09', 195]],
-  'zones-audio': [['2.3.1', '2026-10-05', 312]],
-  'books-audio': [['1.2.0', '2026-09-30', 181]],
+  'places-audio': [['2.3.1', '2026-10-05', 312]],
+  'readables-audio': [['1.2.0', '2026-09-30', 181]],
   'quests-audio-deDE': [['1.8.0', '2026-10-08', 982, '- 96 quests re-recorded.\n- New: gossip of the Durotar vendors.']],
-  'zones-audio-deDE': [
+  'places-audio-deDE': [
     ['2.1.1', '2026-10-11', 450, 'Fixes a wrong line for Gadgetzan.'],
     ['2.1.0', '2026-10-03', 447]
   ],
-  'books-audio-deDE': [['1.1.0', '2026-10-01', 143]],
+  'readables-audio-deDE': [['1.1.0', '2026-10-01', 143]],
   'quests-audio-frFR': [['1.6.0', '2026-10-06', 871]],
-  'zones-audio-frFR': [['1.0.2', '2026-10-04', 398]],
+  'places-audio-frFR': [['1.0.2', '2026-10-04', 398]],
   'quests-audio-esES': [['1.2.0', '2026-09-27', 702]],
-  'zones-audio-esES': [['1.0.0', '2026-09-27', 301]],
+  'places-audio-esES': [['1.0.0', '2026-09-27', 301]],
   'quests-audio-itIT': [['0.9.0', '2026-10-10', 384]],
   'quests-audio-ruRU': [['1.1.0', '2026-10-02', 640]],
   'quests-audio-koKR': [['0.8.0-beta.1', '2026-10-13', 410, 'First beta of the Korean quest voices.']]
@@ -125,12 +125,12 @@ const COMMUNITY_PACKS: CommunityPack[] = [
     license: 'CC-BY-4.0'
   }),
   pack({
-    id: 'mirelle-zones-frFR',
+    id: 'mirelle-places-frFR',
     title: 'Mirelle: Les lieux de Kalimdor',
     author: 'Mirelle',
     description: 'The story of each Kalimdor zone, told by one voice.',
     lang: 'frFR',
-    section: 'zones',
+    section: 'places',
     version: '0.9.1',
     size: 138 * MB,
     homepage: 'https://example.org/mirelle',
@@ -142,7 +142,7 @@ const COMMUNITY_PACKS: CommunityPack[] = [
     author: 'Brannic and friends',
     description: 'Books, letters and notes in a dwarven accent.',
     lang: 'enUS',
-    section: 'books',
+    section: 'readables',
     version: '2.0.0',
     size: 96 * MB,
     license: 'All rights reserved'
@@ -159,12 +159,12 @@ const COMMUNITY_PACKS: CommunityPack[] = [
     homepage: 'http://insecure.example/sombra'
   }),
   pack({
-    id: 'north-zones-ruRU',
+    id: 'north-places-ruRU',
     title: 'Север: Зоны Нортренда',
     author: 'Север',
     description: 'Zone stories for Northrend, in Russian.',
     lang: 'ruRU',
-    section: 'zones',
+    section: 'places',
     version: '1.1.0',
     size: 187 * MB,
     homepage: 'https://example.org/sever',
@@ -251,9 +251,9 @@ export function createMockApi(): ManagerApi {
   if (forever) {
     installs[forever.id] = {
       spoken: { version: '3.4.0', folders: SPOKEN_FOLDERS.filter((f) => f !== 'Spoken_NPCs') },
-      'zones-audio-deDE': { version: '2.1.0', folders: ['SpokenZonesAudio_deDE'] },
+      'places-audio-deDE': { version: '2.1.0', folders: ['SpokenPlacesAudio_deDE'] },
       'community/elune-quests-deDE': { version: '1.2.0', folders: [communityFolder('elune-quests-deDE')] },
-      'community/mirelle-zones-frFR': { version: '0.8.0', folders: [communityFolder('mirelle-zones-frFR')] }
+      'community/mirelle-places-frFR': { version: '0.8.0', folders: [communityFolder('mirelle-places-frFR')] }
     }
   }
   if (era) installs[era.id] = { spoken: { version: '3.5.0', folders: SPOKEN_FOLDERS.filter((f) => f !== 'Spoken_NPCs') } }
@@ -343,7 +343,7 @@ export function createMockApi(): ManagerApi {
     emit(base)
     const start = Date.now()
     const DOWNLOAD = action === 'install' ? 4200 : 0
-    const failAt = action === 'install' && p.id === 'books-audio-deDE' && !failedOnce.has(p.id) ? 0.45 : 2
+    const failAt = action === 'install' && p.id === 'readables-audio-deDE' && !failedOnce.has(p.id) ? 0.45 : 2
     let cancelled = false
     const finish = (): void => {
       window.clearInterval(handle.timer)

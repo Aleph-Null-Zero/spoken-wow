@@ -286,7 +286,7 @@ async function main() {
   if (write) {
     await mkdir(OUT_DIR, { recursive: true });
     await mkdir(WAGO_OUT_DIR, { recursive: true });
-    // Built from every page, not from the ones being written: --group=zones still has to know
+    // Built from every page, not from the ones being written: --group=places still has to know
     // that spoken-audio-quests-horde is a pack, or a zones-only run would link it to a Wago
     // page holding nothing.
     const urls = wagoUrls(all.flatMap((g) => g.pages));

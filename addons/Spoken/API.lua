@@ -278,7 +278,7 @@ end
 -- are each module's own to list. tests/lua/packs_test.lua keeps this in step with the pages.
 local CURSEFORGE = "https://www.curseforge.com/wow/addons/"
 local RELEASES = "https://github.com/rusty-key/spoken-wow/releases?q="
-local PACK_FOLDERS = { quests = "SpokenQuestsAudio", places = "SpokenZonesAudio", readables = "SpokenBooksAudio" }
+local PACK_FOLDERS = { quests = "SpokenQuestsAudio", places = "SpokenPlacesAudio", readables = "SpokenReadablesAudio" }
 local PACK_PAGES = {
     -- Quests in one folder per language is a GitHub download: on CurseForge a language's quests
     -- are split into packs under other folders.

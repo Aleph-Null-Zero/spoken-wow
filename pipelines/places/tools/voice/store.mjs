@@ -38,7 +38,7 @@ if (!CODES.includes(LANG)) {
 // language's run cannot write another's lookup or manifest.
 export function packDir() {
   return LANG === BASE_LOCALE
-    ? join(ROOT, "addons/SpokenZonesAudio")
+    ? join(ROOT, "addons/SpokenPlacesAudio")
     : join(ROOT, "build/places", LANG);
 }
 

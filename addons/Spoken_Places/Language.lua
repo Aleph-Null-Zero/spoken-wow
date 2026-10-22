@@ -426,7 +426,9 @@ function SpokenPlaces:ShouldLoadLanguage(code)
 	local metadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
 	if count and metadata then
 		for index = 1, count() do
-			if metadata(index, "X-SpokenZones-Language") == code then return true end
+			-- X-SpokenZones-Language: a pack released under the old name.
+			local language = metadata(index, "X-SpokenPlaces-Language") or metadata(index, "X-SpokenZones-Language")
+			if language == code then return true end
 		end
 	end
 	return false

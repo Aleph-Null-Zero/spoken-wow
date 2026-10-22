@@ -25,7 +25,7 @@ import { Contained } from "@/components/Width";
  *
  * The address is /places/r/{mapID}/{slug} -- the same path the line's audio file uses --
  * because the addon can build it from what it already has, with no per-line table and
- * nothing to escape. See SpokenZones' ReportURL. Builds already in players' hands point at
+ * nothing to escape. See SpokenPlaces:ReportURL. Builds already in players' hands point at
  * lore.rusty.one/{lang}/r/... and lore.rusty.one/r/...; both are redirected here.
  */
 type Params = { lang: string; mapID: string; slug: string };

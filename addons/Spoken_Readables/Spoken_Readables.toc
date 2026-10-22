@@ -19,8 +19,8 @@
 # so an alt walking into the same library is read to rather than met with silence.
 ## Dependencies: Spoken
 # Spoken is what this module runs on, and ships in the same zip.
-## OptionalDeps: SpokenBooksAudio
-# The pack is not a registration mechanism: it registers itself into SpokenBooksAudioPacks and
+## OptionalDeps: SpokenReadablesAudio
+# The pack is not a registration mechanism: it registers itself into SpokenReadablesAudioPacks and
 # Audio.lua walks that on demand, so this is load order only.
 ## IconTexture: Interface\AddOns\Spoken_Readables\Textures\AddonIcon.tga
 ## Group: Spoken

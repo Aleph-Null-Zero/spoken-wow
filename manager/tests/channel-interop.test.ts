@@ -11,7 +11,7 @@ import { generateKeys } from '../../scripts/manager/sign.mjs'
 import { memoryStore } from '../../scripts/manager/store.mjs'
 import { tmpDir, write } from './helpers'
 
-const PACK = 'SpokenZonesAudio_deDE'
+const PACK = 'SpokenPlacesAudio_deDE'
 
 describe('publisher to manager', () => {
   it('a published pack is accepted by the manager with the same file list', async () => {
@@ -23,10 +23,10 @@ describe('publisher to manager', () => {
 
     await publish({
       store,
-      packs: [{ folder: PACK, section: 'zones', lang: 'deDE' }],
+      packs: [{ folder: PACK, section: 'places', lang: 'deDE' }],
       distDir: dist,
       signingKey: keys.privateKey,
-      minSpoken: { quests: '3.0.0', zones: '3.0.0', books: '3.0.0' },
+      minSpoken: { quests: '3.0.0', places: '3.0.0', readables: '3.0.0' },
       latestSpoken: '3.0.0',
       cache: new Map(),
       log: () => undefined

@@ -20,20 +20,20 @@ function tree(pages) {
   return dir;
 }
 
-const placesEn = ["zones", "a.md", { section: "places", lang: "enUS", curseforge: "1636532",
-  wago: "b6mvD9KP", release: "zones-audio", slug: "spoken-audio-places", name: "Spoken Zones Audio" }];
-const placesMx = ["zones", "b.md", { section: "places", lang: "esMX", version: "1.0.0",
-  curseforge: "1711067", release: "zones-audio-esMX", slug: "spoken-spanish-al-audio-places",
+const placesEn = ["places", "a.md", { section: "places", lang: "enUS", curseforge: "1636532",
+  wago: "b6mvD9KP", release: "places-audio", slug: "spoken-audio-places", name: "Spoken Zones Audio" }];
+const placesMx = ["places", "b.md", { section: "places", lang: "esMX", version: "1.0.0",
+  curseforge: "1711067", release: "places-audio-esMX", slug: "spoken-spanish-al-audio-places",
   name: "Spoken Zones Audio: Spanish (AL)" }];
 const hordeEn = ["quests", "h.md", { section: "quests", lang: "enUS", pack: "horde",
   curseforge: "1660198", wago: "vNAg3OKo", release: "quests-audio-horde",
   slug: "spoken-audio-quests-horde", name: "Spoken Quests Audio: Horde" }];
-const addonPage = ["zones", "addon.md", { curseforge: "1636521", slug: "spoken-zones",
+const addonPage = ["places", "addon.md", { curseforge: "1636521", slug: "spoken-zones",
   name: "Spoken Zones" }];
 
 test("English packs keep today's folders and carry no version, zip or tag", () => {
   const packs = loadPacks(tree([placesEn, hordeEn, addonPage]));
-  assert.equal(findPack("places", "enUS", null, packs).folder, "SpokenZonesAudio");
+  assert.equal(findPack("places", "enUS", null, packs).folder, "SpokenPlacesAudio");
   const horde = findPack("quests", "enUS", "horde", packs);
   assert.equal(horde.folder, "SpokenQuestsAudioHorde");
   assert.equal(horde.version, null);
@@ -43,9 +43,9 @@ test("English packs keep today's folders and carry no version, zip or tag", () =
 
 test("a language pack gets English's folder plus its code, and a zip and tag from its version", () => {
   const mx = findPack("places", "esMX", null, loadPacks(tree([placesEn, placesMx])));
-  assert.equal(mx.folder, "SpokenZonesAudio_esMX");
-  assert.equal(mx.zip, "SpokenZonesAudio_esMX-1.0.0.zip");
-  assert.equal(mx.tag, "zones-audio-esMX/v1.0.0");
+  assert.equal(mx.folder, "SpokenPlacesAudio_esMX");
+  assert.equal(mx.zip, "SpokenPlacesAudio_esMX-1.0.0.zip");
+  assert.equal(mx.tag, "places-audio-esMX/v1.0.0");
   assert.equal(mx.wago, null);
 });
 
@@ -55,7 +55,7 @@ test("pages without a section are addons, not packs", () => {
 
 test("packsFor lists only that section and language", () => {
   const packs = loadPacks(tree([placesEn, placesMx, hordeEn]));
-  assert.deepEqual(packsFor("places", "esMX", packs).map((p) => p.folder), ["SpokenZonesAudio_esMX"]);
+  assert.deepEqual(packsFor("places", "esMX", packs).map((p) => p.folder), ["SpokenPlacesAudio_esMX"]);
   assert.deepEqual(packsFor("quests", "esMX", packs), []);
 });
 
@@ -65,12 +65,12 @@ test("findPack names what it could not find", () => {
 });
 
 for (const [why, page, message] of [
-  ["a language pack without a version", ["zones", "x.md", { ...placesMx[2], version: undefined }], /version/],
-  ["a code that is not a language", ["zones", "x.md", { ...placesMx[2], lang: "esXX" }], /esXX/],
+  ["a language pack without a version", ["places", "x.md", { ...placesMx[2], version: undefined }], /version/],
+  ["a code that is not a language", ["places", "x.md", { ...placesMx[2], lang: "esXX" }], /esXX/],
   ["a quests pack without a pack key", ["quests", "x.md", { ...hordeEn[2], pack: undefined }], /pack/],
-  ["a places page with a pack key", ["zones", "x.md", { ...placesEn[2], pack: "horde" }], /pack/],
-  ["a release tag off the rule", ["zones", "x.md", { ...placesMx[2], release: "zones-esMX" }], /zones-audio-esMX/],
-  ["an unknown section", ["zones", "x.md", { ...placesEn[2], section: "maps" }], /maps/],
+  ["a places page with a pack key", ["places", "x.md", { ...placesEn[2], pack: "horde" }], /pack/],
+  ["a release tag off the rule", ["places", "x.md", { ...placesMx[2], release: "zones-esMX" }], /places-audio-esMX/],
+  ["an unknown section", ["places", "x.md", { ...placesEn[2], section: "maps" }], /maps/],
 ]) {
   test(`rejects ${why}`, () => {
     const fields = Object.fromEntries(Object.entries(page[2]).filter(([, v]) => v !== undefined));
@@ -79,11 +79,11 @@ for (const [why, page, message] of [
 }
 
 test("rejects two pages for one pack", () => {
-  assert.throws(() => loadPacks(tree([placesMx, ["zones", "c.md", placesMx[2]]])), /two pages/);
+  assert.throws(() => loadPacks(tree([placesMx, ["places", "c.md", placesMx[2]]])), /two pages/);
 });
 
 test("a language heading is told from an English one", () => {
-  assert.equal(isLanguageHeading("## 1.0.0 — zones-audio-esMX — 2026-09-30"), true);
+  assert.equal(isLanguageHeading("## 1.0.0 — places-audio-esMX — 2026-09-30"), true);
   assert.equal(isLanguageHeading("## 2.0.0 — quests-audio-horde-deDE"), true);
   assert.equal(isLanguageHeading("## 2.1.0 — audio — 2026-09-18"), false);
   assert.equal(isLanguageHeading("## 2.1.0 — 2026-09-21"), false);
@@ -92,7 +92,7 @@ test("a language heading is told from an English one", () => {
 
 const CHANGELOG = `# Changelog
 
-## 2.1.0 — books-audio-esMX — 2026-10-01
+## 2.1.0 — readables-audio-esMX — 2026-10-01
 
 - Spanish.
 
@@ -102,10 +102,10 @@ const CHANGELOG = `# Changelog
 `;
 
 test("changelogSection takes exactly the language pack's section", () => {
-  assert.equal(changelogSection(CHANGELOG, "2.1.0", "books-audio-esMX"),
-    "## 2.1.0 — books-audio-esMX — 2026-10-01\n\n- Spanish.");
-  assert.throws(() => changelogSection(CHANGELOG, "2.1.0", "books-audio-deDE"), /no "## 2.1.0 — books-audio-deDE"/);
-  assert.throws(() => changelogSection(CHANGELOG + "\n## 2.1.0 — books-audio-esMX\n", "2.1.0", "books-audio-esMX"), /two/);
+  assert.equal(changelogSection(CHANGELOG, "2.1.0", "readables-audio-esMX"),
+    "## 2.1.0 — readables-audio-esMX — 2026-10-01\n\n- Spanish.");
+  assert.throws(() => changelogSection(CHANGELOG, "2.1.0", "readables-audio-deDE"), /no "## 2.1.0 — readables-audio-deDE"/);
+  assert.throws(() => changelogSection(CHANGELOG + "\n## 2.1.0 — readables-audio-esMX\n", "2.1.0", "readables-audio-esMX"), /two/);
 });
 
 test("a language may ship its quests as one pack, with no suffix", () => {
@@ -144,8 +144,8 @@ test("github: false keeps a pack off GitHub, and nothing else is accepted", () =
 
 test("an acted overlay is the section's English folder plus Acted, and the language's code", () => {
   assert.equal(actedFolder("quests", "enUS"), "SpokenQuestsAudioActed");
-  assert.equal(actedFolder("places", "deDE"), "SpokenZonesAudioActed_deDE");
-  assert.equal(actedFolder("readables", "ptBR"), "SpokenBooksAudioActed_ptBR");
+  assert.equal(actedFolder("places", "deDE"), "SpokenPlacesAudioActed_deDE");
+  assert.equal(actedFolder("readables", "ptBR"), "SpokenReadablesAudioActed_ptBR");
   assert.throws(() => actedFolder("places", "xxYY"));
 });
 
@@ -177,9 +177,9 @@ test("only a language's shared pack holds quests, and only its sides are dormant
 });
 
 test("manager: true puts a pack's folders on the manager channel", () => {
-  const onChannel = ["zones", "b.md", { ...placesMx[2], manager: "true" }];
+  const onChannel = ["places", "b.md", { ...placesMx[2], manager: "true" }];
   assert.deepEqual(managerFolders(loadPacks(tree([placesEn, onChannel]))),
-    [{ folder: "SpokenZonesAudio_esMX", section: "places", lang: "esMX" }]);
+    [{ folder: "SpokenPlacesAudio_esMX", section: "places", lang: "esMX" }]);
 });
 
 test("English's quests bundle puts its four folders on the channel", () => {
@@ -191,7 +191,7 @@ test("English's quests bundle puts its four folders on the channel", () => {
 });
 
 test("manager may only be true", () => {
-  assert.throws(() => loadPacks(tree([["zones", "b.md", { ...placesMx[2], manager: "yes" }]])), /manager may only be true/);
+  assert.throws(() => loadPacks(tree([["places", "b.md", { ...placesMx[2], manager: "yes" }]])), /manager may only be true/);
 });
 
 test("every section names the oldest Spoken its packs need", () => {

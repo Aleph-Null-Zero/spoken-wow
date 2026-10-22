@@ -27,8 +27,8 @@ test("everybody is credited once, earliest first", () => {
 
 test("the places overlay registers apart from the packs, keyed like a pack", () => {
   const lua = placesLua("deDE", [clip("1411/zone", { lineId: "z:1411" }), clip("1411/razor-hill", { lineId: "s:1411:razor hill" })], ["A"]);
-  assert.match(lua, /SpokenZonesAudioOverlays\[ADDON_NAME\] = overlay/);
-  assert.doesNotMatch(lua, /SpokenZonesAudioPacks\[/);
+  assert.match(lua, /SpokenPlacesAudioOverlays\[ADDON_NAME\] = overlay/);
+  assert.doesNotMatch(lua, /SpokenPlacesAudioPacks\[/);
   assert.match(lua, /\[1411\] = \{ file = "1411\\\\zone", len = 2.5 \}/);
   assert.match(lua, /\["razor hill"\] = \{ file = "1411\\\\razor-hill", len = 2.5 \}/);
   assert.match(lua, /language = "deDE"/);
@@ -38,7 +38,7 @@ test("the places overlay registers apart from the packs, keyed like a pack", () 
 
 test("the readables overlay registers apart from the packs, by page id", () => {
   const lua = readablesLua("enUS", [clip("1381")], ["A"]);
-  assert.match(lua, /SpokenBooksAudioOverlays\[ADDON_NAME\] = overlay/);
+  assert.match(lua, /SpokenReadablesAudioOverlays\[ADDON_NAME\] = overlay/);
   assert.match(lua, /\[1381\] = \{ file = "1381", len = 2.5 \}/);
 });
 

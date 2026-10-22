@@ -32,8 +32,8 @@ The notes for the module itself are in `docs/spoken/CHANGELOG.md`, because it ve
 | Folder | What it is |
 | --- | --- |
 | `addons/Spoken_Places` | The module: stories, lookup code, the map panel, the Places tab, settings page. |
-| `addons/SpokenZonesAudio` | The English voice pack. The repository holds `Data/Sounds.lua` (the clip lookup) and the `.toc`; the mp3s in `Sounds/` are gitignored and assembled from the site's takes. |
-| `SpokenZonesAudio_<locale>` | One pack per other language. Built into `build/places/<locale>`, never committed. |
+| `addons/SpokenPlacesAudio` | The English voice pack. The repository holds `Data/Sounds.lua` (the clip lookup) and the `.toc`; the mp3s in `Sounds/` are gitignored and assembled from the site's takes. |
+| `SpokenPlacesAudio_<locale>` | One pack per other language. Built into `build/places/<locale>`, never committed. |
 
 The addon still reads the packs that were published as `ZoneLoreAudio` and `ZoneLoreAudio64`
 (`Audio.lua`, `GetAudioPacks`), because those folders are on players' disks.
@@ -66,7 +66,7 @@ pipelines/places/tools/   scrapers, the lore store and exporter, locale tools, p
 pipelines/lib/dungeons.json   the dungeon table's source
 scripts/places/           package.sh, package-audio.sh, release.sh
 make/places.mk            the make places-* targets
-publishers/zones/         the store pages for the packs
+publishers/places/         the store pages for the packs
 apps/web                  the site, with the lore explorer at /places
 tests/lua/places_*_test.lua
 ```

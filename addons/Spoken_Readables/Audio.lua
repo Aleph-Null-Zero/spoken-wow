@@ -49,7 +49,7 @@ end
 --- What `pageId`'s readable is written on by its kind, or nil for paper.
 function SpokenReadables:KindMaterial(pageId)
 	local place = pageId and self:Data() and self:Data().pages[pageId]
-	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books
+	local places = _G.SpokenReadablesPlaces and SpokenReadablesPlaces.books
 	local entry = place and places and places[place.book]
 	return entry and KIND_MATERIAL[entry.type] or nil
 end
@@ -101,7 +101,7 @@ SpokenReadables.TYPE_NAMES = {
 
 --- What `book` is (a book, a letter, a gravestone...), as the Compendium sorts it.
 function SpokenReadables:KindOf(book)
-	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books
+	local places = _G.SpokenReadablesPlaces and SpokenReadablesPlaces.books
 	local place = places and places[book]
 	return L[(self.TYPE_NAMES[place and place.type] or self.TYPE_NAMES.other).one]
 end
@@ -111,15 +111,23 @@ function SpokenReadables:OneLine()
 	return not (SpokenReadablesSettings and SpokenReadablesSettings.bookAsOneLine == false)
 end
 
---- Every installed pack this version can read, newest format first.
+--- Every installed pack this version can read, newest format first. Packs released as
+--- SpokenBooksAudio write SpokenBooksAudioPacks, and stay on players' disks, so it is read too; one
+--- whose SpokenReadablesAudio replacement is installed beside it is the same pack, one release older.
 function SpokenReadables:GetAudioPacks()
 	local packs = {}
-	for name, pack in pairs(_G.SpokenBooksAudioPacks or {}) do
-		if type(pack) == "table" and pack.version == PACK_FORMAT and type(pack.pages) == "table" then
-			pack.addon = pack.addon or name
-			table.insert(packs, pack)
+	local current = _G.SpokenReadablesAudioPacks or {}
+	local function Collect(registry, renamed)
+		for name, pack in pairs(registry or {}) do
+			if type(pack) == "table" and pack.version == PACK_FORMAT and type(pack.pages) == "table"
+				and not (renamed and current[(name:gsub("^SpokenBooksAudio", "SpokenReadablesAudio"))]) then
+				pack.addon = pack.addon or name
+				table.insert(packs, pack)
+			end
 		end
 	end
+	Collect(current)
+	Collect(_G.SpokenBooksAudioPacks, true)
 	table.sort(packs, function(a, b) return (a.addon or "") < (b.addon or "") end)
 	return packs
 end

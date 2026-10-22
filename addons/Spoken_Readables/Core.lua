@@ -277,7 +277,7 @@ end
 --- The corpus, as Data/Books.lua left it. Nil only when that file failed to load, which is
 --- worth answering for rather than indexing into nil from four call sites.
 function SpokenReadables:Data()
-	return _G.SpokenBooksData
+	return _G.SpokenReadablesData
 end
 
 --- Spoken's site, or nil when Spoken is not loaded: no page is read aloud without it, so there
