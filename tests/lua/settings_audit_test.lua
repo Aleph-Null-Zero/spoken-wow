@@ -24,9 +24,9 @@ _G.C_AddOns = { IsAddOnLoaded = function() return true end }
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local env = _G.SpokenEnv
-env.Sources:Register("readables", { title = "Spoken Writings", addon = "Spoken_Readables", order = 2,
+env.Sources:Register("readables", { title = "Spoken Readables", addon = "Spoken_Readables", order = 2,
     packs = function() return { "SpokenBooksAudio" } end })
-env.Sources:Register("places", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
+env.Sources:Register("places", { title = "Spoken Places", addon = "Spoken_Places", order = 3,
     packs = function() return { "SpokenZonesAudio" } end })
 _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()
@@ -58,9 +58,9 @@ local Dev = stub.LoadDeveloper(here .. "/../../addons/Spoken_Developer/")
 Dev:SetupOptions()
 
 
--- What the test's stand-ins lack and the real addons have: the zones addon here is a stand-in
+-- What the test's stand-ins lack and the real addons have: the Places addon here is a stand-in
 -- (queue_helpers.NewZoneLore) without its playback and language files, so the methods its page
--- calls are recorded rather than run -- every one of them is defined in SpokenZones itself.
+-- calls are recorded rather than run -- every one of them is defined in SpokenPlaces itself.
 local called = {}
 for _, method in ipairs({ "StopLore", "NotifyAudioChanged", "ShowCopyLink", "RefreshLoreWindow",
     "ApplyPanelOptions", "ResetOptions", "PlayTestLine", "ShowDiagnostics", "ToggleLoreWindow",
@@ -71,7 +71,7 @@ end
 local zonesLanguage
 Z.SetLanguage = function(_, code) zonesLanguage = code; return true end
 Z.GetLanguagePreference = function() return zonesLanguage end
--- The books addon's own copy dialog.
+-- The Readables addon's own copy dialog.
 assert(loadfile(READABLES .. "UI/CopyLink.lua"))("Spoken_Readables", B)
 -- The stub client measures no text; the subtitle's sample needs a height to lay out.
 do
@@ -254,28 +254,28 @@ end
 Expect("...and no Show Boss Abilities, which is on the Bosses page", #abilityRows, 0)
 
 ---------------------------------------------------------------- the Compendium's Text Size
--- On Spoken's page, after Open Azeroth's Compendium, for every tab; no longer on the Zones page.
+-- On Spoken's page, after Open Azeroth's Compendium, for every tab; no longer on the Places page.
 local afterOpen
 local controls = Controls(pages[1].layout)
 for index, control in ipairs(controls) do
     if Name(control) == env.L.OPT_COMPENDIUM_OPEN and controls[index + 1] then afterOpen = Name(controls[index + 1]) end
 end
 Expect("Spoken's Compendium section has Text Size after its Open button", afterOpen, env.L.OPT_COMPENDIUM_FONT_SIZE)
-local onZones = {}
+local onPlaces = {}
 for _, control in ipairs(Controls(pages[4].layout)) do
-    if Name(control) == env.L.OPT_COMPENDIUM_FONT_SIZE then table.insert(onZones, Name(control)) end
+    if Name(control) == env.L.OPT_COMPENDIUM_FONT_SIZE then table.insert(onPlaces, Name(control)) end
 end
-Expect("...and the Zones page has none", table.concat(onZones, "|"), "")
+Expect("...and the Places page has none", table.concat(onPlaces, "|"), "")
 
 -- Kept with each part's settings, so Spoken's profile reset would not reach them.
 unlocked.places, unlocked.readables, unlocked.quests, unlocked.bosses = true, true, true, true
--- The Text Size the Zones page had, which Spoken's reads until it is set there.
+-- The Text Size the Places page had, which Spoken's reads until it is set there.
 _G.SpokenZonesSettings = { fontSize = 15 }
 local reset = _G.SpokenOptionsPanel.layout.defaults
 reset.scripts.OnClick(reset)
 stub.popups[#stub.popups].dialog.OnAccept()
 Expect("Reset All turns every Unlock switch off", (unlocked.places or unlocked.readables or unlocked.quests or unlocked.bosses) and true or false, false)
-Expect("...and puts the Compendium's Text Size back to 12, not to the Zones page's", _G.Spoken:CompendiumFontSize(), 12)
+Expect("...and puts the Compendium's Text Size back to 12, not to the Places page's", _G.Spoken:CompendiumFontSize(), 12)
 _G.SpokenZonesSettings = nil
 
 os.exit(Failures() == 0 and 0 or 1)

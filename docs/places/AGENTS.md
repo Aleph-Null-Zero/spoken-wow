@@ -2,9 +2,13 @@
 
 The root `AGENTS.md` applies, including its credit, data and versioning rules. This file covers
 only the Places section. Its folders, make targets, database source, site routes and
-`SPOKEN_PLACES_*` variables say places; the addon's internals (its `zones` source and part key,
-the `SpokenZones*` globals and saved variables), the `SpokenZonesAudio` pack folders, the
-`zones-audio` tags, the `publishers/zones/` pages and the `z:`/`s:` line ids still say zones.
+`SPOKEN_PLACES_*` variables say places, and so does the addon's `places` source and part key and
+its `SpokenPlaces` namespace. Still saying zones: the `SpokenZonesSettings` and
+`SpokenZonesCharacter` saved variables, the `Zones` table of Spoken's profile, the
+`SpokenZonesAudio` pack folders and `SpokenZonesAudioPacks` global, the `X-SpokenZones-*` `.toc`
+fields, frame names like `SpokenZonesPanel`, the `zones-audio` and `zones/v*` tags, the
+`publishers/zones/` pages and CurseForge slugs, the `addon=SpokenZones/<version>` envelope field and
+the `z:`/`s:` line ids.
 Before changing a part, read its file:
 
 - the module, its settings, languages and voice packs: [ADDON.md](ADDON.md)

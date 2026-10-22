@@ -74,7 +74,7 @@ Z.AreaAt = areaAt
 local THUNDER_BLUFF = 1456
 local shownMap
 WorldMapFrame.SetMapID = function(_, id) shownMap = id end
--- As SpokenZones:AreaAt gives it: the city's story and its map.
+-- As SpokenPlaces:AreaAt gives it: the city's story and its map.
 Z.AreaAt = function(_, mapID)
     if mapID == MULGORE then return "Thunder Bluff", { name = "Thunder Bluff" }, nil, THUNDER_BLUFF end
 end
@@ -86,4 +86,4 @@ Click()
 Expect("...and opens the panel when it is closed, as an area does", settings.mapPanelCollapsed, false)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones map click tests passed")
+print("\nAll places map click tests passed")

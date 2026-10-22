@@ -23,7 +23,7 @@ _G.SpokenBooksAudioPacks = {
 local REGISTRY_1 = "Hillsbrad Town Registry\n\nWe the people of Hillsbrad do solemny swear our faith and devotion to the Alliance maintained by the great monarchs, King Magni Bronzebeard of Ironforge and King Anduin Wrynn of Stormwind.\n\nHerein lies the town registry for purposes of governing this fair city in the foothills of the great Alterac Mountains as well as serving as a record of those who have paid their taxes to their Kings and to the great almighty Alliance."
 local REGISTRY_2 = "Magistrate Rutherford Burnside\nAll debts settled.\n\nBlacksmith Avery Verringtan\nAll debts settled.\n\nClerk Horrace Whitesteed\nAll debts settled.\n\nCouncilman Gillis\nAll debts settled.\n\nCouncilman Hooks\nAll debts settled.\n\nFarmer Getz\nAll debts settled.\n\nFarmer Ray\nDebt outstanding.  Payment in agricultural goods promised at time of harvest.\n\nFarmer Lyion\nDebt outstanding.  Evicted from the land."
 
-local function LoadBooks()
+local function LoadReadables()
     local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
         "UI/PlayButton", "Events", "Commands" }) do
@@ -37,7 +37,7 @@ stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
-local B = LoadBooks()
+local B = LoadReadables()
 B:InitDB()
 B:SetupSource()
 dofile(READABLES .. "Data/Books.lua")
@@ -248,5 +248,5 @@ stub.ShowPage({ title = "A letter", number = 1, text = REGISTRY_1, creator = "So
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("no button on mail", button:IsShown(), false)
 
-print(Failures() == 0 and "All books event tests passed" or (Failures() .. " failed"))
+print(Failures() == 0 and "All readables event tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

@@ -48,7 +48,7 @@ local function Boot(opts)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     C_Timer.After = after
-    local Z = H.LoadZones(PLACES)
+    local Z = H.LoadPlaces(PLACES)
     assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     assert(loadfile(PLACES .. "Discovery.lua"))("Spoken_Places", Z)
     assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
@@ -153,4 +153,4 @@ for _, map in ipairs(maps) do
 end
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones instance tests passed")
+print("\nAll places instance tests passed")

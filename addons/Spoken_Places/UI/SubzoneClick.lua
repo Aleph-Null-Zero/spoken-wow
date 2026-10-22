@@ -1,4 +1,4 @@
--- SpokenZones -- detect clicks on a subzone of the displayed world map.
+-- SpokenPlaces -- detect clicks on a subzone of the displayed world map.
 --
 -- Subzones have no uiMapID, so C_Map.GetMapInfoAtPosition cannot see them; it
 -- only reports child *maps*. MapUtil.FindBestAreaNameAtMouse is the API that
@@ -26,7 +26,7 @@ local function HandleClick(x, y)
 		return
 	end
 
-	-- The highlight lights what this finds (SpokenZones:AreaAt), so a lit area is one a click opens.
+	-- The highlight lights what this finds (SpokenPlaces:AreaAt), so a lit area is one a click opens.
 	local areaName, entry, key, city = SpokenPlaces:AreaAt(mapID, x, y)
 	local debug = SpokenPlaces:Get("debug")
 

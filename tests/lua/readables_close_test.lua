@@ -24,7 +24,7 @@ _G.SpokenBooksAudioPacks = {
 local LETTER = "Hello Morgan,\n\nBusiness in Goldshire is brisk."
 local REGISTRY_1 = "Hillsbrad Town Registry\n\nWe the people of Hillsbrad do solemny swear our faith and devotion to the Alliance maintained by the great monarchs, King Magni Bronzebeard of Ironforge and King Anduin Wrynn of Stormwind.\n\nHerein lies the town registry for purposes of governing this fair city in the foothills of the great Alterac Mountains as well as serving as a record of those who have paid their taxes to their Kings and to the great almighty Alliance."
 
-local function LoadBooks()
+local function LoadReadables()
     local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
         "Events", "Commands" }) do
@@ -38,7 +38,7 @@ stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
-local B = LoadBooks()
+local B = LoadReadables()
 B:InitDB()
 B:SetupSource()
 dofile(READABLES .. "Data/Books.lua")
@@ -149,5 +149,5 @@ Expect("/spw close toggles it", SpokenBooksSettings.closeWhenRead, false)
 SlashCmdList["SPOKENREADABLES"]("close")
 Expect("...and back", SpokenBooksSettings.closeWhenRead, true)
 
-print(Failures() == 0 and "All books close tests passed" or (Failures() .. " failed"))
+print(Failures() == 0 and "All readables close tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

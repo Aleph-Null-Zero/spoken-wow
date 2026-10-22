@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Read the root `AGENTS.md`, then [AGENTS.md](AGENTS.md) for the Places section, whose addon internals, pack folders and tags still say `zones`.
+Read the root `AGENTS.md`, then [AGENTS.md](AGENTS.md) for the Places section, whose saved variables, pack folders, tags and store pages still say `zones`.
 
 Before touching a part, read its file: [ADDON.md](ADDON.md) (module, settings, languages, packs),
 [COMPENDIUM.md](COMPENDIUM.md) (the tab, map panel, area and dungeon tables), [LORE.md](LORE.md)

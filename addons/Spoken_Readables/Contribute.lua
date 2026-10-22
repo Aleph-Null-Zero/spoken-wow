@@ -18,7 +18,7 @@ local ADDON_NAME, SpokenReadables = ...
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
 
---- The fields every books envelope starts with: which addon, which client, which language.
+--- The fields every readables envelope starts with: which addon, which client, which language.
 local function BaseFields(self)
 	return
 	{

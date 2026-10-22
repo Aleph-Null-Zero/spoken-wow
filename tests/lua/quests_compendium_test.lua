@@ -156,7 +156,7 @@ Expect("...where the player's continent is not known, on the first continent, as
 MAPS[9998] = { "An inn in Kalimdor", 1414 }
 stub.world.playerMapID = 9998
 Tab:Open()
-Expect("...where the player is on a continent and in no zone with quests, on that continent, as Zones and Books land",
+Expect("...where the player is on a continent and in no zone with quests, on that continent, as Places and Readables land",
     page.title.text, "Kalimdor")
 
 -- The client's scroll frame: an offset only within the range it last measured, which it measures
@@ -1130,12 +1130,12 @@ Expect("Quests switched off while the window shows its tab, the window closes", 
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)
 Spoken:SetPartOn("quests", true)
 
--- Quests is the first tab, before Zones and Books, and gives the window its title.
-C:Register("places", { label = "Zones", order = 1, build = function() end })
-C:Register("readables", { label = "Books", order = 2, build = function() end })
+-- Quests is the first tab, before Places and Readables, and gives the window its title.
+C:Register("places", { label = "Places", order = 1, build = function() end })
+C:Register("readables", { label = "Readables", order = 2, build = function() end })
 Expect("Quests is the first tab", _G.SpokenCompendiumWindowTab1:GetText(), L.COMPENDIUM_QUESTS)
-Expect("...Zones and Books after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
-    "Zones|Books")
+Expect("...Places and Readables after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
+    "Places|Readables")
 Expect("...and the window has its title", C.window.title, SpokenEnv.L.OPT_COMPENDIUM_TITLE)
 -- Opened from the minimap menu, on the first tab until the player has chosen one with the tabs.
 C:Select("readables")
@@ -1210,11 +1210,11 @@ Expect("...a dungeon's page in the zone of its entrance, counting its quests", p
 do
     list = Shown()
     Click("Searing Gorge")
-    -- Zones' picture of the place above its page, where Zones has one.
-    Expect("a place's page has no picture while Zones has none", page.body.picture:IsShown(), false)
+    -- Places' picture of the place above its page, where Places has one.
+    Expect("a place's page has no picture while Places has none", page.body.picture:IsShown(), false)
     _G.Spoken.PlacePicture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end
     Tab:Refresh()
-    Expect("...and Zones' picture of the place when it has", page.body.picture:IsShown() and page.body.picture:GetTexture(), "pic1427")
+    Expect("...and Places' picture of the place when it has", page.body.picture:IsShown() and page.body.picture:GetTexture(), "pic1427")
     _G.Spoken.PlacePicture = nil
     list = Shown()
     Click("Searing Gorge")

@@ -1,4 +1,4 @@
--- What the books addon offers to send for a page the corpus does not carry.
+-- What the Readables addon offers to send for a page the corpus does not carry.
 -- Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -9,7 +9,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
-local function LoadBooks()
+local function LoadReadables()
     local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
         local chunk = assert(loadfile(READABLES .. file .. ".lua"))
@@ -20,7 +20,7 @@ end
 
 stub.SetClient("16001")
 local env = stub.LoadSpoken(SPOKEN)
-local B = LoadBooks()
+local B = LoadReadables()
 B:InitDB()
 dofile(READABLES .. "Data/Books.lua")
 

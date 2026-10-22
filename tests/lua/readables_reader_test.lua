@@ -10,7 +10,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
-local function LoadBooks()
+local function LoadReadables()
     local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio" }) do
         local chunk = assert(loadfile(READABLES .. file .. ".lua"))
@@ -23,7 +23,7 @@ stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
-local B = LoadBooks()
+local B = LoadReadables()
 B:InitDB()
 B:SetupSource()
 dofile(READABLES .. "Data/Books.lua")
@@ -112,5 +112,5 @@ Expect("a caption as the narrator says it: the first side, adventurer, traveler,
     "Adventurer, Before I go. Greetings, brother. Tell me, adventurer, have you met the traveler? Adventurer!")
 world.playerName, world.playerClass, world.playerRace, world.unitSex = nil, nil, nil, 2
 
-print(Failures() == 0 and "All books reader tests passed" or (Failures() .. " failed"))
+print(Failures() == 0 and "All readables reader tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

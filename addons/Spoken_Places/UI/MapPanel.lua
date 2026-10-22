@@ -1,4 +1,4 @@
--- SpokenZones -- the story docked to the side of the world map, drawn as the quest log is.
+-- SpokenPlaces -- the story docked to the side of the world map, drawn as the quest log is.
 --
 -- Shows lore for the zone the map is displaying, or for a subzone the player
 -- clicked (see UI/SubzoneClick.lua), with a link back to the zone.

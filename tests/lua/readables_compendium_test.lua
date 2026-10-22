@@ -1,7 +1,7 @@
 -- The readables in Azeroth's Compendium: every book, letter, note and plaque, in a card for the
 -- zone it is in under its continent's banner and a line for what it is, or by what it is
 -- alone, found or not; a readable's page with
--- where it comes from; the search, Found Only and Unlock Unfound Writings; and the tabs once the
+-- where it comes from; the search, Found Only and Unlock Unfound Readables; and the tabs once the
 -- places are there too. Against the shipped data (Data/Books.lua, Data/Places.lua). Run with
 -- `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
@@ -473,7 +473,7 @@ do
     Click("Cragmoor")
     _G.Spoken.PlacePicture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end
     B:RefreshReadables()
-    Expect("a zone's page has Zones' picture of the place above it", panel.page.body.picture:IsShown()
+    Expect("a zone's page has Places' picture of the place above it", panel.page.body.picture:IsShown()
         and panel.page.body.picture:GetTexture(), "pic9004")
     _G.Spoken.PlacePicture = nil
     list = Shown()
@@ -553,9 +553,9 @@ Expect("opened on a writing, it is chosen, its row shown with what holds it open
 Expect("the Compendium shows a found writing's page, not one not found",
     tostring(B:CompendiumHas(KURDRAN)) .. "|" .. tostring(B:CompendiumHas(ALLERIA)), "true|false")
 SpokenBooksSettings.unlockUnfound = true
-Expect("...or any with Unlock Unfound Writings on", B:CompendiumHas(ALLERIA), true)
+Expect("...or any with Unlock Unfound Readables on", B:CompendiumHas(ALLERIA), true)
 SpokenBooksSettings.unlockUnfound = false
--- The line under the title is plain words, as on Quests and Zones.
+-- The line under the title is plain words, as on Quests and Places.
 Expect("a page's line under its title is not a link", page.sub.onClick, nil)
 Click("Kurdran Wildhammer")
 Click("Ranger Captain Alleria Windrunner")
@@ -563,7 +563,7 @@ Expect("a readable not found does not open", page.title.text, "Kurdran Wildhamme
 
 SpokenBooksSettings.unlockUnfound = true
 B:RefreshReadables()
-Expect("Unlock Unfound Writings opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
+Expect("Unlock Unfound Readables opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 -- Opening one is not finding it: the counts stay what the character has found.
 local before = RowFor("Stormwind City").count.text
 Click("Ranger Captain Alleria Windrunner")
@@ -951,7 +951,7 @@ OpenKinds("wide")
 Click(L.GROUP_WIDE)
 
 -- The places' tab joins: the tabs show, and each shows its own panel.
-_G.SpokenCompendium:Register("places", { label = "Zones", order = 1,
+_G.SpokenCompendium:Register("places", { label = "Places", order = 1,
     build = function(p) p.places = true end })
 _G.SpokenCompendium:Select("places")
 Expect("with two tabs, the tabs show", _G.SpokenCompendiumWindowTab1:IsShown() and _G.SpokenCompendiumWindowTab2:IsShown(), true)

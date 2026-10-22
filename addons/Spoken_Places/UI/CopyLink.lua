@@ -1,4 +1,4 @@
--- SpokenZones -- a popup holding one selectable URL.
+-- SpokenPlaces -- a popup holding one selectable URL.
 --
 -- The client has no way to open a browser, so every link this addon offers ends
 -- up here: an edit box with the address already highlighted, so the player

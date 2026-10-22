@@ -108,7 +108,7 @@ function Spoken:RegisterOptionalAction(id, label)
     return Actions:RegisterOptional(id, label)
 end
 
---- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
+--- A row bullet, registered once by a feature addon so SpokenReadables needs no change to
 --- the player to have one of its own.
 function Spoken:RegisterBullet(id, texture, size)
     Bullets[id] = { texture = texture, size = size }
@@ -499,7 +499,7 @@ end
 
 --- The Text Size of the words of stories, books and quests in Azeroth's Compendium and beside the
 --- map, from the Compendium section of Spoken's page. Until the player sets it there, the size
---- they set on the Zones page, where it was before; 12 with neither.
+--- they set on the Places page, where it was before; 12 with neither.
 function Spoken:CompendiumFontSize()
     local size = Addon.db and Addon.db.profile.CompendiumFontSize
     if size == nil and type(SpokenZonesSettings) == "table" then size = SpokenZonesSettings.fontSize end

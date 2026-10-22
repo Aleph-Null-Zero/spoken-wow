@@ -12,7 +12,7 @@ local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("11509"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 -- Spoken, which the module runs on: its round buttons are the pages' Play and Report.
--- Spoken Zones is loaded, as the Compendium's page checks for the art it ships.
+-- Places is loaded, as the Compendium's page checks for the art it ships.
 _G.IsAddOnLoaded = function(name) return name == "Spoken_Places" end
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.24, 0.15, 0.07 end }
 stub.LoadSpoken(here .. "/../../addons/Spoken/").Addon:Enable()
@@ -92,7 +92,7 @@ function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
 function Z:Picture(mapID, key)
     if mapID == 1411 and not key then return "Pictures/zone-1411", "Pictures/Mask2" end
 end
--- Every place listed, as with Unlock Undiscovered Zones on, until the checks for the found-only
+-- Every place listed, as with Unlock Undiscovered Places on, until the checks for the found-only
 -- list below turn it off.
 local showAll, found = true, {}
 function Z:ShowsUndiscovered() return showAll end
@@ -590,7 +590,7 @@ ATLASES["spellbook-divider"] = true
 
 ---------------------------------------------------------------- places not yet discovered
 -- Durotar and one of its areas found; Dun Morogh, given an area here, and Somewhere Else not. As on
--- the Quests and Writings tabs, every banner and card lists and opens, and only an area's row locks.
+-- the Quests and Readables tabs, every banner and card lists and opens, and only an area's row locks.
 local function Locked()
     local labels = {}
     for _, row in ipairs(rows) do
@@ -668,7 +668,7 @@ Shown()
 
 -- A search lists every match, greyed as browsing lists it: in a zone not found, under a banner none
 -- of whose zones is found. A zone's line is greyed while nothing in it is found, as a line with
--- nothing started or found in it is on the Quests and Writings tabs.
+-- nothing started or found in it is on the Quests and Readables tabs.
 local wasFound = found
 found = { ["1411/valley of trials"] = true }
 local function Search(text)
@@ -748,7 +748,7 @@ Expect("...off, everything again", Shown(), "Eastern Kingdoms|Dun Morogh|Kalimdo
 Z.HasAudio = hasAudio
 
 ---------------------------------------------------------------- a new session
--- A fresh Compendium with a first tab before the places, and Zones' tab set up again in it.
+-- A fresh Compendium with a first tab before the places, and Places' tab set up again in it.
 local partOn = true
 local function NewSession()
     _G.SpokenCompendium:Hide()
@@ -767,7 +767,7 @@ Expect("the Compendium first opened from the minimap or Spoken's page opens on i
     _G.SpokenCompendium:Active(), "first")
 partOn = false
 local late = NewSession()
-Expect("with Zones off at login, the places' tab is not built", rawget(late, "window"), nil)
+Expect("with Places off at login, the places' tab is not built", rawget(late, "window"), nil)
 partOn = true
 late:ToggleLoreWindow()
 Expect("...switched on later, opening it builds the tab and opens it on where the player stands",
@@ -781,7 +781,7 @@ Expect("...and the map's panel opens it on a place", tostring(_G.SpokenCompendiu
 partOn = false
 late = NewSession()
 late:ToggleLoreWindow()
-Expect("...while Zones stays off, nothing opens", _G.SpokenCompendium:IsOpen(), false)
+Expect("...while Places stays off, nothing opens", _G.SpokenCompendium:IsOpen(), false)
 
 -- Text Size, on Spoken's page: Spoken says when it changes, and the story is drawn again at it.
 partOn = true
@@ -794,7 +794,7 @@ local body = sized.window.page.body.text
 local setFont, drawnAt = body.SetFont, nil
 body.SetFont = function(self, face, size, ...) drawnAt = size; if setFont then return setFont(self, face, size, ...) end end
 spoken:SetCompendiumFontSize(16)
-Expect("Zones listens for Spoken's COMPENDIUM_FONT_CHANGED", said.COMPENDIUM_FONT_CHANGED ~= nil, true)
+Expect("Places listens for Spoken's COMPENDIUM_FONT_CHANGED", said.COMPENDIUM_FONT_CHANGED ~= nil, true)
 said.COMPENDIUM_FONT_CHANGED()
 -- The parchment's ink is drawn a point larger than the Text Size.
 Expect("...and draws the story again at the new Text Size", drawnAt, 16 + 1)
@@ -832,4 +832,4 @@ do
 end
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones lore window tests passed")
+print("\nAll places lore window tests passed")

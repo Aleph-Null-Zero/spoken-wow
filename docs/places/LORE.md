@@ -41,19 +41,19 @@ a re-scrape is safe to run: it never discards an edit.
 zone's uiMapID and then by the area's key. An entry has `name`, `short`, `full` and `source` (the
 wiki page, or none where the text was written for this project). An entry with `pending = true` is a
 place with no story yet: it ships with empty text so the addon can list it and say so. The
-addon asks `SpokenZones:IsPending(entry)` and never tests for the entry's existence, because an
+addon asks `SpokenPlaces:IsPending(entry)` and never tests for the entry's existence, because an
 empty string is truthy in Lua.
 
 The key of an area is its name made canonical: lower case, apostrophes dropped, a leading "the"
 dropped, any other run of characters outside `a-z0-9` made one space. "The Bulwark" is `bulwark`.
 Every language is keyed by the English name, because a place is one place whatever it is called.
-`normaliseKey` in `pipelines/places/tools/lib/wiki.mjs` and `SpokenZones:NormaliseAreaKey` in
+`normaliseKey` in `pipelines/places/tools/lib/wiki.mjs` and `SpokenPlaces:NormaliseAreaKey` in
 `Core.lua` must agree, and `validate.mjs` checks that they do and that every generated key is
 canonical (a key that is not is unreachable). A key is frozen once a story has one: when the
 game renames a place, the key stays and `Data/ForeverAreas.lua` maps the new spelling to it.
 
 Areas are looked up by name, because areas have no uiMapID. `C_Map.GetMapInfoAtPosition` returns
-child maps only, and `MapUtil.FindBestAreaNameAtMouse` returns a name. `SpokenZones:ResolveAreaKey`
+child maps only, and `MapUtil.FindBestAreaNameAtMouse` returns a name. `SpokenPlaces:ResolveAreaKey`
 turns the name the client reports into a key: the alias table for the client's locale first, then
 Forever's spelling, then the normalised name. A name the client gives more than one place is
 looked up with the map it was reported on as well (see Languages).

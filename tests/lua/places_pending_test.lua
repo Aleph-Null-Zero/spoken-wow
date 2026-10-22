@@ -72,4 +72,4 @@ end
 Expect("no subzone hangs off an unknown zone", table.concat(orphans, ", "), "")
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones pending tests passed")
+print("\nAll places pending tests passed")

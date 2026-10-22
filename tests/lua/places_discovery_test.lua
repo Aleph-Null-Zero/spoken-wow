@@ -66,7 +66,7 @@ end
 local onZone
 function Z:OnZoneChanged(fn) onZone = fn end
 _G.SpokenZonesCharacter = nil
-assert(loadfile(PLACES .. "Discovery.lua"))("SpokenZones", Z)
+assert(loadfile(PLACES .. "Discovery.lua"))("Spoken_Places", Z)
 Z:SetupDiscovery()
 
 -- The city first, before anything has read Durotar's map.

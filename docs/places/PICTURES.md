@@ -55,9 +55,9 @@ given the picture of the one that was reviewed.
 
 ## In the game
 
-`SpokenZones:Picture(mapID, key)` (`Core.lua`) returns the picture's path and its mask's, or nil
+`SpokenPlaces:Picture(mapID, key)` (`Core.lua`) returns the picture's path and its mask's, or nil
 for a place with none or with Show Pictures off. `Data/Pictures.lua` is
-`SpokenZones.pictures[mapID][key or ""] = { texture, mask number }`, where `""` is the zone itself.
+`SpokenPlaces.pictures[mapID][key or ""] = { texture, mask number }`, where `""` is the zone itself.
 `TextView.lua` draws the picture 2:1 and as wide as the text up to `PICTURE_MOST` (400), centred,
 `PICTURE_GAP` (10) above the words, at `PICTURE_ALPHA` (0.95), cut by the mask through a mask
 texture.

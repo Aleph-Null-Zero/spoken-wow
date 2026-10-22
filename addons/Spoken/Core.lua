@@ -571,7 +571,7 @@ function Addon:IsGamepadUI()
 end
 
 -- Folders an older release installed, which nothing ships any more: Spoken's own before it was
--- renamed, and the old names of Quests and Zones, whether the addons themselves or the empty
+-- renamed, and the old names of Quests and Places, whether the addons themselves or the empty
 -- folders that stood in for them. Loaded beside this release, the old code narrates over it and
 -- the empty ones only clutter the AddOns list.
 --

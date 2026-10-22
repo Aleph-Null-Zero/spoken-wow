@@ -28,7 +28,7 @@ local function Boot()
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     C_Timer.After = after
-    local Z = H.LoadZones(PLACES)
+    local Z = H.LoadPlaces(PLACES)
     assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     for _, file in ipairs({ "Autoplay", "Discovery", "UI/LoreWindow" }) do
         assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z)
@@ -102,4 +102,4 @@ _G.IsShiftKeyDown = shift
 Spoken:StopAll()
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones story place tests passed")
+print("\nAll places story place tests passed")

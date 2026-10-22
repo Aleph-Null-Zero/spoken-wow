@@ -1,6 +1,6 @@
 -- A place this addon has no lore for, as something a player can describe.
 --
--- No text, unlike the quests and books envelopes: zone lore is wiki-sourced rather than
+-- No text, unlike the quests and readables envelopes: zone lore is wiki-sourced rather than
 -- client-sourced, so the client has nothing to hand over. What this sends names the place --
 -- the map, the zone, the subzone -- and the contribute page asks the player for the part that
 -- is actually missing: a description of it.
@@ -22,12 +22,12 @@ function SpokenPlaces:CanContribute()
     return true
 end
 
---- The fields every zones envelope starts with: which addon, which client, which language.
+--- The fields every places envelope starts with: which addon, which client, which language.
 local function BaseFields(self)
     return
     {
-        -- SpokenZones.VERSION does not exist -- Core.lua computes the real .toc version into
-        -- the lowercase SpokenZones.version; "dev" is what a source checkout with no .toc
+        -- SpokenPlaces.VERSION does not exist -- Core.lua computes the real .toc version into
+        -- the lowercase SpokenPlaces.version; "dev" is what a source checkout with no .toc
         -- metadata at all reads back as.
         { "addon", format("SpokenZones/%s", self.version or "dev") },
         { "build", format("%s/%s", (GetBuildInfo and select(1, GetBuildInfo())) or "?",

@@ -1,4 +1,4 @@
--- What the zones addon sends for a place it has no lore for. Run with `make test-player`.
+-- What the Places addon sends for a place it has no lore for. Run with `make test-player`.
 --
 -- No text: zone lore is wiki-sourced, so the client has nothing to give. The envelope names the
 -- place the panel shows, and the contribute page asks the player to describe it.
@@ -17,11 +17,11 @@ local env = stub.LoadSpoken(SPOKEN)
 -- The addon's own .toc Version, deliberately unlike "dev" so the assertion below cannot pass
 -- by coincidence -- it is pinning that CaptureContribution reads a real version, not
 -- confirming a particular one. See addons/Spoken_Quests/Contribute.lua's Contribute:Capture
--- for the same pattern; SpokenZones.VERSION does not exist, only the lowercase
--- SpokenZones.version Core.lua already computes from the .toc.
+-- for the same pattern; SpokenPlaces.VERSION does not exist, only the lowercase
+-- SpokenPlaces.version Core.lua already computes from the .toc.
 stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })
 
-local Z = H.LoadZones(PLACES)   -- the loader that loads Core.lua for real, unlike stub.LoadZones
+local Z = H.LoadPlaces(PLACES)   -- the loader that loads Core.lua for real, unlike stub.LoadZones
 
 -- The player stands somewhere else entirely: what is sent is the place the panel shows.
 stub.SetZone({ map = 1453, zone = "Stormwind City", x = 0.5, y = 0.5 })

@@ -1,4 +1,4 @@
--- SpokenBooks -- books, letters and notes read aloud.
+-- SpokenReadables -- books, letters and notes read aloud.
 --
 -- Client targets: Classic Era 1.15.9 (11509), Anniversary 2.5.6 (20506) and
 -- Forever 1.60 (16001). Nothing here branches on the client: the book UI is the same API
@@ -27,7 +27,7 @@ SpokenReadables.version = GetAddOnMeta and GetAddOnMeta(ADDON_NAME, "Version") o
 local REQUIRED_API = 1
 
 local defaults = {
-	-- On, unlike the zones addon's area autoplay: opening a book is already a deliberate
+	-- On, unlike the places addon's area autoplay: opening a book is already a deliberate
 	-- act, so a player who opened one has asked to read it. The switch is for whoever
 	-- would rather press play themselves.
 	autoplay = true,
@@ -214,7 +214,7 @@ function SpokenReadables:SetupSource()
 		title = L.OPT_PAGE_TITLE,
 		addon = ADDON_NAME,
 		order = 4,
-		-- No limit, unlike the zones source. Zone lore arrives in bursts nobody asked for --
+		-- No limit, unlike the places source. Zone lore arrives in bursts nobody asked for --
 		-- crossing a cluster of small subzones queues narration about places the player has
 		-- already left -- so it caps the backlog and drops the oldest. A readable is one the
 		-- player opened, and each queues after the one being read: they pile up on purpose, a
@@ -285,7 +285,7 @@ end
 --- Built from the page id alone, and that is the whole reason the address has this shape:
 --- the id is frozen -- `b:{pageTextID}` per docs/readables/AGENTS.md -- so the addon can build
 --- the link from what it already has, with no per-page table to ship and nothing to escape.
---- The zones landing page makes the same trade with its {mapID}/{slug} path.
+--- The places landing page makes the same trade with its {mapID}/{slug} path.
 function SpokenReadables:ReportURL(pageId, language)
 	local key = type(pageId) == "number" and format("%d", pageId)
 		or (type(pageId) == "string" and pageId:match("^n[%x%-]+$"))

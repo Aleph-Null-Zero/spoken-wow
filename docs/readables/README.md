@@ -7,10 +7,12 @@ read aloud in game by Spoken's Readables module (`addons/Spoken_Readables`).
 Players see this section as **Readables**: the module, its page and tab, its commands (`/spr`; `/spw`
 and `/spb` still work), the sound packs' titles and the site's labels. Most of what they never
 see says readables too: the folders, the `make readables-*` targets, the database's `readables`
-source, the site's `/readables` routes and the `SPOKEN_READABLES_*` variables. The addon's
-internals still say books: its `books` source and part key, the `SpokenBooks*` globals and saved
-variables, the `SpokenBooksAudio` pack folders with their `books-audio` tags, the
-`publishers/books/` pages and the `b:{pageTextID}` line ids.
+source, the site's `/readables` routes, the `SPOKEN_READABLES_*` variables, and the addon's
+`readables` source and part key and its `SpokenReadables` namespace. Still saying books: the
+`SpokenBooksSettings` and `SpokenBooksCharacter` saved variables, the `Writings` table of Spoken's
+profile, the `SpokenBooksData`, `SpokenBooksPlaces` and `SpokenBooksAudioPacks` globals, frame names
+like `SpokenBooksDialogueUITooltip`, the `SpokenBooksAudio` pack folders with their `books-audio`
+tags, the `publishers/books/` pages and CurseForge slugs, and the `b:{pageTextID}` line ids.
 
 ## Where the words come from, and why not from anywhere else
 
@@ -209,7 +211,7 @@ that a clip finished — the player owns the queue — so "finished" could only 
 from a queue that `/spr stop` or a zone change can empty early. The rule refuses autoplay
 only: `/spr read` and the Play button go straight to the playlist, because a reader pressing
 play has asked again in so many words. It also does not refuse the book it is in the middle
-of reading, which is what `SpokenBooks:IsNarrating` is for — a reader who jumps past the
+of reading, which is what `SpokenReadables:IsNarrating` is for — a reader who jumps past the
 queued pages would otherwise strand the narration on the page they turned away from.
 
 **The panel and the button are the two files this addon reads books without.**
@@ -237,9 +239,10 @@ client cannot open a browser or post anywhere, so pressing it raises a popup hol
 selectable address — `UI/CopyLink.lua`, the same shape the Places addon carries, and not
 shared with it because two addons cannot own one StaticPopup id.
 
-The address is `https://spoken.rusty.one/books/r/{pageTextID}` (`/{lang}/books/r/…` when the
-clip was read in another language, through `Spoken:ReportURL`), built from the page id
-alone; the site sends it on to `/readables/r/…` (`lib/section-routes.ts`). That is deliberate: the id is frozen, so the addon can address any page with no
+The address is `https://spoken.rusty.one/readables/r/{pageTextID}` (`/{lang}/readables/r/…` when
+the clip was read in another language, through `Spoken:ReportURL`), built from the page id
+alone. Released older addons built `/books/r/…`, which the site sends on to `/readables/r/…`
+(`lib/section-routes.ts`). Building from the id alone is deliberate: the id is frozen, so the addon can address any page with no
 per-page table to ship and nothing to escape — the trade the places landing page makes with
 its `{mapID}/{slug}` path.
 
@@ -278,7 +281,7 @@ click ever also offers Spoken's **Collect Missing Lines**, which keeps such page
 
 Azeroth's Compendium (Spoken's `UI/Compendium.lua`, shared with the Quests and Places tabs) is a
 movable window that closes on Escape, resizes from its corner and folds down to its list. The
-Readables tab (`UI/Readables.lua`, key `readables`; the rest of the addon says books) lists
+Readables tab (`UI/Readables.lua`, key `readables`) lists
 every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and picture Spoken Readables
 reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
 and to listen to wherever you are. Which readables exist and where they are comes from
@@ -333,8 +336,8 @@ and leaves the page as it was.
 
 **Opened from elsewhere.** The book frame and DialogueUI's book view have the Compendium's tome
 button (`UI/PlayButton.lua`, `NewOpenButton`), which opens this tab on that readable with what holds
-it opened (`SpokenBooks:ShowReadables(bookId)`). It shows for readables listed, and found or with
-Unlock Unfound Readables on (`SpokenBooks:CompendiumHas`).
+it opened (`SpokenReadables:ShowReadables(bookId)`). It shows for readables listed, and found or with
+Unlock Unfound Readables on (`SpokenReadables:CompendiumHas`).
 
 ### Installing it in a client
 

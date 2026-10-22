@@ -1,5 +1,5 @@
--- The zones addon speaking through the player. Audio.lua and Autoplay.lua are loaded for
--- real against a hand-built SpokenZones table; the queue, frame and callbacks are the real
+-- The Places addon speaking through the player. Audio.lua and Autoplay.lua are loaded for
+-- real against a hand-built SpokenPlaces table; the queue, frame and callbacks are the real
 -- Spoken ones. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -32,7 +32,7 @@ local function Boot()
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     _G.C_Timer.After = function() end   -- the login greeting is Autoplay's own business, not this test's
-    local Z = stub.LoadZones(PLACES, NewZoneLore())
+    local Z = stub.LoadPlaces(PLACES, NewZoneLore())
     Z:SetupAudio()
     Z:SetupAutoplay()
     return env, Z
@@ -48,7 +48,7 @@ Z.Picture = nil
 Expect("...headed in the minimap menu by its page's name, in the player's language", Z.source.title, Z.L.OPT_PAGE_TITLE)
 -- No channel of its own: the channel is one setting, on the player.
 Expect("...on the player's channel", Z.source:GetChannel(), "Master")
-Expect("...SpokenZones's queue limit", Z.source.queueLimit, 3)
+Expect("...SpokenPlaces' queue limit", Z.source.queueLimit, 3)
 Expect("...and its own gap", Z.source.interClipGap, 0.25)
 
 -- Durotar on Kalimdor and Orgrimmar in it, as Azeroth's Compendium nests them.
@@ -99,7 +99,7 @@ Expect("IsPlayingLore for that entry", Z:IsPlayingLore(1411, nil), true)
 Expect("...not for another", Z:IsPlayingLore(1411, "valley of trials"), false)
 local m, a, paused = Z:GetNowPlaying()
 Expect("GetNowPlaying names it", tostring(m) .. "/" .. tostring(a) .. "/" .. tostring(paused), "1411/nil/false")
-Expect("the player's AUDIO_CHANGED reaches SpokenZones's own listeners", changed > 0, true)
+Expect("the player's AUDIO_CHANGED reaches SpokenPlaces' own listeners", changed > 0, true)
 Expect("starting marks the area heard in the per-character record", Z:HasHeard(1411, nil), true)
 
 local F = env.PlayerFrame
@@ -123,7 +123,7 @@ Expect("...targeting what is playing", Z.copied, "https://spoken.test/r/1411/nil
 ---------------------------------------------------------------- pause, skip, stop
 Z:PauseLore()
 Expect("PauseLore pauses the player", Spoken:IsPaused(), true)
-Expect("...and SpokenZones sees it", Z:IsPaused(), true)
+Expect("...and SpokenPlaces sees it", Z:IsPaused(), true)
 Z:ResumeLore()
 Expect("ResumeLore", Spoken:IsPaused(), false)
 
@@ -131,9 +131,9 @@ local quests = Spoken:RegisterSource("quests", { title = "Quests", addon = "Spok
 local q = H.Clip()
 quests:Enqueue(q)
 Z:EnqueueLore(Z:NewLoreSound(1411, "valley of trials"))
-Expect("QueueLength counts only the zones addon's waiting clips", Z:QueueLength(), 1)
+Expect("QueueLength counts only the Places addon's waiting clips", Z:QueueLength(), 1)
 Z:StopLore()
-Expect("StopLore removes the zones clips", Z:IsPlayingLore(), false)
+Expect("StopLore removes the places clips", Z:IsPlayingLore(), false)
 Expect("...and leaves another source's alone", Spoken:GetQueue()[1], q)
 Spoken:StopAll()
 
@@ -216,12 +216,12 @@ Expect("...and says why", Z.printed[getn(Z.printed)]:find("no narration") ~= nil
 env, Z = Boot()
 local labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
-Expect("the zones addon adds its settings entry to the one button, and not the Compendium's",
+Expect("the Places addon adds its settings entry to the one button, and not the Compendium's",
     table.concat(labels, "|"), "Stop or Replay|Skip Line|Stop All|Settings|Places Settings")
 -- The Compendium is Spoken's own entry, there once a part has a tab in it, and opens the window.
 dofile(here .. "/../../addons/Spoken/UI/Compendium.lua")
 local opened = 0
-SpokenCompendium:Register("places", { label = "Zones", order = 1, build = function() end,
+SpokenCompendium:Register("places", { label = "Places", order = 1, build = function() end,
     open = function() opened = opened + 1 end })
 labels = {}
 for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.text) end
@@ -235,13 +235,13 @@ for _, entry in ipairs(env.Minimap:BuildMenu()) do table.insert(labels, entry.te
 Expect("...and is gone while no tab's part is on", table.concat(labels, "|"),
     "Stop or Replay|Skip Line|Stop All|Settings|Places Settings")
 SpokenCompendium = nil
-Expect("...and registers no button of its own", stub.ldbObjects.SpokenZones, nil)
+Expect("...and registers no button of its own", stub.ldbObjects.SpokenPlaces, nil)
 
 ---------------------------------------------------------------- without the player
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 local saved = _G.Spoken
 _G.Spoken = nil
-local alone = stub.LoadZones(PLACES, NewZoneLore())
+local alone = stub.LoadPlaces(PLACES, NewZoneLore())
 alone:SetupAudio()
 Expect("without Spoken, PlayLore refuses rather than erroring", alone:PlayLore(1411, nil), false)
 Expect("...and says the player is missing", alone.printed[1] and alone.printed[1]:find("Spoken") ~= nil, true)
@@ -300,7 +300,7 @@ local function BootGreeting(level)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     _G.C_Timer.After = StubAfter
-    local Z = stub.LoadZones(PLACES, NewZoneLore())
+    local Z = stub.LoadPlaces(PLACES, NewZoneLore())
     local counter = { asked = 0 }
     Z.GetPlayerMapID = function() counter.asked = counter.asked + 1 end
     Z.GetLoreWithFallback = function() return nil, nil end
@@ -360,4 +360,4 @@ _G.SpokenZonesAudioPacks, _G.ZoneLoreAudioPacks, _G.ZoneLoreAudioData =
     packSaved[1], packSaved[2], packSaved[3]
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones source tests passed")
+print("\nAll places source tests passed")

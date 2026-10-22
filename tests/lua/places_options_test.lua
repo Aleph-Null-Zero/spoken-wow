@@ -1,4 +1,4 @@
--- The zones module's settings page, nested under Spoken's and laid out by Spoken's
+-- The Places module's settings page, nested under Spoken's and laid out by Spoken's
 -- UI/Layout.lua, so the pages read alike. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -118,4 +118,4 @@ do
 end
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones options tests passed")
+print("\nAll places options tests passed")

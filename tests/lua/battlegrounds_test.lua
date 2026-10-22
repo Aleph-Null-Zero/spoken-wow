@@ -12,12 +12,12 @@ local Expect, Failures = H.Expecter(stub.print)
 local instanceType = "none"
 _G.IsInInstance = function() return instanceType ~= "none", instanceType end
 
-local env, quests, zones, Q
+local env, quests, places, Q
 local function Fresh()
     instanceType = "none"
     -- Each load reads the same saved variables: a fresh one starts from the defaults.
     _G.SpokenSettings = nil
-    env, quests, zones = H.Fresh(stub, SPOKEN)
+    env, quests, places = H.Fresh(stub, SPOKEN)
     Q = env.SoundQueue
 end
 local function Setting(on) env.Addon.db.profile.Audio.ReadInBattlegrounds = on end
@@ -34,7 +34,7 @@ for _, kind in ipairs({ "pvp", "arena" }) do
     Fresh()
     Setting(false)
     instanceType = kind
-    local added, why = zones:Enqueue(H.Clip())
+    local added, why = places:Enqueue(H.Clip())
     Expect("off, a line in a " .. kind .. " instance is refused", added, nil)
     Expect("...with the reason for the debug log", why, "Read in Battlegrounds is off")
     Expect("...nothing is queued", Q:GetQueueSize(), 0)

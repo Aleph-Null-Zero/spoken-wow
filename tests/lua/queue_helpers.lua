@@ -11,9 +11,9 @@ function M.Fresh(stub, spokenDir)
     local env = stub.LoadSpoken(spokenDir)
     env.Addon.db.char.IsPaused = false
     local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
-    local zones = env.Sources:Register("places", { title = "Zones", addon = "Spoken_Places", order = 2,
+    local places = env.Sources:Register("places", { title = "Places", addon = "Spoken_Places", order = 2,
         queueLimit = 3, interClipGap = 0.25 })
-    return env, quests, zones
+    return env, quests, places
 end
 
 local n = 0
@@ -75,15 +75,15 @@ function M.Expecter(print)
     return Expect, function() return failures end
 end
 
---- The zones addon loaded for real, Core.lua included -- unlike wow_client_stub.LoadZones,
+--- The Places addon loaded for real, Core.lua included -- unlike wow_client_stub.LoadZones,
 --- which loads only Audio/ContributeButton/Autoplay against a hand-built fake table for playback
 --- tests. Contribute.lua needs the real GetPlayerMapID, GetLoreWithFallback, GetSubzoneLore,
 --- GetLore and IsPending, all of which live in Core.lua, so this loads that too, and the
 --- language and pack answers it sends, from Language.lua and Audio.lua. Spoken's UI/Compendium.lua
 --- too where Spoken has not loaded it: a clip's header is the place above, from its tree.
 --- `seed` is the addon table as it stands before Language.lua runs, for what the
---- generated data would have put there first (SpokenZones.Languages).
-function M.LoadZones(addonDirectory, seed)
+--- generated data would have put there first (SpokenPlaces.Languages).
+function M.LoadPlaces(addonDirectory, seed)
     local SpokenPlaces = seed or {}
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
     for _, file in ipairs({ "Language", "Core", "Audio", "Contribute" }) do
@@ -93,9 +93,9 @@ function M.LoadZones(addonDirectory, seed)
     return SpokenPlaces
 end
 
---- The language codes SpokenZones.LOCALES lists, in order, read off its source. The other
+--- The language codes SpokenPlaces.LOCALES lists, in order, read off its source. The other
 --- addons each keep a copy of the list and are tested against this one.
-function M.ZonesLocaleCodes(here)
+function M.PlacesLocaleCodes(here)
     local codes = {}
     local file = assert(io.open(here .. "/../../addons/Spoken_Places/Language.lua"))
     for code in file:read("*a"):gmatch('{ code = "(%a+)"') do table.insert(codes, code) end
@@ -103,7 +103,7 @@ function M.ZonesLocaleCodes(here)
     return table.concat(codes, " ")
 end
 
---- The parts of the zones addon's Core.lua that its playback files read, as a fake.
+--- The parts of the Places addon's Core.lua that its playback files read, as a fake.
 function M.NewZoneLore()
     local cfg = { voiceEnabled = true, autoplay = true, autoplaySubzones = true,
         autoplayExplored = false, debug = false,

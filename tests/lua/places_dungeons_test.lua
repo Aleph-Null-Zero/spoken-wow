@@ -1,4 +1,4 @@
--- The dungeons and raids on the Zones tab of Azeroth's Compendium: each a card inside the card of
+-- The dungeons and raids on the Places tab of Azeroth's Compendium: each a card inside the card of
 -- the zone of its entrance, under a Dungeons and Raids line where the zone has several, as the
 -- Quests tab files their quests. First the data (Spoken's Data/Dungeons.lua, which every tab reads)
 -- against the areas' stories and the Quests data, then the list built against the stub client. Run
@@ -25,7 +25,7 @@ for _, file in ipairs({ "enUS/Zones.lua", "enUS/Subzones.lua" }) do
 end
 dofile(ADDONS .. "Spoken/Data/Dungeons.lua")
 local all = _G.SpokenDungeons.dungeons
--- By the zone of each's entrance, as Spoken Zones' Core.lua reads them.
+-- By the zone of each's entrance, as Places' Core.lua reads them.
 local core = {}
 assert(loadfile(PLACES .. "Core.lua"))("Spoken_Places", core)
 local subzones, dungeons = data.subzones, core.Dungeons
@@ -337,4 +337,4 @@ Expect("...and told once it is", mapPage.body.text.text, "The quilboars' barrows
 showAll, found = true, {}
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones dungeons tests passed")
+print("\nAll places dungeons tests passed")

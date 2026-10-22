@@ -377,7 +377,7 @@ VO = Install({ { folder = "Pack", language = "xxXX", lines = EN_LINES } })
 Expect("a language this addon does not know reads as English",
     VO.DataModules:GetPresentModule("Pack").Language, "enUS")
 
----------------------------------------------------------------- in step with SpokenZones
+--------------------------------------------------------------- in step with SpokenPlaces
 -- The two addons sit side by side; a language one offers and the other does not is a
 -- setting the player makes once and finds half-honoured.
 ------------------------------------------- a greeting's speaker of a voice only English has yet
@@ -394,7 +394,7 @@ Expect("...the line's own file", gossipSound.fileName, HASH)
 
 local questsCodes = {}
 for _, locale in ipairs(VO.Language.LOCALES) do table.insert(questsCodes, locale.code) end
-Expect("the language list matches SpokenZones'", table.concat(questsCodes, " "), H.ZonesLocaleCodes(here))
+Expect("the language list matches SpokenPlaces'", table.concat(questsCodes, " "), H.PlacesLocaleCodes(here))
 
 stub.SetLocale("enUS")
 stub.ResetAddOns()

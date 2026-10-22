@@ -1,4 +1,4 @@
--- SpokenZones -- lights up the area under the cursor on a zone map, so it reads as clickable.
+-- SpokenPlaces -- lights up the area under the cursor on a zone map, so it reads as clickable.
 --
 -- The continent map already lights the zone under the cursor (Blizzard's click-to-zoom
 -- highlight); a zone map has nothing like it for its areas, which a click opens the story of
@@ -122,7 +122,7 @@ local function Target()
 	if not x or not y then
 		return nil
 	end
-	-- As the click finds it (SpokenZones:AreaAt), so what lights up is what a click opens.
+	-- As the click finds it (SpokenPlaces:AreaAt), so what lights up is what a click opens.
 	local name, entry = SpokenPlaces:AreaAt(mapID, x, y)
 	if not entry then
 		return nil

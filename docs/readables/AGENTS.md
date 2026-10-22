@@ -3,12 +3,14 @@
 The root `AGENTS.md` applies. This file covers only the Readables section. `docs/readables/README.md`
 is the detailed reference.
 
-## Players see Readables; the addon says books
+## Players see Readables; some addon names still say books
 
 The module is Readables wherever a player reads its name, and its folder is `Spoken_Readables`.
-The site, database, pipelines and folders say readables; the addon's internal names stay books
-(the README lists them). The ids, saved variables and pack folder among them are frozen:
-renaming one loses players' settings or re-ships a pack.
+The site, database, pipelines and folders say readables, and so do the addon's `readables` source
+and part key and its `SpokenReadables` namespace. Its saved variables, profile table, globals,
+pack folders, tags, store pages and line ids still say books (the README lists them). The ids,
+saved variables and pack folder among them are frozen: renaming one loses players' settings or
+re-ships a pack.
 
 ## The table is the corpus; the Lua is an export of it
 

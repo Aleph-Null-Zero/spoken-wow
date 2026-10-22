@@ -1,4 +1,4 @@
--- The language axis of the books addon: which pack reads a page, which index finds it, and
+-- The language axis of the Readables addon: which pack reads a page, which index finds it, and
 -- where a report goes. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -116,7 +116,7 @@ Expect("E. new packs provide captions before a page is opened",
     B:ClipFor(PAGE).present.transcript, "Gespeicherte deutsche Seite.")
 B = Install({ ENGLISH })
 Expect("E. with no Spoken there is nothing to report to", B:ReportURL(PAGE), nil)
--- The address is Spoken's to build (Spoken:ReportURL); this suite loads Books alone.
+-- The address is Spoken's to build (Spoken:ReportURL); this suite loads Readables alone.
 stub.LoadSpoken(here .. "/../../addons/Spoken/")
 Expect("E. an English report keeps its address", B:ReportURL(PAGE, "enUS"),
     "https://spoken.rusty.one/readables/r/15")
@@ -201,10 +201,10 @@ do
     Expect("G. a page both list is not repeated", #B:BookOf(PAGE).pages, 3)
 end
 
----------------------------------------------------------------- in step with SpokenZones
-local booksCodes = {}
-for _, locale in ipairs(B.LOCALES) do table.insert(booksCodes, locale.code) end
-Expect("the language list matches SpokenZones'", table.concat(booksCodes, " "), H.ZonesLocaleCodes(here))
+--------------------------------------------------------------- in step with SpokenPlaces
+local readablesCodes = {}
+for _, locale in ipairs(B.LOCALES) do table.insert(readablesCodes, locale.code) end
+Expect("the language list matches SpokenPlaces'", table.concat(readablesCodes, " "), H.PlacesLocaleCodes(here))
 
 ---------------------------------------------------------------- what the page is on
 -- Read in the reading frame, a page shows what it is on: a book from the bags its own icon, a
@@ -220,7 +220,7 @@ do
     _G.ItemTextGetItem = function() return "Worn Tablet" end
     _G.ItemTextGetMaterial = function() return "Stone" end
     Expect("...one on stone shows a stone tablet", Bk:ClipFor(PAGE).present.portrait.texture, Bk.MATERIALS.Stone)
-    -- The bags are Spoken's to search (Spoken:BagItemIcon); this test loads Books alone.
+    -- The bags are Spoken's to search (Spoken:BagItemIcon); this test loads Readables alone.
     local spoken = _G.Spoken
     _G.Spoken = { BagItemIcon = function(_, name) return name == "Worn Tablet" and 133741 or nil, { 0, 1, 0, 1 } end }
     Expect("...and a book from the bags its own icon", Bk:ClipFor(PAGE).present.portrait.texture, 133741)
@@ -241,4 +241,4 @@ Expect("an English caption's tokens are subtitled as the clip says them",
 
 stub.SetLocale("enUS")
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll books language tests passed")
+print("\nAll readables language tests passed")

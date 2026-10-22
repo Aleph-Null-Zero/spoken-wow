@@ -1,4 +1,4 @@
--- SpokenBooks -- the readables in Azeroth's Compendium (UI/Compendium.lua): every book, letter,
+-- SpokenReadables -- the readables in Azeroth's Compendium (UI/Compendium.lua): every book, letter,
 -- note and plaque Spoken Readables reads, found or not, to read and listen to anywhere.
 --
 -- The list is laid out as the places' (Spoken Places' tab): a banner for each continent, a line for
@@ -797,7 +797,7 @@ local function InAndCount(where, found, total)
 	return L.READABLES_IN_FMT:format(where) .. " · " .. Count(found, total)
 end
 
--- The place one level up from a zone, as the Zones tab nests them: a city's zone, a zone's
+-- The place one level up from a zone, as the Places tab nests them: a city's zone, a zone's
 -- continent, and the world for a continent or a zone on none.
 local function Above(mapID)
 	if C.IsContinent(mapID) then return C.WORLD end
@@ -1133,7 +1133,7 @@ local function Build(panel)
 		build = BuildRows,
 		isSelected = IsSelected,
 		onClick = OnClick,
-		locked = function() return SpokenCompendium.LockedReason("OPT_UNLOCK_WRITINGS") end,
+		locked = function() return SpokenCompendium.LockedReason("OPT_UNLOCK_READABLES") end,
 		onHidden = OnHidden,
 		onSearch = function(text)
 			filter = text

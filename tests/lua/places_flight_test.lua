@@ -32,7 +32,7 @@ local function Boot(client, taxi, flight, greeting)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     C_Timer.After = after
-    local Z = H.LoadZones(PLACES)
+    local Z = H.LoadPlaces(PLACES)
     assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1411] = { name = "Durotar", full = "Durotar lore." }
@@ -134,4 +134,4 @@ stub.FireEvent("CHAT_MSG_SYSTEM", "Discovered Durotar.")
 Expect("the same message, not secret, still discovers", Spoken:IsPlaying(), true)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones flight tests passed")
+print("\nAll places flight tests passed")

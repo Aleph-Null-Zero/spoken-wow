@@ -1,4 +1,4 @@
--- SpokenZones -- the module's page in the game's settings, under Spoken's, laid out by Spoken's
+-- SpokenPlaces -- the module's page in the game's settings, under Spoken's, laid out by Spoken's
 -- UI/Layout.lua so the pages read alike.
 
 local _, SpokenPlaces = ...
@@ -261,7 +261,7 @@ end
 function SpokenPlaces:OpenOptions()
 	-- Nested under Spoken's entry: Spoken opens this page.
 	if not (self.optionsPage and self.optionsPage.Open()) then
-		SpokenPlaces:Print("open Game Menu -> Options -> AddOns -> Spoken -> Zones")
+		SpokenPlaces:Print("open Game Menu -> Options -> AddOns -> Spoken -> Places")
 	end
 end
 

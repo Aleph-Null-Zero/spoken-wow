@@ -16,7 +16,7 @@ _G.C_Map = _G.C_Map or {}
 _G.C_Map.GetMapInfo = function(id) return names[id] and { mapID = id, name = names[id] } or nil end
 _G.C_Map.GetMapInfoAtPosition = function() return nil end
 
-local Z = H.LoadZones(PLACES)
+local Z = H.LoadPlaces(PLACES)
 Z.CityIn = { [STORMWIND] = ELWYNN, [ORGRIMMAR] = DUROTAR }
 local lore = { [STORMWIND] = { name = "Stormwind City", full = "The human capital." } }
 Z.GetLore = function(_, id) return lore[id] end
@@ -35,4 +35,4 @@ Expect("...as the city's map, which a click opens", mapID, STORMWIND)
 Expect("...under the area's name, with no area key of the zone's", name == "Stormwind City" and key == nil, true)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones city tests passed")
+print("\nAll places city tests passed")

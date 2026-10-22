@@ -95,7 +95,7 @@ function Z:ClearSubzone() self.selected = nil; self:RefreshPanel() end
 function Z:Picture(mapID, key)
     if mapID == 1411 and not key then return "Pictures/zone-1411", "Pictures/Mask2" end
 end
--- Every place listed, as with Unlock Undiscovered Zones on, until the checks for the found-only
+-- Every place listed, as with Unlock Undiscovered Places on, until the checks for the found-only
 -- list below turn it off.
 local showAll, found = true, {}
 function Z:ShowsUndiscovered() return showAll end
@@ -193,4 +193,4 @@ Shown()
 Expect("...the banner no longer the chosen row", RowFor(L.OTHER_LANDS).selected, false)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones other lands and battlegrounds tests passed")
+print("\nAll places other lands and battlegrounds tests passed")

@@ -21,7 +21,7 @@ local Expect, Failures = H.Expecter(print)
 stub.SetClient("11509")
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 local R, E = VO.ReportButton, VO.Enums
-local Z = H.LoadZones(PLACES)
+local Z = H.LoadPlaces(PLACES)
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core" }) do
     assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)

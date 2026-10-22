@@ -1,4 +1,4 @@
--- SpokenZones -- Core: namespace, saved variables, events, zone resolution.
+-- SpokenPlaces -- Core: namespace, saved variables, events, zone resolution.
 -- Client targets: WoW Classic Era 1.15.9 (11509) and Anniversary 2.5.6 (20506).
 -- The two share a uiMapID space, so nothing here branches on the client.
 
@@ -16,7 +16,7 @@ SpokenPlaces.name = ADDON_NAME
 SpokenPlaces.version = GetAddOnMeta(ADDON_NAME, "Version") or "dev"
 
 -- Populated by Data/<language>/Zones.lua and Subzones.lua (both generated),
--- through SpokenZones:RegisterLoreData. Declared here so every other file can rely
+-- through SpokenPlaces:RegisterLoreData. Declared here so every other file can rely
 -- on the tables existing even when a data file is empty or failed to load.
 SpokenPlaces.Zones = SpokenPlaces.Zones or {}
 SpokenPlaces.Subzones = SpokenPlaces.Subzones or {}
@@ -48,7 +48,7 @@ local defaults = {
 	autoplay = true,
 	autoplaySubzones = true,
 	-- Off, because it replaces the client's own record of what a character has
-	-- discovered with one SpokenZones keeps itself. Only a character who explored
+	-- discovered with one Places keeps itself. Only a character who explored
 	-- before installing the addon needs that; see Autoplay.lua.
 	autoplayExplored = false,
 	-- Off, so a player cannot end up reading an unfinished translation without
@@ -488,7 +488,7 @@ function SpokenPlaces:AreasIn(zone)
 end
 
 -- Returns the lore entry, the key that was looked up and the map the story is kept under
--- (SpokenZones:StoryPlace). The key is returned even on a miss so /spp debug can report what
+-- (SpokenPlaces:StoryPlace). The key is returned even on a miss so /spp debug can report what
 -- failed to match.
 function SpokenPlaces:GetSubzoneLore(parentMapID, areaName)
 	local key = self:ResolveAreaKey(areaName, parentMapID)
@@ -528,7 +528,7 @@ end
 --- The city inside the zone `mapID` that the area `areaName` is, if it is one, and its story. Each
 --- city is a map of its own under its continent in the game's map tree (Stormwind City under the
 --- Eastern Kingdoms, not Elwynn Forest), so on its zone's map the game reports it only by its area
---- name, and the zone no longer lists it as one of its own areas (SpokenZones.CityIn, the lore
+--- name, and the zone no longer lists it as one of its own areas (SpokenPlaces.CityIn, the lore
 --- window's). Matched by the city map's name in the client's language, or its story's.
 function SpokenPlaces:CityAt(mapID, areaName)
 	if not (mapID and areaName and self.CityIn) then
@@ -634,7 +634,7 @@ local function SetupHooks()
 
 	-- Audio before autoplay: autoplay registers its combat hold on the source audio creates. Each
 	-- step on its own, its error printed and reported, so one that fails does not keep the rest
-	-- from being set up: without audio's source, Spoken's page calls Zones not installed.
+	-- from being set up: without audio's source, Spoken's page calls Places not installed.
 	for _, step in ipairs({ "SetupMapPanel", "SetupSubzoneClicks", "SetupMapHighlight", "SetupDiscovery",
 		"SetupLoreWindow", "SetupAudio", "SetupAutoplay", "SetupOptions" }) do
 		if SpokenPlaces[step] then

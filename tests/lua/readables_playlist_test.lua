@@ -29,7 +29,7 @@ _G.SpokenBooksAudioPacks = {
     },
 }
 
-local function LoadBooks()
+local function LoadReadables()
     local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "Events", "UI/CopyLink" }) do
         local chunk = assert(loadfile(READABLES .. file .. ".lua"))
@@ -42,13 +42,13 @@ stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
 _G.SpokenBooksSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
-local B = LoadBooks()
+local B = LoadReadables()
 B:InitDB()
 B:SetupSource()
 dofile(READABLES .. "Data/Books.lua")
 dofile(READABLES .. "Data/Places.lua")
 
---- The books clips in the player's queue, in order, by page id.
+--- The readables clips in the player's queue, in order, by page id.
 local function QueuedPages()
     local pages = {}
     for _, clip in ipairs(Spoken:GetQueue()) do
@@ -280,5 +280,5 @@ Expect("no pack means no clips", B:ClipFor(261), nil)
 Expect("...and a message that names the download rather than blaming the page",
     B:DescribeMissingAudio(), "No Readables voice pack is installed.")
 
-print(Failures() == 0 and "All books playlist tests passed" or (Failures() .. " failed"))
+print(Failures() == 0 and "All readables playlist tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

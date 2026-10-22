@@ -1,5 +1,5 @@
 -- The area under the pointer on a zone map, found one way for the click and the map highlight
--- (SpokenZones:AreaAt), so what lights up is what a click opens. A child map under the pointer --
+-- (SpokenPlaces:AreaAt), so what lights up is what a click opens. A child map under the pointer --
 -- a cave or a dungeon entrance with a story of its own -- does not hide the area around it from
 -- the highlight while a click there still opens it. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
@@ -11,7 +11,7 @@ local PLACES = here .. "/../../addons/Spoken_Places/"
 
 stub.SetClient("16001")
 local DUROTAR, CAVE = 1411, 9999
-local Z = H.LoadZones(PLACES)
+local Z = H.LoadPlaces(PLACES)
 _G.MapUtil = { FindBestAreaNameAtMouse = function() return "Razor Hill" end }
 -- A cave map with its own story under the same spot.
 _G.C_Map = _G.C_Map or {}
@@ -30,4 +30,4 @@ _G.MapUtil.FindBestAreaNameAtMouse = function() return nil end
 Expect("no area there, nothing", Z:AreaAt(DUROTAR, 0.4, 0.4), nil)
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones area tests passed")
+print("\nAll places area tests passed")

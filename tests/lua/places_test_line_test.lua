@@ -1,4 +1,4 @@
--- The zones page's Test line, Start Over and Text Size, with the addon's Core.lua loaded for real. Run
+-- The Places page's Test line, Start Over and Text Size, with the addon's Core.lua loaded for real. Run
 -- with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -11,7 +11,7 @@ local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
 stub.LoadSpoken(SPOKEN)
-local Z = H.LoadZones(PLACES)
+local Z = H.LoadPlaces(PLACES)
 _G.SpokenZonesSettings = { voiceEnabled = true }
 local printed = {}
 Z.Print = function(_, fmt, ...)
@@ -46,19 +46,19 @@ Expect("a reset brings the voice back on", _G.SpokenZonesSettings.voiceEnabled, 
 Expect("...and the play buttons hear the voice is on again", notified, 1)
 
 ---------------------------------------------------------------- Text Size
--- Azeroth's Compendium's, on Spoken's page. Until it is set there, the size the Zones page had.
+-- Azeroth's Compendium's, on Spoken's page. Until it is set there, the size the Places page had.
 local Spoken = _G.Spoken
 _G.SpokenZonesSettings.fontSize = 15
-Expect("Text Size not yet set on Spoken's page is the one the Zones page had, which Zones reads",
+Expect("Text Size not yet set on Spoken's page is the one the Places page had, which Places reads",
     Spoken:CompendiumFontSize() .. "|" .. Z:Get("fontSize"), "15|15")
 local told = 0
 Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", function() told = told + 1 end)
 Spoken:SetCompendiumFontSize(18)
-Expect("...set there, it is Spoken's, and Zones reads it", Spoken:CompendiumFontSize() .. "|" .. Z:Get("fontSize")
+Expect("...set there, it is Spoken's, and Places reads it", Spoken:CompendiumFontSize() .. "|" .. Z:Get("fontSize")
     .. "|" .. _G.SpokenZonesSettings.fontSize, "18|18|15")
 Expect("...the parts that draw it told once", told, 1)
 Z:ResetOptions()
-Expect("the Zones page's Start Over leaves it, as it is on Spoken's page", _G.SpokenZonesSettings.fontSize .. "|"
+Expect("the Places page's Start Over leaves it, as it is on Spoken's page", _G.SpokenZonesSettings.fontSize .. "|"
     .. Z:Get("fontSize"), "15|18")
 _G.SpokenEnv.Addon.db.profile.CompendiumFontSize = nil
 _G.SpokenZonesSettings.fontSize = nil

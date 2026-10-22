@@ -28,7 +28,7 @@ WorldMapFrame.IsCanvasMouseFocus = function() return overCanvas end
 WorldMapFrame.ScrollContainer = { GetNormalizedCursorPosition = function() return cursor[1], cursor[2] end }
 local function Point(px, py) cursor[1], cursor[2] = px / 1002, py / 668 end
 
--- The areas a click opens, as SpokenZones:AreaAt finds them: Razor Hill in the left of the small
+-- The areas a click opens, as SpokenPlaces:AreaAt finds them: Razor Hill in the left of the small
 -- rectangle (its overlay's rectangle reaches past it), the Valley of Trials in the rest of the
 -- big one, and an area with no story beyond.
 local Z = {}
@@ -44,7 +44,7 @@ function Z:AreaAt(_, x, y)
     if px >= 100 and px <= 400 and py >= 50 and py <= 250 then return "Valley of Trials", { name = "Valley" } end
     return "Kolkar Crag", nil
 end
-assert(loadfile(PLACES .. "UI/MapHighlight.lua"))("SpokenZones", Z)
+assert(loadfile(PLACES .. "UI/MapHighlight.lua"))("Spoken_Places", Z)
 Z:SetupMapHighlight()
 local state = Z.mapHighlight
 local tick = state.driver:GetScript("OnUpdate")
@@ -105,7 +105,7 @@ WorldMapFrame.mapID = 1411
 Run()
 Expect("back on the zone map it lights again", state.frame:IsShown(), true)
 
--- Area Highlight, on the Zones page: how bright, and nothing at all at 0.
+-- Area Highlight, on the Places page: how bright, and nothing at all at 0.
 settings.highlightOpacity = 0.6
 Z:RefreshMapHighlight()
 Run()

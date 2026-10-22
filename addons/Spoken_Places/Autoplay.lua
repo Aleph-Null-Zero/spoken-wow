@@ -1,4 +1,4 @@
--- SpokenZones -- narrate an area when the player discovers it.
+-- SpokenPlaces -- narrate an area when the player discovers it.
 --
 -- The trigger is the game's own discovery, the moment it prints "Discovered
 -- Durotar". Nothing else comes close:
@@ -14,7 +14,7 @@
 -- semantics this feature wanted.
 --
 -- The cost of leaning on it is that a character who explored Azeroth before
--- installing SpokenZones already spent every discovery it will ever get, and so is
+-- installing Places already spent every discovery it will ever get, and so is
 -- narrated nothing at all. The `autoplayExplored` option answers that by keeping
 -- the record here instead -- see "Per-character record" below -- and narrating on
 -- zone change rather than on discovery. It is off by default, and on a fresh
@@ -269,7 +269,7 @@ function SpokenPlaces:HasHeard(mapID, areaKey)
 	return HeardSet()[HeardKey(mapID, areaKey)] == true
 end
 
--- Called by SpokenZones:PlayLore once a clip is confirmed started, whatever asked for
+-- Called by SpokenPlaces:PlayLore once a clip is confirmed started, whatever asked for
 -- it. That is what keeps a discovery and a zone change landing together from
 -- narrating the same area twice.
 function SpokenPlaces:MarkHeard(mapID, areaKey)

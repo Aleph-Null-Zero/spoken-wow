@@ -1,6 +1,6 @@
--- Every locale file of Spoken, Quests, Zones, Writings and Developer holds the same keys as
+-- Every locale file of Spoken, Quests, Places, Readables and Developer holds the same keys as
 -- its English base, none left over, and each string takes the same arguments (a %s stays a %s,
--- possibly as %1$s). Zones' own data files are checked by its language tests. Run with `make test-player`.
+-- possibly as %1$s). Places' own data files are checked by its language tests. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local H = require("queue_helpers")
@@ -38,8 +38,8 @@ end
 local MODULES = {
     { name = "Spoken", base = "Spoken/Strings.lua", dir = "Spoken/Locale/", table = true },
     { name = "Quests", base = "Spoken_Quests/Strings.lua", dir = "Spoken_Quests/Locale/" },
-    { name = "Zones", base = "Spoken_Places/Locale/enUS.lua", dir = "Spoken_Places/Locale/" },
-    { name = "Writings", base = "Spoken_Readables/Locale/enUS.lua", dir = "Spoken_Readables/Locale/" },
+    { name = "Places", base = "Spoken_Places/Locale/enUS.lua", dir = "Spoken_Places/Locale/" },
+    { name = "Readables", base = "Spoken_Readables/Locale/enUS.lua", dir = "Spoken_Readables/Locale/" },
     { name = "NPCs", base = "Spoken_NPCs/Locale/enUS.lua", dir = "Spoken_NPCs/Locale/", min = 5 },
     -- TITLE is the addon's name, the same in every language.
     { name = "Developer", base = "Spoken_Developer/Locale/enUS.lua", dir = "Spoken_Developer/Locale/", same = { TITLE = true } },

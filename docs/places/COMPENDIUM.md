@@ -84,7 +84,7 @@ The tab does what the Quests and Readables tabs do. Banners and zones list and o
 anything in them is found, and a zone with nothing found is greyed. An area not yet found is a row
 greyed with a padlock, listed by name, and it does not open. The page of a place not found (opened
 from the map panel or a link) says `You have not discovered this place yet. Go there to read its
-story.` under its name and line. `SpokenZones:IsLocked` decides, and `QueueLore` refuses a locked
+story.` under its name and line. `SpokenPlaces:IsLocked` decides, and `QueueLore` refuses a locked
 place.
 
 Unlock Undiscovered Places (`showUndiscovered`) opens every area and tells every story. The counts
@@ -166,7 +166,7 @@ folds it.
   left to the game. A drag is not a click. A click on a city inside the zone opens the city's map.
 - `UI/MapHighlight.lua` lights the area under the cursor when a click would open its story. The
   highlight is that area's explored overlay drawn again in additive blend, so only explored areas
-  light. `SpokenZones:AreaAt` answers both the click and the highlight.
+  light. `SpokenPlaces:AreaAt` answers both the click and the highlight.
 - A map with no story of its own shows its parent zone's, and says so on the line under the
   title. A place with no story yet says so and offers Contribute. The panel's page uses the Text
   Language, Text Size and Show Pictures settings.

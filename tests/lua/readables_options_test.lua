@@ -1,4 +1,4 @@
--- The books addon's settings page: its switches and the button that undoes the reading record,
+-- The Readables addon's settings page: its switches and the button that undoes the reading record,
 -- laid out by Spoken's UI/Layout.lua and nested under Spoken's entry. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -120,7 +120,7 @@ close:SetChecked(false)
 close.scripts.OnClick(close)
 
 ---------------------------------------------------------------- the gather switch stays in the player's settings
--- The switch is the player's alone: quests and books both feed the one store, so a
+-- The switch is the player's alone: quests and readables both feed the one store, so a
 -- mirror here could only ever repeat it -- a reader cannot have pages off and lines on.
 -- Its command is Spoken's too (/sp collect): /spw gather no longer reaches it.
 local gathering = _G.Spoken.Gather:IsEnabled()
@@ -183,7 +183,7 @@ do
 end
 
 ---------------------------------------------------------------- starting over
--- Found Only, Voiced Only and By Zone go back with the rest, and an open Writings tab is drawn again.
+-- Found Only, Voiced Only and By Zone go back with the rest, and an open Readables tab is drawn again.
 do
     local redrawn = 0
     B.RefreshReadables = function() redrawn = redrawn + 1 end
@@ -192,10 +192,10 @@ do
     local reset = B.optionsPage.layout.defaults
     reset.scripts.OnClick(reset)
     stub.popups[#stub.popups].dialog.OnAccept()
-    Expect("resetting the page puts Found Only back and draws the Writings tab again",
+    Expect("resetting the page puts Found Only back and draws the Readables tab again",
         tostring(SpokenBooksSettings.compendiumFoundOnly) .. " " .. redrawn, "false 1")
     B.RefreshReadables = nil
 end
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll books options tests passed")
+print("\nAll readables options tests passed")

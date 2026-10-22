@@ -1,4 +1,4 @@
--- SpokenZones -- the page a story is written on, shared by the lore window and the map panel:
+-- SpokenPlaces -- the page a story is written on, shared by the lore window and the map panel:
 -- Azeroth's Compendium's page (SpokenCompendium.NewPage), with its Play, Report and layout, on the
 -- spellbook's parchment in the window and the quest log's beside the map.
 --

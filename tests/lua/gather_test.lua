@@ -1,5 +1,5 @@
 -- Contributing in the background: the store, the first-click choice, and what the quests and
--- books addons keep while the player simply plays. Run with `make test-player`.
+-- readables addons keep while the player simply plays. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -148,7 +148,7 @@ Expect("...and says how to send the file",
     box.body:GetText():match("SavedVariables\\SpokenContributions%.lua") ~= nil, true)
 Expect("...counting what is kept", box.body:GetText():match("1 line") ~= nil, true)
 
-------------------------------------------------------------------------------- books
+--------------------------------------------------------------------------- readables
 local SpokenReadables = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
     assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", SpokenReadables)

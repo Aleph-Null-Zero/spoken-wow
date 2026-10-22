@@ -1,5 +1,5 @@
--- The books addon speaking through the player. Checksum.lua and Core.lua are loaded for
--- real against a hand-built SpokenBooks table; the queue, frame and callbacks are the real
+-- The Readables addon speaking through the player. Checksum.lua and Core.lua are loaded for
+-- real against a hand-built SpokenReadables table; the queue, frame and callbacks are the real
 -- Spoken ones. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
@@ -10,7 +10,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
-local function LoadBooks()
+local function LoadReadables()
     local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language" }) do
         local chunk = assert(loadfile(READABLES .. file .. ".lua"))
@@ -24,7 +24,7 @@ local function Boot()
     _G.SpokenBooksSettings = nil
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
-    local B = LoadBooks()
+    local B = LoadReadables()
     B:InitDB()
     B:SetupSource()
     return env, B
@@ -35,7 +35,7 @@ end
 -- neither passed this whole file while being mute in game: no login event reached them, so
 -- no source was ever claimed and every page lookup returned 0 against a nil source. This
 -- section boots a copy the way the client does -- load the files, then fire the events --
--- and runs first, so it is the only books copy alive while it fires them.
+-- and runs first, so it is the only Readables copy alive while it fires them.
 --
 -- Its own loader, because LoadBooks above is deliberately the two files this file's other
 -- sections need: Events.lua is what creates the frame the events arrive at, and without it
@@ -80,7 +80,7 @@ local env, B = Boot()
 local Spoken = _G.Spoken
 
 ---------------------------------------------------------------- registration
-Expect("the books addon registers a source with the player", Spoken:GetSource("readables"), B.source)
+Expect("the Readables addon registers a source with the player", Spoken:GetSource("readables"), B.source)
 Expect("...headed in the minimap menu by its page's name, in the player's language", B.source.title, B.L.OPT_PAGE_TITLE)
 -- No cap: a book is a bounded sequence somebody opened, not a burst of discoveries. Capped,
 -- the player trims the oldest waiting clip and a four-page book loses its middle.
@@ -129,10 +129,10 @@ Expect("seven books share a title and are told apart by checksum", variants, 7)
 ---------------------------------------------------------------- a player that is too old
 local oldSpoken = _G.Spoken
 _G.Spoken = { IsCompatible = function() return false end }
-local B2 = LoadBooks()
+local B2 = LoadReadables()
 Expect("an incompatible player leaves the addon loaded but quiet", B2:SetupSource(), nil)
 Expect("...and says so", B2.compatible, false)
 _G.Spoken = oldSpoken
 
-print(Failures() == 0 and "All books source tests passed" or (Failures() .. " failed"))
+print(Failures() == 0 and "All readables source tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

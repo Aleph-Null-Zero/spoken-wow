@@ -3,7 +3,7 @@
 ## Spoken and the module
 
 Spoken owns the player: the queue, the windows (Small Window, subtitles, DialogueUI window), the
-minimap button and the settings. Places registers one source on it (`Spoken:RegisterSource("zones",
+minimap button and the settings. Places registers one source on it (`Spoken:RegisterSource("places",
 ...)` in `Audio.lua`) with a queue limit of 3 waiting lines and a gap of 0.25 seconds between
 clips. `docs/spoken/PLAYER-STYLES.md` describes the windows.
 
@@ -15,7 +15,7 @@ What Places adds to Spoken:
 - The Places tab of Azeroth's Compendium and a panel beside the world map ([COMPENDIUM.md](COMPENDIUM.md)).
 - A Report button on each line being read. There is no Read button of its own.
 
-The Enable switch on the Places page is Spoken's switch for the part (`Spoken:IsPartOn("zones")`).
+The Enable switch on the Places page is Spoken's switch for the part (`Spoken:IsPartOn("places")`).
 With it off the map panel, its side tab and the Compendium tab go away.
 
 ## Settings
@@ -92,7 +92,7 @@ a language pins it on every client.
 
 ## How a story is read
 
-`SpokenZones:NewLoreSound(mapID, areaKey)` builds the clip: its key is `z:<mapID>` for a zone and
+`SpokenPlaces:NewLoreSound(mapID, areaKey)` builds the clip: its key is `z:<mapID>` for a zone and
 `s:<mapID>:<key>` for an area (frozen, see the root `AGENTS.md`), the file and length from the
 voice pack's lookup, and the `present` table Spoken's windows draw: header (the zone), label,
 words (the story in the pack's language), a font where that script needs one, the zone badge,
@@ -177,10 +177,11 @@ The game announces a discovery once per character, and Places reads that message
 ## Reports and contributions
 
 The game cannot open a link, so a Report button shows an address to copy
-(`UI/CopyLink.lua`). `SpokenZones:ReportURL` builds it with `Spoken:ReportURL`:
-`https://spoken.rusty.one/zones/r/<mapID>/<slug>` for English and
-`https://spoken.rusty.one/<lang>/zones/r/<mapID>/<slug>` for another language, which the site
-sends on to `/places/r/…` (`apps/web/src/lib/section-routes.ts`). The language is
+(`UI/CopyLink.lua`). `SpokenPlaces:ReportURL` builds it with `Spoken:ReportURL`:
+`https://spoken.rusty.one/places/r/<mapID>/<slug>` for English and
+`https://spoken.rusty.one/<lang>/places/r/<mapID>/<slug>` for another language. Released older
+addons built `/zones/r/…`, which the site sends on to `/places/r/…`
+(`apps/web/src/lib/section-routes.ts`). The language is
 the one the clip is read in for Report on the player's window, and the text language for
 Report on a page. The slug is the key with spaces as hyphens and other
 characters dropped, and `zone` for a zone. `validate.mjs` fails the build if the Lua slug and
@@ -188,7 +189,7 @@ characters dropped, and `zone` for a zone. `validate.mjs` fails the build if the
 
 A place with no story shows Contribute under the sentence saying so. It sends the place the page
 shows, not where the player stands: the addon version, build, locale, the pack's language, the map,
-the zone and the area (`Contribute.lua`), through `Spoken.Contribute:Envelope("zones", ...)` to
+the zone and the area (`Contribute.lua`), through `Spoken.Contribute:Envelope("places", ...)` to
 `/contribute` on the site. The page asks for a description of at least 20 characters
 (`DESCRIPTION_MIN` in `apps/web/src/lib/contributions/contributions.ts`). Spoken's Hide Report
 Buttons and Hide Contribute Buttons settings hide both.

@@ -4,7 +4,7 @@
 -- ADDON_LOADED is where the saved variables become readable: SpokenBooksSettings is nil until the
 -- client has restored it, so Commands.lua indexing it before then is an error rather than a
 -- default. PLAYER_ENTERING_WORLD is where the source is claimed, late on purpose -- the
--- player addon builds its API at its own load, and waiting for the world is what the zones
+-- player addon builds its API at its own load, and waiting for the world is what the places
 -- addon does for the same reason. Without both, every function below returns 0 on a missing
 -- source and the addon is silent while looking installed.
 --

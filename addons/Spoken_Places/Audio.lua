@@ -1,4 +1,4 @@
--- SpokenZones -- narrated lore playback.
+-- SpokenPlaces -- narrated lore playback.
 --
 -- This file knows what a lore entry sounds like -- which pack narrates it, where
 -- the file is, how long it runs -- and hands that to the Spoken player, which owns
@@ -154,7 +154,7 @@ function SpokenPlaces:SetupAudio()
 	end)
 
 	-- Switched off or on in Spoken's settings: the map panel follows, and so does the Compendium's
-	-- Zones tab.
+	-- Places tab.
 	if Spoken.RegisterCallback then
 		Spoken:RegisterCallback("PART_SWITCHED", function(key)
 			if key ~= "places" then return end
@@ -383,7 +383,7 @@ function SpokenPlaces:IsVoiceEnabled()
 end
 
 -- Path and duration for a lore entry. `areaKey` is a canonical subzone key (see
--- SpokenZones:NormaliseAreaKey), or nil for the zone itself.
+-- SpokenPlaces:NormaliseAreaKey), or nil for the zone itself.
 --
 -- Duration comes from the generated lookup because there is no way to ask the
 -- client how long a sound file is; without one the button could never reset itself.
@@ -685,7 +685,7 @@ function SpokenPlaces:ResumeLore()
 end
 
 -- Plays this entry now, ahead of anything waiting. Pressing Play has always meant
--- now in SpokenZones, so this front-inserts rather than appending; producers such as
+-- now in SpokenPlaces, so this front-inserts rather than appending; producers such as
 -- autoplay append instead.
 function SpokenPlaces:PlayLore(mapID, areaKey)
 	if not self:IsVoiceEnabled() then

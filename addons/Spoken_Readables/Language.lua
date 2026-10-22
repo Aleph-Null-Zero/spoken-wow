@@ -1,4 +1,4 @@
--- SpokenBooks -- the language axis of the sound packs, as SpokenQuests has it.
+-- SpokenReadables -- the language axis of the sound packs, as SpokenQuests has it.
 --
 -- Three identifiers, deliberately distinct:
 --
@@ -16,7 +16,7 @@
 
 local ADDON_NAME, SpokenReadables = ...
 
--- Kept in step with SpokenZones.LOCALES (addons/Spoken_Places/Language.lua): the addons sit
+-- Kept in step with SpokenPlaces.LOCALES (addons/Spoken_Places/Language.lua): the addons sit
 -- side by side, and a language offered in one and missing from the other is a setting the
 -- player makes once and finds half-honoured. tests/lua/readables_language_test.lua holds them
 -- together.

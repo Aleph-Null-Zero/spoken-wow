@@ -20,7 +20,7 @@ _G.SpokenBooksAudioPacks = {
     },
 }
 
-local function LoadBooks()
+local function LoadReadables()
     local SpokenReadables = {}
     for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Contribute", "Audio", "Playlist", "UI/CopyLink",
         "UI/DialogueUIBook" }) do
@@ -79,7 +79,7 @@ view:LayoutWidgets()
 view:Hide()
 _G.DUIBookFrame = view
 
-local B = LoadBooks()
+local B = LoadReadables()
 B:InitDB()
 B:SetupSource()
 dofile(READABLES .. "Data/Books.lua")

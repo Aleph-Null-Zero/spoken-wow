@@ -60,7 +60,7 @@ VO.Addon:OnInitialize()
 local env = _G.SpokenEnv
 env.Sources:Register("readables", { title = "Spoken Readables", addon = "Spoken_Readables", order = 4,
     packs = function() return { "SpokenBooksAudio" } end })
-env.Sources:Register("places", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
+env.Sources:Register("places", { title = "Spoken Places", addon = "Spoken_Places", order = 3,
     packs = function() return { "SpokenZonesAudio" } end })
 _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()

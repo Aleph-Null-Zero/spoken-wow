@@ -12,7 +12,7 @@ local SPOKEN = here .. "/../../addons/Spoken/"
 
 -- Pages under Spoken held until the world is entered, as in the game (see below).
 stub.holdPages = true
-local env, quests, zones = H.Fresh(stub, SPOKEN)
+local env, quests, places = H.Fresh(stub, SPOKEN)
 local Q, S = env.SoundQueue, env.Sources
 
 quests:Enqueue(H.Clip({ length = 5 }))
@@ -25,7 +25,7 @@ Expect("...saying why", reason, env.L.PART_TURNED_OFF)
 local played, why = quests:PlayNow(H.Clip())
 Expect("a line played by hand is refused too", played, false)
 Expect("...with the reason, for the addon to show", why, env.L.PART_TURNED_OFF)
-Expect("the other parts carry on", zones:Enqueue(H.Clip()) ~= nil, true)
+Expect("the other parts carry on", places:Enqueue(H.Clip()) ~= nil, true)
 Expect("the choice is kept in the settings", env.Addon.db.profile.Parts.quests, false)
 S:SetTurnedOff("quests", false)
 Expect("switched back on, it plays again", quests:Enqueue(H.Clip()) ~= nil, true)
@@ -37,7 +37,7 @@ Q:RemoveAllSoundsFromQueue()
 -- waits until just after the world is entered, then all are nested in their order rather than
 -- in the order the addons asked.
 stub.settingsCategories = {}
-local zonesPage = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Zones", 3)
+local placesPage = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Places", 3)
 local questsPage = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Quests", 1)
 Expect("a page asked for before Spoken's own entry waits for it", questsPage.category, nil)
 
@@ -56,8 +56,8 @@ local function Listed()
     end
     return table.concat(names, "|")
 end
-Expect("...then is nested under it, in its own order", Listed(), "Spoken|Spoken>Quests|Spoken>Gossip|Spoken>Zones|Spoken>Contribute & Report")
-local readables = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Writings", 2)
+Expect("...then is nested under it, in its own order", Listed(), "Spoken|Spoken>Quests|Spoken>Gossip|Spoken>Places|Spoken>Contribute & Report")
+local readables = _G.Spoken:AddSettingsPage(CreateFrame("Frame"), "Readables", 2)
 Expect("a page asked for afterwards is nested at once", readables.category and readables.category.parent.name, "Spoken")
 Expect("opening a page opens its own entry", readables.Open(), true)
 local labels = {}
@@ -78,12 +78,12 @@ Expect("the modules are listed Quests, Gossip, Places, Readables", table.concat(
 Expect("...which says why it cannot be turned on", readablesCard and readablesCard.layoutReason, env.L.REASON_NOT_INSTALLED)
 -- The modules register on entering the world, after the page is built: the row is drawn again
 -- at once, not left saying "Not installed" until something else redraws it.
-local lateBooks = _G.Spoken:RegisterSource("readables", { title = "Spoken Writings", order = 4 })
+local lateReadables = _G.Spoken:RegisterSource("readables", { title = "Spoken Readables", order = 4 })
 Expect("a module registering after the page is built is installed on its row at once",
     readablesCard and readablesCard.layoutReason, nil)
-env.Sources.byKey.books = nil
+env.Sources.byKey.readables = nil
 for i, source in ipairs(env.Sources.ordered) do
-    if source == lateBooks then table.remove(env.Sources.ordered, i) break end
+    if source == lateReadables then table.remove(env.Sources.ordered, i) break end
 end
 env.Options:UpdateRows()
 -- Installed here, with no voice pack found: the row says what is missing.

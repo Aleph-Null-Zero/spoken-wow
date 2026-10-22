@@ -12,7 +12,7 @@ local PLACES = here .. "/../../addons/Spoken_Places/"
 local ELWYNN, BARRENS, SWAMP, REDRIDGE, THUNDER_BLUFF, ALTERAC, HILLSBRAD, ZEPHRAS =
     1429, 1413, 1435, 1433, 1456, 1416, 1424, 2521
 
-local Z = H.LoadZones(PLACES)
+local Z = H.LoadPlaces(PLACES)
 Z.Subzones = {
     [THUNDER_BLUFF] = { ["spirit rise"] = { name = "Spirit Rise", full = "The elders' rise." } },
     [ZEPHRAS] = { ["rise of spirits"] = { name = "Rise of Spirits", pending = true } },
@@ -54,7 +54,7 @@ Expect("a name only the flat table has resolves through it, map or not",
     Z:ResolveAreaKey("Крепость Каменной Стражи", REDRIDGE), "stonewatch keep")
 
 ---------------------------------------------------------------- a file without the table
-local real = H.LoadZones(PLACES)
+local real = H.LoadPlaces(PLACES)
 real.clientLocale = "ruRU"
 assert(loadfile(PLACES .. "Data/ruRU/Aliases.lua"))("Spoken_Places", real)
 local northshire
@@ -71,4 +71,4 @@ if real.ZoneAliases.ruRU == nil then
 end
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones alias tests passed")
+print("\nAll places alias tests passed")

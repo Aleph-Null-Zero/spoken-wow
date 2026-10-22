@@ -79,7 +79,7 @@ local function Boot(where, client)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     C_Timer.After = after
-    local Z = H.LoadZones(PLACES)
+    local Z = H.LoadPlaces(PLACES)
     assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     for _, file in ipairs({ "Autoplay", "Discovery", "Data/AreaZones", "UI/LoreWindow" }) do
         assert(loadfile(PLACES .. file .. ".lua"))("Spoken_Places", Z)
@@ -364,4 +364,4 @@ Expect("...not discovered while not found", mapPage.body.text.text, Z.L.NOT_DISC
 showAll = true
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones area zones tests passed")
+print("\nAll places area zones tests passed")

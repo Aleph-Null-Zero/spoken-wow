@@ -246,8 +246,8 @@ stub.Secrets()
 CloseGossip()
 Expect("nothing went wrong in a callback", #_G.SpokenEnv.Callbacks.errors, 0)
 
----------------------------------------------------------------- zones
-local function BootZones()
+--------------------------------------------------------------- places
+local function BootPlaces()
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     world.inCombat = false
     world.playerLevel = 1
@@ -260,7 +260,7 @@ local function BootZones()
     }
     local zenv = stub.LoadSpoken(SPOKEN)
     zenv.Addon:Enable()
-    local Z = H.LoadZones(PLACES)
+    local Z = H.LoadPlaces(PLACES)
     assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
     assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1411] = { name = "Durotar", full = "Durotar lore." }
@@ -271,7 +271,7 @@ local function BootZones()
     return Z
 end
 
-local Z = BootZones()
+local Z = BootPlaces()
 stub.Secrets(1411)
 Expect("a secret map is no map", Z:GetPlayerMapID(), nil)
 stub.Secrets()
@@ -291,7 +291,7 @@ stub.Advance(3)
 Expect("the subzone no longer secret, the greeting reads it", _G.Spoken:GetQueueSize(), 1)
 
 -- The discovery message, as #357 reported it from Shadowfang Keep.
-Z = BootZones()
+Z = BootPlaces()
 _G.SpokenZonesCharacter.greeted = true
 assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
 Z:SetupAutoplay()

@@ -1,4 +1,4 @@
--- Zones and Writings settings were account-wide, and every character has a profile of its own in
+-- Places and Readables settings were account-wide, and every character has a profile of its own in
 -- Spoken's settings. What a player had saved comes to each character's profile at login; a profile
 -- made or reset later starts from the defaults. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."

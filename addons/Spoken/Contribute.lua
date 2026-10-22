@@ -111,7 +111,7 @@ end
 
 --- The integrity check on a pasted envelope.
 ---
---- Deliberately not SpokenBooks:ChecksumOf, whose number is a frozen page id: coupling an id
+--- Deliberately not SpokenReadables:ChecksumOf, whose number is a frozen page id: coupling an id
 --- format to a transport format means neither can change without the other. The arithmetic is
 --- the same because the constraint is the same -- Lua 5.1 has no bitwise operators and the
 --- modulus is the largest signed 32-bit prime, so every intermediate stays exact in a double.

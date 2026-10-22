@@ -1,7 +1,7 @@
--- SpokenZones -- the places in Azeroth's Compendium (UI/Compendium.lua): every place's story, to
+-- SpokenPlaces -- the places in Azeroth's Compendium (UI/Compendium.lua): every place's story, to
 -- browse and listen to anywhere.
 --
--- Opened from the minimap menu, the Zones settings page or /spp window. Independent of
+-- Opened from the minimap menu, the Places settings page or /spp window. Independent of
 -- WorldMapFrame, so it works with the map closed.
 --
 -- The window, its list and its rows are the Compendium's; this is what goes in them. On the left,
@@ -182,7 +182,7 @@ end
 local function OpenZone(mapID) C.OpenZone(mapID, openZones) end
 
 --- Open what holds the place `mapID`, or its area `key`: a dungeon's entrance zone and the line its
---- line is under, any other area's zone, the one the client puts it in (SpokenZones:AreaZone).
+--- line is under, any other area's zone, the one the client puts it in (SpokenPlaces:AreaZone).
 local function OpenPlace(mapID, key)
 	local entrance = SpokenPlaces:DungeonOf(mapID, key)
 	if entrance then
@@ -204,7 +204,7 @@ local function OnForever()
 	return onForever
 end
 
--- The areas that are dungeons and raids (SpokenZones.Dungeons, from Spoken's Data/Dungeons.lua), by
+-- The areas that are dungeons and raids (SpokenPlaces.Dungeons, from Spoken's Data/Dungeons.lua), by
 -- where their story is kept: the zone of the entrance, whose line lists them, and the instance's map.
 local dungeonAt, dungeonsFrom = {}, nil
 local function DungeonIndex()
@@ -246,7 +246,7 @@ local function DungeonsIn(zone)
 end
 
 -- A zone's areas listed as rows, by name, each { mapID = the map its story is kept under, key =,
--- entry = }: those the client puts in the zone (SpokenZones:AreasIn), not its dungeons and raids,
+-- entry = }: those the client puts in the zone (SpokenPlaces:AreasIn), not its dungeons and raids,
 -- which are lines.
 local function Areas(mapID)
 	local own = SpokenPlaces.Subzones[mapID]
@@ -708,7 +708,7 @@ end
 local function Count(n, many, one) return n == 1 and one or string.format(many, n) end
 
 --- The line under a place's name: where it sits and what its line or banner counts. An area sits in
---- the zone it is listed in (SpokenZones:AreaZone): a dungeon's entrance's, Strahnbrad's Alterac
+--- the zone it is listed in (SpokenPlaces:AreaZone): a dungeon's entrance's, Strahnbrad's Alterac
 --- Mountains. Azeroth sits in nothing, so its line says what it holds.
 function SpokenPlaces:PlaceLine(mapID, key)
 	if key then return string.format(L.IN_ZONE_FMT, ZoneName(self:AreaZone(mapID, key))) end
@@ -883,8 +883,8 @@ end
 -- Public
 --------------------------------------------------------------------------------
 
--- The tab's list, built now where Zones was off at login and has been switched on since; nil
--- while Zones is off.
+-- The tab's list, built now where Places was off at login and has been switched on since; nil
+-- while Places is off.
 local function Built()
 	if not list then SpokenCompendium:Select("places") end
 	return list

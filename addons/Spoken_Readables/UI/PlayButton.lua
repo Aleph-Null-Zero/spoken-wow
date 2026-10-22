@@ -4,7 +4,7 @@
 -- book: the addon's two settings both mean "do not start by yourself", and neither should
 -- mean "give me no way to start it".
 --
--- A TEXT button, not an icon, for the reason the zones side once gave: an
+-- A TEXT button, not an icon, for the reason the places side once gave: an
 -- icon path cannot be verified without launching the client, and a texture that does not
 -- exist on 11509 draws nothing at all -- an invisible button is a worse failure than a plain
 -- one.
@@ -62,7 +62,7 @@ local function FitToLabels(button, labels)
 end
 
 --- Open in Azeroth's Compendium: the Compendium's tome in the player's round button, as Quests
---- and Zones have it, opening the tab on writing `bookId`. `tooltip`, where given, returns the
+--- and Places have it, opening the tab on writing `bookId`. `tooltip`, where given, returns the
 --- tooltip to use: DialogueUI hides the game's with the rest of the interface.
 function SpokenReadables:NewOpenButton(parent, tooltip)
 	if not (_G.Spoken and Spoken.CreateRoundButton) then return nil end

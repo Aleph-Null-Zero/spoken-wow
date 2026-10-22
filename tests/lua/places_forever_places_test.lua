@@ -19,7 +19,7 @@ local function Boot(forever)
         if id == 2482 and not forever then return nil end
         return getMapInfo(id)
     end
-    local Z = H.LoadZones(PLACES)
+    local Z = H.LoadPlaces(PLACES)
     assert(loadfile(PLACES .. "Data/ForeverAreas.lua"))("Spoken_Places", Z)
     Z.Subzones[ELWYNN] = {
         goldshire = { name = "Goldshire", full = "A town." },
@@ -55,4 +55,4 @@ Expect("...and the Era spelling is still the key", Z:ResolveAreaKey("Legash Enca
 
 _G.C_Map.GetMapInfo = getMapInfo
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones Forever places tests passed")
+print("\nAll places Forever places tests passed")

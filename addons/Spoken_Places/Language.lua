@@ -1,4 +1,4 @@
--- SpokenZones -- the language axis.
+-- SpokenPlaces -- the language axis.
 --
 -- Two identifiers live here and are deliberately never merged:
 --
@@ -342,7 +342,7 @@ end
 --------------------------------------------------------------------------------
 -- Interface strings
 --
--- SpokenZones.L is every string the interface can show, looked up by name:
+-- SpokenPlaces.L is every string the interface can show, looked up by name:
 -- the active language first, English second, and the key itself last so a
 -- missing string is legible on screen rather than a nil concatenation error.
 --

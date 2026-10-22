@@ -125,7 +125,7 @@ function SpokenReadables:GetAudioPacks()
 end
 
 -- The buttons the player shows under a book clip: Report, and nothing else. There is no Read
--- button here, unlike the zones strip -- the page is already open on screen, and a button
+-- button here, unlike the places strip -- the page is already open on screen, and a button
 -- that re-read what the reader is looking at would answer a question nobody asked.
 --
 -- One table, shared by every clip. The player tells the button which clip it now stands
@@ -133,7 +133,7 @@ end
 local ACTIONS = {
 	{
 		id = "report",
-		-- An icon in the corner rather than a word beside the line, as the zones action is.
+		-- An icon in the corner rather than a word beside the line, as the places action is.
 		icon = [[Interface\HelpFrame\HelpIcon-Bug]],
 		label = L.REPORT_PROBLEM,
 		anchor = "topright",

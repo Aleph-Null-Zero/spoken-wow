@@ -1,4 +1,4 @@
--- SpokenBooks -- the module's page in the game's settings, under Spoken's, laid out by Spoken's
+-- SpokenReadables -- the module's page in the game's settings, under Spoken's, laid out by Spoken's
 -- UI/Layout.lua so the pages read alike.
 --
 -- Every switch here also has a slash command, and always will: the settings panel is the

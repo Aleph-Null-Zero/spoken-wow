@@ -1,4 +1,4 @@
--- The zones addon's narration across languages: an entry the active pack lacks, and where a
+-- The Places addon's narration across languages: an entry the active pack lacks, and where a
 -- report on a clip goes. Language selection itself is older than this file and lives in
 -- Language.lua. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
@@ -14,7 +14,7 @@ stub.SetClient("16001")
 stub.LoadSpoken(SPOKEN)
 
 -- What a player had saved before the settings moved into Spoken's profile. Each load below is a
--- first run, so the move is forgotten and the profile starts without Zones' table.
+-- first run, so the move is forgotten and the profile starts without Places' table.
 local function Legacy(settings)
     local db = _G.SpokenEnv.Addon.db
     db.profile.Modules, db.global.ModulesLegacy = nil, nil
@@ -25,7 +25,7 @@ stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })
 local MAP, BOTH, ONLY_ENGLISH = 1411, "valley of trials", "sen'jin village"
 
 -- The voice is Spoken's Voice Language and If a Voice Is Missing, as for every module; the text's
--- language is the Zones page's own.
+-- language is the Places page's own.
 local function Voice(code, fallback)
     local language = _G.SpokenEnv.Addon.db.profile.Language
     language.Voice, language.Fallback = code, fallback
@@ -38,7 +38,7 @@ local function Install(packs)
     for _, pack in ipairs(packs) do
         _G.SpokenZonesAudioPacks[pack.addon] = pack
     end
-    return H.LoadZones(PLACES)
+    return H.LoadPlaces(PLACES)
 end
 
 local function Pack(addon, language, subzones)
@@ -134,7 +134,7 @@ local function InstallOn(locale, db)
     if db ~= lastInstalled then Legacy(db) end
     lastInstalled = db
     _G.SpokenZonesAudioPacks = {}
-    return H.LoadZones(PLACES, { Languages = READY })
+    return H.LoadPlaces(PLACES, { Languages = READY })
 end
 
 local saved = {}
@@ -165,7 +165,7 @@ local function InstallItalian(locale, db)
     stub.SetLocale(locale)
     Legacy(db)
     _G.SpokenZonesAudioPacks = {}
-    return H.LoadZones(PLACES, { Languages = WITH_ITALIAN })
+    return H.LoadPlaces(PLACES, { Languages = WITH_ITALIAN })
 end
 Z = InstallItalian("enUS", {})
 Expect("G. Italian is offered once its lore is in", Z:IsLanguageSelectable("itIT"), true)
@@ -244,7 +244,7 @@ local function Lore(pack)
     stub.SetLocale("deDE")
     Legacy({ language = pack.language })
     _G.SpokenZonesAudioPacks = { [pack.addon] = pack }
-    Z = H.LoadZones(PLACES, { Languages = { { code = "enUS", ready = true }, { code = "deDE", ready = true },
+    Z = H.LoadPlaces(PLACES, { Languages = { { code = "enUS", ready = true }, { code = "deDE", ready = true },
         { code = "koKR", ready = true } } })
     local clip = Z:NewLoreSound(MAP, nil)
     return clip and clip.present
@@ -276,4 +276,4 @@ _G.GameFontHighlight, _G.QuestFont = realHighlight, realQuest
 stub.SetLocale("enUS")
 
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
-print("\nAll zones language tests passed")
+print("\nAll places language tests passed")
