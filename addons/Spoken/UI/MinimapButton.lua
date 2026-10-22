@@ -290,13 +290,10 @@ function Minimap:Setup()
             -- the next compartment open). From the compartment, wait for the close to
             -- finish and open on our own button, which neither moves nor closes.
             if minimapButton and button ~= minimapButton then
-                if C_Timer and C_Timer.After then
-                    C_Timer.After(0.05, function()
-                        Minimap:HandleClick(minimapButton, mouseButton)
-                    end)
-                    return
-                end
-                button = minimapButton
+                C_Timer.After(0.05, function()
+                    Minimap:HandleClick(minimapButton, mouseButton)
+                end)
+                return
             end
             Minimap:HandleClick(button, mouseButton)
         end,

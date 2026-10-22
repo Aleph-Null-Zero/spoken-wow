@@ -225,7 +225,7 @@ function Addon:ApplyProfile()
     if not self.enabled then return end
     if PlayerFrame and PlayerFrame.RefreshConfig then PlayerFrame:RefreshConfig() end
     if Transcript and Transcript.RefreshConfig then Transcript:RefreshConfig() end
-    if Subtitle and Subtitle.Update then Subtitle:Update() end
+    Subtitle:Update()
     -- Hands LibDBIcon the new profile's table: it keeps the one it was given.
     if Minimap and Minimap.Refresh then Minimap:Refresh() end
     if OtherSounds and OtherSounds.IsAvailable and OtherSounds:IsAvailable() then OtherSounds:RefreshConfig() end
@@ -368,7 +368,7 @@ function Addon:SetPlayerHost(host)
     self:ApplyHost(MinimalPlayer.frame)
     if DialogueUIPlayer then self:ApplyHost(DialogueUIPlayer.frame) end
     -- The subtitles go over the host too, and pass its clicks through.
-    if Subtitle and Subtitle.frame then
+    if Subtitle.frame then
         self:ApplyHost(Subtitle.frame)
         Subtitle:Mouse()
     end
@@ -460,10 +460,8 @@ local function RegisterSlashCommand()
             { "/sp diagnostics", L.OPT_DIAGNOSTICS },
             { "/sp settings", L.SETTINGS },
         }
-        if Gather then
-            table.insert(lines, { "/sp collect", L.OPT_GATHER })
-            table.insert(lines, { "/sp send", L.OPT_GATHER_SHARE })
-        end
+        table.insert(lines, { "/sp collect", L.OPT_GATHER })
+        table.insert(lines, { "/sp send", L.OPT_GATHER_SHARE })
         if Developer.provider then table.insert(lines, { "/sp log", "Spoken Developer" }) end
         print("|cff66bbffSpoken|r")
         for _, line in ipairs(lines) do print("  " .. line[1] .. ": " .. line[2]) end

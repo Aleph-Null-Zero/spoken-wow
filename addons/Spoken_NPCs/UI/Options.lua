@@ -14,9 +14,6 @@ function NPCs:SetupOptions()
 	if panel or not (Spoken and Spoken.AddSettingsPage and SpokenLayout) then
 		return
 	end
-	if not (Settings and Settings.RegisterCanvasLayoutCategory) then
-		return
-	end
 	-- The words every module's page shares, kept in Spoken.
 	local W = Spoken:Words()
 

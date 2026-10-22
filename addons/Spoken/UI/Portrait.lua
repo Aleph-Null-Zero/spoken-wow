@@ -81,11 +81,6 @@ function Portrait:FrameHead(model)
     model:SetCustomCamera(0)
 end
 
---- Whether a model frame has something to draw.
-function Portrait:ModelLoaded(model)
-    return model:GetModelFileID() ~= nil
-end
-
 ---@return number|nil seconds  0 if the model is known to lack the animation
 function Portrait:GetModelAnimationDuration(model, animation)
     if not model or model == 123 then return end
@@ -99,20 +94,9 @@ end
 -- The model frame, one per portrait.
 --------------------------------------------------------------------------------
 
-function Portrait:AcquireModelFrame(portrait, clip)
-    if not portrait.model then
-        portrait.model = CreateFrame("DressUpModel", nil, portrait)
-        portrait.model:SetAllPoints()
-    end
-    return portrait.model
-end
-
-function Portrait:ReleaseModelFrame(portrait, frame)
-end
-
-local function InitModelFrame(model)
-    if model._initialized then return end
-    model._initialized = true
+local function CreateModelFrame(portrait)
+    local model = CreateFrame("DressUpModel", nil, portrait)
+    model:SetAllPoints()
     model:HookScript("OnHide", function(self)
         self:ClearModel()
         self.oldCreatureID = nil
@@ -154,6 +138,7 @@ local function InitModelFrame(model)
         end
         self.wasPaused = isPaused
     end)
+    return model
 end
 
 --------------------------------------------------------------------------------
@@ -187,8 +172,8 @@ Renderers["texture"] = {
 
 Renderers["model"] = {
     Acquire = function(portrait, clip)
-        local model = Portrait:AcquireModelFrame(portrait, clip)
-        InitModelFrame(model)
+        portrait.model = portrait.model or CreateModelFrame(portrait)
+        local model = portrait.model
         model:Show()
         return model
     end,
@@ -197,7 +182,7 @@ Renderers["model"] = {
         if not creatureID then return false end
         if creatureID ~= model.oldCreatureID then
             model:ClearModel()
-            if spec.displayID and model.SetDisplayInfo then
+            if spec.displayID then
                 model:SetDisplayInfo(spec.displayID)
             else
                 model:SetCreature(creatureID)
@@ -213,7 +198,7 @@ Renderers["model"] = {
             model.animDuration = nil
         end
         -- A model the client could not load draws nothing; say so, and the fallback shows.
-        return Portrait:ModelLoaded(model)
+        return model:GetModelFileID() ~= nil
     end,
     Release = function(model)
         model:Hide()

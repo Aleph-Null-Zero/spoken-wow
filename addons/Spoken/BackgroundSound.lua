@@ -13,8 +13,7 @@ BackgroundSound = {}
 local CVAR = "Sound_EnableSoundWhenGameIsInBG"
 
 local function Read()
-    local ok, value = pcall(GetCVar, CVAR)
-    if ok then return value end
+    return GetCVar(CVAR)
 end
 
 local function On(value) return tonumber(value) == 1 end

@@ -82,9 +82,9 @@ local QUEST_EVENTS = {
         text = function() return GetRewardText and NotSecret(GetRewardText()) or "" end },
 }
 
---- GetQuestID for the dialog `event` names.
-local function QuestIDFor(event)
-    return GetQuestID and NotSecret(GetQuestID()) or 0
+--- The quest the open dialog shows, 0 when none.
+local function CurrentQuestID()
+    return NotSecret(GetQuestID()) or 0
 end
 
 local function CaptureQuestSnapshot(event)
@@ -93,7 +93,7 @@ local function CaptureQuestSnapshot(event)
         return
     end
     local readText = quest.text
-    local questID = QuestIDFor(event)
+    local questID = CurrentQuestID()
     local questTitle = QuestTitle()
     -- Nothing to replay, and nothing to identify a quest by either.
     if (not questID or questID == 0) and questTitle == "" then
@@ -117,7 +117,7 @@ local function ReadQuestFields(event)
         return snapshot.questID, snapshot.title, snapshot.text, snapshot.guid, snapshot.targetName,
             snapshot.isObjectOrItem
     end
-    return QuestIDFor(event), QuestTitle(), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
+    return CurrentQuestID(), QuestTitle(), QUEST_EVENTS[event].text(), Utils:GetNPCGUID(),
         Utils:GetNPCName(), Utils:IsNPCObjectOrItem()
 end
 
@@ -134,7 +134,7 @@ local function GetVisibleQuestEvent()
         return "QUEST_GREETING"
     end
 
-    local questID = GetQuestID and NotSecret(GetQuestID())
+    local questID = NotSecret(GetQuestID())
     if not questID or questID == 0 then
         return
     end
@@ -155,11 +155,9 @@ end
 -- opened it. Opened by an addon, that taints the gamepad's bindings: the next close is blocked,
 -- and the "blocked from an action" dialog it raises hangs the client (#165). What this addon
 -- would pop up unasked goes to chat there instead. A copy of Spoken's own (Core.lua), because
--- the player may be the addon that is missing. pcall, because a client without gamepad support
--- may raise on a CVar it has never heard of.
+-- the player may be the addon that is missing.
 local function IsGamepadUI()
-    local ok, style = pcall(GetCVar, "InputDeviceInterfaceStyle")
-    return ok and style == "1"
+    return GetCVar("InputDeviceInterfaceStyle") == "1"
 end
 
 local function Say(text)
@@ -307,7 +305,7 @@ function Addon:GetVisibleLine(event)
     local probe
     if quest then
         local text = quest.text()
-        local questID = ResolveQuestID(quest.source, QuestIDFor(event),
+        local questID = ResolveQuestID(quest.source, CurrentQuestID(),
             QuestTitle(), Utils:GetNPCName() or "", text, true)
         if not questID then
             return nil
@@ -503,11 +501,7 @@ function Addon:OnInitialize()
         self:ShowMissingDataModulePopup()
     end
     local function ScheduleDeferredDataLoad()
-        if C_Timer and C_Timer.After then
-            C_Timer.After(1, LoadDeferredDataModules)
-        else
-            self:ScheduleTimer(LoadDeferredDataModules, 1)
-        end
+        C_Timer.After(1, LoadDeferredDataModules)
     end
     if self.dataModulesPending then
         if IsLoggedIn and IsLoggedIn() then
@@ -556,20 +550,15 @@ function Addon:OnInitialize()
             questSnapshot = nil
             ResetCandidate(state)
             -- Said once for each quest opened meanwhile, which is the question a player asks.
-            local open = GetQuestID and NotSecret(GetQuestID()) or 0
-            if open and open ~= 0 then
+            local open = CurrentQuestID()
+            if open ~= 0 then
                 Debug:Note("watcher", "off:" .. tostring(open),
                     "quest %s open, not read: Read Automatically is off", tostring(open))
             end
             return
         end
-        local questCallSucceeded, questID = pcall(function()
-            return GetQuestID and NotSecret(GetQuestID()) or 0
-        end)
-        if not questCallSucceeded then
-            error(questID)
-        end
-        if not questID or questID == 0 then
+        local questID = CurrentQuestID()
+        if questID == 0 then
             -- The dialog is gone. If it closed with nothing dispatched for it, the event
             -- snapshot is the whole record of the interaction, so read that before the
             -- candidate state is cleared.
@@ -1166,7 +1155,7 @@ function Addon:MuteGreetingAhead(event)
     end
     -- Silenced only where a pack reads the line; any other NPC keeps its greeting. A quest whose
     -- ID is not known yet is muted too: its greeting starts now, and with no line the mute lifts.
-    local questID = quest and QuestIDFor(event)
+    local questID = quest and CurrentQuestID()
     if (quest and (not questID or questID == 0)) or self:ExpectedLine(event) then
         Spoken:MuteGameDialogueAhead(self:PartOfPage(event) == "gossip" and Player.gossipSource or Player.source)
     end
@@ -1208,7 +1197,7 @@ function Addon:ExpectedLine(event, textIsCurrent)
         end
         -- The quest ID can still be the previous quest's this early; the worst that costs is
         -- one greeting muted for nothing, or one cut off as it was before.
-        local questID = QuestIDFor(event)
+        local questID = CurrentQuestID()
         if not questID or questID == 0 then
             return nil
         end

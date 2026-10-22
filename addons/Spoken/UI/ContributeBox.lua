@@ -249,7 +249,7 @@ function Spoken:ShowContribution(payload, address, isLink, gather)
         return false
     end
 
-    if type(gather) == "table" and Gather and not Gather:IsIntroduced() then
+    if type(gather) == "table" and not Gather:IsIntroduced() then
         ShowProse(L.CONTRIBUTE_INTRO, true)
         box.justThis:SetScript("OnClick", function()
             Gather:SetIntroduced()

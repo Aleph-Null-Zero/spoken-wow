@@ -108,7 +108,7 @@ function Welcome:Build()
     -- Seen is seen, however the window closes: Done, the X or Escape.
     frame:SetScript("OnHide", function()
         Addon.db.global.Welcomed = true
-        if Subtitle and Subtitle:IsShowingSample() then Subtitle:ShowSample(false) end
+        if Subtitle:IsShowingSample() then Subtitle:ShowSample(false) end
         if Options.previewing or Addon.previewStyle or PlayerFrame:IsShowingSample() then Options:SetPreviewing(false) end
     end)
     table.insert(UISpecialFrames, "SpokenWelcomeFrame")
@@ -252,17 +252,13 @@ function Welcome:Show()
     self.frame:Show()
 end
 
-function Welcome:IsAvailable()
-    return Settings ~= nil and Settings.RegisterCanvasLayoutCategory ~= nil
-end
-
 -- At the first login it ships to, once the world is up and everything has registered, and
 -- never in combat, where a window over the screen is the last thing anyone wants.
 local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
 events:SetScript("OnEvent", function()
     events:UnregisterEvent("PLAYER_ENTERING_WORLD")
-    if not (Addon.db and Welcome:IsAvailable()) or Addon.db.global.Welcomed then return end
+    if not Addon.db or Addon.db.global.Welcomed then return end
     local function Open()
         if InCombatLockdown and InCombatLockdown() then return end
         Welcome:Show()
