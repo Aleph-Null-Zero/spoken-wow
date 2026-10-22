@@ -68,7 +68,8 @@ describe('checkEntryPath', () => {
 
 describe('allowedFolders', () => {
   it('uses the product folders for a voice pack and the Spoken list for Spoken', () => {
-    expect(allowedFolders(productById('zones-audio')!)).toEqual(['SpokenZonesAudio'])
+    // A pack keeps its folder from before its section was renamed, to see it and replace it.
+    expect(allowedFolders(productById('places-audio')!)).toEqual(['SpokenPlacesAudio', 'SpokenZonesAudio'])
     expect(allowedFolders(productById('quests-audio')!)).toHaveLength(4)
     expect(allowedFolders(productById('spoken')!)).toEqual(SPOKEN_FOLDERS)
   })

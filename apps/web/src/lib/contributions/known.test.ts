@@ -196,12 +196,12 @@ describe("lineStates", () => {
     }
   });
 
-  it("leaves a books row naming no page missing", async () => {
-    expect(await lineStates([{ source: "books", locale: "enUS", text: "Page", meta: {} }])).toEqual([{ kind: "missing" }]);
+  it("leaves a readables row naming no page missing", async () => {
+    expect(await lineStates([{ source: "readables", locale: "enUS", text: "Page", meta: {} }])).toEqual([{ kind: "missing" }]);
   });
 });
 
-describe("lineStates: books", () => {
+describe("lineStates: readables", () => {
   const base = 900_000_000 + Math.floor(Math.random() * 90_000_000);
   const pages = [`b:${base}`, `b:${base + 1}`];
 
@@ -233,11 +233,11 @@ describe("lineStates: books", () => {
     await db().query(`delete from "entity_name" where "kind" = 'gameobject' and "entityId" = $1`, [String(base)]);
   });
 
-  it("calls a books row with this language's words known, and other words changed", async () => {
+  it("calls a readables row with this language's words known, and other words changed", async () => {
     const [known, changed, missing] = await lineStates([
-      { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" } },
-      { source: "books", locale: "esES", text: `Words one ${base}.`, meta: { book: `Libro ${base}`, number: "1" } },
-      { source: "books", locale: "esES", text: "Nada.", meta: { book: `Nuevo ${base}`, number: "1" } },
+      { source: "readables", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" } },
+      { source: "readables", locale: "esES", text: `Words one ${base}.`, meta: { book: `Libro ${base}`, number: "1" } },
+      { source: "readables", locale: "esES", text: "Nada.", meta: { book: `Nuevo ${base}`, number: "1" } },
     ]);
     expect(known).toEqual({ kind: "known", lineId: expect.any(String) });
     expect(changed).toEqual({ kind: "changed", wordings: [{ lineId: pages[0], variant: 0, text: `Texto uno ${base}.` }], closest: 0 });
@@ -246,9 +246,9 @@ describe("lineStates: books", () => {
 
   it("honours the page a moderator named over the one the words find", async () => {
     const [named, ownText, newBook] = await lineStates([
-      { source: "books", locale: "esES", text: `Words two ${base}.`, meta: {}, matchLineId: pages[0] },
-      { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: {}, matchLineId: pages[0] },
-      { source: "books", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" }, matchNewBook: true },
+      { source: "readables", locale: "esES", text: `Words two ${base}.`, meta: {}, matchLineId: pages[0] },
+      { source: "readables", locale: "esES", text: `Texto uno ${base}.`, meta: {}, matchLineId: pages[0] },
+      { source: "readables", locale: "esES", text: `Texto uno ${base}.`, meta: { book: `Libro ${base}`, number: "1" }, matchNewBook: true },
     ]);
     expect(named).toEqual({ kind: "changed", wordings: [{ lineId: pages[0], variant: 0, text: `Texto uno ${base}.` }], closest: 0 });
     expect(ownText).toEqual({ kind: "known", lineId: expect.any(String) });

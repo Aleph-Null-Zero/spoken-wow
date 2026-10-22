@@ -2,9 +2,9 @@
 // Assemble a section's Sounds folder from the database: every live take, copied out of the
 // archive under the path the addon plays it from.
 //
-//   node scripts/audio/sounds.mjs <quests|zones|books>          (LOCAL_DB names the database)
-//   node scripts/audio/sounds.mjs --list <quests|zones|books>   the archive files it would copy
-//   node scripts/audio/sounds.mjs --lang=esMX zones               another language's pack
+//   node scripts/audio/sounds.mjs <quests|places|readables>        (LOCAL_DB names the database)
+//   node scripts/audio/sounds.mjs --list <quests|places|readables> the archive files it would copy
+//   node scripts/audio/sounds.mjs --lang=esMX places            another language's pack
 //
 // A language other than English is assembled into `build/<section>/<lang>/`, never into
 // English's folder; its takes are archived under `<archive>/<lang>/` (`historyDirOf` in
@@ -32,8 +32,8 @@ import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { readLines, shipped } from "../../pipelines/zones/tools/lib/loredata.mjs";
-import { assignFiles } from "../../pipelines/zones/tools/voice/naming.mjs";
+import { readLines, shipped } from "../../pipelines/places/tools/lib/loredata.mjs";
+import { assignFiles } from "../../pipelines/places/tools/voice/naming.mjs";
 import { archiveOf } from "../lib/archives.mjs";
 import { NAMED_QUESTS_SQL, namedBy } from "./relevant.mjs";
 
@@ -43,8 +43,8 @@ const BASE_LANG = "enUS";
 
 const SECTIONS = {
   quests: { archive: archiveOf("quests"), out: join(ROOT, "pipelines/quests/audio") },
-  zones: { archive: archiveOf("zones"), out: join(ROOT, "addons/SpokenZonesAudio/Sounds") },
-  books: { archive: archiveOf("books"), out: join(ROOT, "addons/SpokenBooksAudio/Sounds") },
+  places: { archive: archiveOf("places"), out: join(ROOT, "addons/SpokenPlacesAudio/Sounds") },
+  readables: { archive: archiveOf("readables"), out: join(ROOT, "addons/SpokenReadablesAudio/Sounds") },
 };
 
 // --list prints, relative to the archive, every file this would copy, and copies nothing.
@@ -56,7 +56,7 @@ const section = args.find((arg) => !arg.startsWith("--"));
 const lang = args.find((arg) => arg.startsWith("--lang="))?.slice("--lang=".length) || BASE_LANG;
 const english = SECTIONS[section];
 if (!english || !/^[a-z]{2}[A-Z]{2}$/.test(lang)) {
-  console.error("usage: sounds.mjs [--list] [--lang=<code>] <quests|zones|books>");
+  console.error("usage: sounds.mjs [--list] [--lang=<code>] <quests|places|readables>");
   process.exit(1);
 }
 // Another language never writes where English's pack is assembled: its folder is a work area
@@ -100,17 +100,17 @@ const takes = listing.map((row) => {
   return { file, stem, archived: name ? join(prefix, stem, name) : "" };
 });
 
-// Quests carry only the audio a current line names (relevant.mjs), and zones only the places the
+// Quests carry only the audio a current line names (relevant.mjs), and places only the areas the
 // committed lore has words for: a take stays live after its place leaves the lore, and the lookup
 // (build-lookup.mjs) does not list it.
-async function zonesShipped() {
+async function placesShipped() {
   const entries = await readLines();
   const lore = shipped(entries);
   const files = new Set([...assignFiles(entries)].filter(([id]) => lore.has(id)).map(([, file]) => file));
   return (stem) => files.has(stem);
 }
 const relevant =
-  section === "quests" ? namedBy(psql(NAMED_QUESTS_SQL)) : section === "zones" ? await zonesShipped() : () => true;
+  section === "quests" ? namedBy(psql(NAMED_QUESTS_SQL)) : section === "places" ? await placesShipped() : () => true;
 const live = takes.filter((take) => relevant(take.stem));
 const unnamed = takes.length - live.length;
 

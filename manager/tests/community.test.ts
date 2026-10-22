@@ -348,7 +348,7 @@ describe('installing a community pack', () => {
   it('refuses a product whose folder is not a SpokenCommunity_ name', async () => {
     const env = await communityEnv()
     const { product, release } = await prepare(await yazlZip(packEntries()))
-    for (const folders of [['Spoken'], ['SpokenZonesAudio'], [FOLDER, 'Spoken'], null]) {
+    for (const folders of [['Spoken'], ['SpokenPlacesAudio'], [FOLDER, 'Spoken'], null]) {
       const err = await installProduct(env.game, { ...product, folders }, release, ctx(env)).catch((e) => e)
       expect(err).toBeInstanceOf(PlainError)
     }

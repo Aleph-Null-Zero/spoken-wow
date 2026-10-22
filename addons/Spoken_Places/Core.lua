@@ -1,8 +1,8 @@
--- SpokenZones -- Core: namespace, saved variables, events, zone resolution.
+-- SpokenPlaces -- Core: namespace, saved variables, events, zone resolution.
 -- Client targets: WoW Classic Era 1.15.9 (11509) and Anniversary 2.5.6 (20506).
 -- The two share a uiMapID space, so nothing here branches on the client.
 
-local ADDON_NAME, SpokenZones = ...
+local ADDON_NAME, SpokenPlaces = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
@@ -12,23 +12,23 @@ local NotSecret = Spoken and Spoken.NotSecret or function(value) return value en
 -- load-time failure on a client this addon has not been run on.
 local GetAddOnMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
 
-SpokenZones.name = ADDON_NAME
-SpokenZones.version = GetAddOnMeta(ADDON_NAME, "Version") or "dev"
+SpokenPlaces.name = ADDON_NAME
+SpokenPlaces.version = GetAddOnMeta(ADDON_NAME, "Version") or "dev"
 
 -- Populated by Data/<language>/Zones.lua and Subzones.lua (both generated),
--- through SpokenZones:RegisterLoreData. Declared here so every other file can rely
+-- through SpokenPlaces:RegisterLoreData. Declared here so every other file can rely
 -- on the tables existing even when a data file is empty or failed to load.
-SpokenZones.Zones = SpokenZones.Zones or {}
-SpokenZones.Subzones = SpokenZones.Subzones or {}
+SpokenPlaces.Zones = SpokenPlaces.Zones or {}
+SpokenPlaces.Subzones = SpokenPlaces.Subzones or {}
 
 -- The subzone the player clicked on the world map, or nil to show zone lore:
 -- { mapID = <parent uiMapID>, areaName = <client name>, entry = <lore> }
-SpokenZones.selected = nil
+SpokenPlaces.selected = nil
 
 -- Callbacks fired when the lore shown to the player should change. UI modules
 -- register into this rather than each hooking WorldMapFrame independently.
-SpokenZones.mapChangedCallbacks = {}
-SpokenZones.zoneChangedCallbacks = {}
+SpokenPlaces.mapChangedCallbacks = {}
+SpokenPlaces.zoneChangedCallbacks = {}
 
 local defaults = {
 	showMapPanel = true,
@@ -48,7 +48,7 @@ local defaults = {
 	autoplay = true,
 	autoplaySubzones = true,
 	-- Off, because it replaces the client's own record of what a character has
-	-- discovered with one SpokenZones keeps itself. Only a character who explored
+	-- discovered with one Places keeps itself. Only a character who explored
 	-- before installing the addon needs that; see Autoplay.lua.
 	autoplayExplored = false,
 	-- Off, so a player cannot end up reading an unfinished translation without
@@ -69,7 +69,7 @@ local defaults = {
 
 local PREFIX = "|cff66bbffSpoken Places|r: "
 
-function SpokenZones:Print(fmt, ...)
+function SpokenPlaces:Print(fmt, ...)
 	local msg = select("#", ...) > 0 and fmt:format(...) or fmt
 	DEFAULT_CHAT_FRAME:AddMessage(PREFIX .. msg)
 end
@@ -80,30 +80,30 @@ end
 
 -- Merge defaults into the saved table without clobbering stored values, so new
 -- options added in later versions appear for existing users. Runtime reads and
--- writes go straight to SpokenZonesSettings.
+-- writes go straight to SpokenPlacesSettings.
 local function MergeDefaults()
-	if type(SpokenZonesSettings) ~= "table" then
-		SpokenZonesSettings = {}
+	if type(SpokenPlacesSettings) ~= "table" then
+		SpokenPlacesSettings = {}
 	end
 	for key, value in pairs(defaults) do
-		if SpokenZonesSettings[key] == nil then
-			SpokenZonesSettings[key] = value
+		if SpokenPlacesSettings[key] == nil then
+			SpokenPlacesSettings[key] = value
 		end
 	end
 
-	SpokenZones.db = SpokenZonesSettings
+	SpokenPlaces.db = SpokenPlacesSettings
 end
 
 local function InitConfig()
-	SpokenZones:BindSettings()
+	SpokenPlaces:BindSettings()
 	MergeDefaults()
 end
 
 -- Spoken has bound a profile's table. Before ADDON_LOADED that is the first binding, which
 -- InitConfig finishes; after it, another profile was chosen, copied over this one or reset. Only
 -- merges: binding again from here would call this again.
-function SpokenZones:OnSettingsBound()
-	if not SpokenZones.db then return end
+function SpokenPlaces:OnSettingsBound()
+	if not SpokenPlaces.db then return end
 	MergeDefaults()
 	-- The stories' language was settled at load: say when this profile wants another.
 	local wanted = self:ResolveLanguage()
@@ -113,52 +113,52 @@ function SpokenZones:OnSettingsBound()
 end
 
 -- Safe before ADDON_LOADED has run.
-function SpokenZones:Get(key)
+function SpokenPlaces:Get(key)
 	-- Text Size is Azeroth's Compendium's, on Spoken's page.
 	if key == "fontSize" and Spoken then
 		return Spoken:CompendiumFontSize()
 	end
-	if SpokenZonesSettings == nil then
+	if SpokenPlacesSettings == nil then
 		return defaults[key]
 	end
-	local value = SpokenZonesSettings[key]
+	local value = SpokenPlacesSettings[key]
 	if value == nil then
 		return defaults[key]
 	end
 	return value
 end
 
-function SpokenZones:Set(key, value)
-	SpokenZonesSettings[key] = value
+function SpokenPlaces:Set(key, value)
+	SpokenPlacesSettings[key] = value
 end
 
 -- Switched on, by the setting or by /spp panel, the player means to see the panel, not the
 -- button that reopens it.
-function SpokenZones:SetMapPanelShown(shown)
-	SpokenZones:Set("showMapPanel", shown)
-	if shown then SpokenZones:Set("mapPanelCollapsed", false) end
+function SpokenPlaces:SetMapPanelShown(shown)
+	SpokenPlaces:Set("showMapPanel", shown)
+	if shown then SpokenPlaces:Set("mapPanelCollapsed", false) end
 end
 
 --- Every setting back to its default. The language chosen and the record of places already
 --- narrated are not settings in that sense, and stay.
-function SpokenZones:ResetOptions()
-	if SpokenZonesSettings == nil then return end
+function SpokenPlaces:ResetOptions()
+	if SpokenPlacesSettings == nil then return end
 	-- Unlock Undiscovered Zones and Text Size are on Spoken's page where Spoken is installed, and
 	-- not this one's.
 	local elsewhere = Spoken and Spoken.ShowsCompendium and { showUndiscovered = true, fontSize = true } or {}
 	for key, value in pairs(defaults) do
-		if not elsewhere[key] then SpokenZonesSettings[key] = value end
+		if not elsewhere[key] then SpokenPlacesSettings[key] = value end
 	end
 	-- Applied as the checkboxes apply them, not only written: the play buttons follow the voice
 	-- being on again.
-	SpokenZones:NotifyAudioChanged()
+	SpokenPlaces:NotifyAudioChanged()
 end
 
 --- Whether the player has this part of Spoken switched on (Spoken's settings). Without the
 --- player there is no switch to read, and the part counts as on. Off, the map's panel and its
 --- play buttons stay hidden.
-function SpokenZones:IsPartOn()
-	return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("zones")
+function SpokenPlaces:IsPartOn()
+	return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("places")
 end
 
 --------------------------------------------------------------------------------
@@ -166,19 +166,19 @@ end
 --------------------------------------------------------------------------------
 
 -- The uiMapID the world map is currently displaying (nil if the map is not up).
-function SpokenZones:GetDisplayedMapID()
+function SpokenPlaces:GetDisplayedMapID()
 	return WorldMapFrame and WorldMapFrame.mapID
 end
 
 -- The uiMapID the player is physically standing in.
-function SpokenZones:GetPlayerMapID()
+function SpokenPlaces:GetPlayerMapID()
 	return NotSecret(C_Map.GetBestMapForUnit("player"))
 end
 
 -- Prefer the client's own zone name over the name baked into the generated data,
 -- so Era-specific naming (e.g. "The Barrens" rather than retail's "Northern
 -- Barrens") is always correct regardless of what the wiki page was titled.
-function SpokenZones:GetMapName(mapID)
+function SpokenPlaces:GetMapName(mapID)
 	if not mapID then
 		return nil
 	end
@@ -197,7 +197,7 @@ end
 -- The empty-string check is not belt and braces: in Lua "" is truthy, so every
 -- `entry.full or entry.short or fallback` in the UI would render a blank body for one of
 -- these. Ask this instead of asking whether the entry exists.
-function SpokenZones:IsPending(entry)
+function SpokenPlaces:IsPending(entry)
 	if not entry then
 		return false
 	end
@@ -208,7 +208,7 @@ function SpokenZones:IsPending(entry)
 end
 
 --- The place's picture and its edge mask, or nil without one or with pictures turned off.
-function SpokenZones:Picture(mapID, key)
+function SpokenPlaces:Picture(mapID, key)
 	local pictures = self.pictures and mapID and self.pictures[mapID]
 	local picture = pictures and pictures[key or ""]
 	if not picture or self:Get("showPictures") == false then return nil end
@@ -216,7 +216,7 @@ function SpokenZones:Picture(mapID, key)
 	return folder .. picture[1], folder .. "Mask" .. picture[2]
 end
 
-function SpokenZones:GetLore(mapID)
+function SpokenPlaces:GetLore(mapID)
 	if not mapID then
 		return nil
 	end
@@ -226,7 +226,7 @@ end
 -- Walks up the map hierarchy looking for an ancestor that does have lore, so a
 -- dungeon or micro-map falls back to its parent zone instead of showing nothing.
 -- Returns the entry and the mapID it was found on.
-function SpokenZones:GetLoreWithFallback(mapID)
+function SpokenPlaces:GetLoreWithFallback(mapID)
 	local id, hops = mapID, 0
 	while id and hops < 6 do
 		local entry = self.Zones[id]
@@ -254,7 +254,7 @@ end
 -- This must stay in step with normaliseKey in tools/lib/wiki.mjs.
 --------------------------------------------------------------------------------
 
-function SpokenZones:NormaliseAreaKey(name)
+function SpokenPlaces:NormaliseAreaKey(name)
 	if type(name) ~= "string" then
 		return nil
 	end
@@ -294,7 +294,7 @@ end
 -- the name was reported on: Spanish names Thunder Bluff's Spirit Rise and
 -- Forever's Rise of Spirits both "Alto de los Espíritus". Without `mapID`, or in
 -- an alias file built before it had that table, the flat table answers alone.
-function SpokenZones:ResolveAreaKey(name, mapID)
+function SpokenPlaces:ResolveAreaKey(name, mapID)
 	if type(name) ~= "string" then
 		return nil
 	end
@@ -326,7 +326,7 @@ end
 --
 -- The game cannot open a URL or send anything anywhere, so the only way a player
 -- can report a bad line is to copy an address and open it themselves. The site
--- resolves /{lang}/zones/r/{mapID}/{slug} back to a line by matching that path
+-- resolves /{lang}/places/r/{mapID}/{slug} back to a line by matching that path
 -- against the audio file paths it already assigns, which is why the slug is built
 -- the same way here as slugFor does in tools/voice/naming.mjs -- and why "zone",
 -- the file name a zone's own line gets, doubles as the slug for it.
@@ -343,13 +343,13 @@ end
 
 --- Spoken's site, or nil when Spoken is not loaded: no clip plays without it, so there is no
 --- report to send.
-function SpokenZones:SiteURL()
+function SpokenPlaces:SiteURL()
 	return _G.Spoken and _G.Spoken.SITE_URL
 end
 
 -- `language` is the voice language, for a report made from the player about a clip; the lore
 -- window's report is about the text on screen and passes none.
-function SpokenZones:ReportURL(mapID, areaKey, language)
+function SpokenPlaces:ReportURL(mapID, areaKey, language)
 	if not mapID or not self:SiteURL() then
 		return nil
 	end
@@ -361,7 +361,7 @@ function SpokenZones:ReportURL(mapID, areaKey, language)
 			slug = "zone"
 		end
 	end
-	return _G.Spoken:ReportURL("zones", ("%d/%s"):format(mapID, slug), language or self:GetLanguage())
+	return _G.Spoken:ReportURL("places", ("%d/%s"):format(mapID, slug), language or self:GetLanguage())
 end
 
 --------------------------------------------------------------------------------
@@ -377,7 +377,7 @@ end
 
 --- The dungeons and raids that have a story, by the zone of their entrance: each { mapID, key } of
 --- the area telling it and `dungeon`, its instance map, from Spoken's table of them (`all`, by map).
-function SpokenZones.DungeonsByZone(all)
+function SpokenPlaces.DungeonsByZone(all)
 	local byZone, maps = {}, {}
 	for map in pairs(all or {}) do table.insert(maps, map) end
 	table.sort(maps)
@@ -390,7 +390,7 @@ function SpokenZones.DungeonsByZone(all)
 	end
 	return byZone
 end
-SpokenZones.Dungeons = SpokenZones.DungeonsByZone(_G.SpokenDungeons and SpokenDungeons.dungeons)
+SpokenPlaces.Dungeons = SpokenPlaces.DungeonsByZone(_G.SpokenDungeons and SpokenDungeons.dungeons)
 
 -- Built once from both tables: `story` [found on][key] = the story's map, `zone` [story's map][key]
 -- = the zone it is listed in, `on` [story's map][key] = every map it is found on but the story's,
@@ -402,7 +402,7 @@ local function HasMap(mapID)
 end
 
 local function PlaceIndex()
-	local dungeons, moved = SpokenZones.Dungeons, SpokenZones.AreaZones
+	local dungeons, moved = SpokenPlaces.Dungeons, SpokenPlaces.AreaZones
 	if placeIndex and placesFrom[1] == dungeons and placesFrom[2] == moved then
 		return placeIndex
 	end
@@ -441,20 +441,20 @@ end
 --- recording, picture and report are under. Razorfen Downs, found at its entrance in The Barrens,
 --- is told under Thousand Needles, and Strahnbrad, found in Alterac Mountains, under Hillsbrad
 --- Foothills; an area found where its story is kept is told there.
-function SpokenZones:StoryPlace(mapID, key)
+function SpokenPlaces:StoryPlace(mapID, key)
 	local at = key and PlaceIndex().story[mapID]
 	return at and at[key] or mapID, key
 end
 
 --- The zone the area `key`, whose story is kept under `mapID`, is listed in: the zone of a
 --- dungeon's entrance, the zone the client puts any other area in.
-function SpokenZones:AreaZone(mapID, key)
+function SpokenPlaces:AreaZone(mapID, key)
 	local at = key and PlaceIndex().zone[mapID]
 	return at and at[key] or mapID
 end
 
 --- The maps besides `mapID` that the area `key`, whose story is kept under `mapID`, is found on.
-function SpokenZones:FoundOn(mapID, key)
+function SpokenPlaces:FoundOn(mapID, key)
 	local at = key and PlaceIndex().on[mapID]
 	return at and at[key] or {}
 end
@@ -464,7 +464,7 @@ end
 --- kept elsewhere that it puts here. On Forever, not those no Forever player can reach
 --- (Data/ForeverAreas.lua's NotOnForever).
 local onForever
-function SpokenZones:AreasIn(zone)
+function SpokenPlaces:AreasIn(zone)
 	local index = PlaceIndex()
 	local away = index.zone[zone] or {}
 	if onForever == nil then
@@ -488,9 +488,9 @@ function SpokenZones:AreasIn(zone)
 end
 
 -- Returns the lore entry, the key that was looked up and the map the story is kept under
--- (SpokenZones:StoryPlace). The key is returned even on a miss so /spp debug can report what
+-- (SpokenPlaces:StoryPlace). The key is returned even on a miss so /spp debug can report what
 -- failed to match.
-function SpokenZones:GetSubzoneLore(parentMapID, areaName)
+function SpokenPlaces:GetSubzoneLore(parentMapID, areaName)
 	local key = self:ResolveAreaKey(areaName, parentMapID)
 	if not key then
 		return nil, nil
@@ -504,7 +504,7 @@ function SpokenZones:GetSubzoneLore(parentMapID, areaName)
 	return zoneTable[key], key, storyMapID
 end
 
-function SpokenZones:IsZoneMap(mapID)
+function SpokenPlaces:IsZoneMap(mapID)
 	local info = mapID and C_Map.GetMapInfo(mapID)
 	if not info then
 		return false
@@ -514,7 +514,7 @@ function SpokenZones:IsZoneMap(mapID)
 end
 
 -- Subzone name under a normalised canvas position, or nil.
-function SpokenZones:GetAreaNameAt(mapID, x, y)
+function SpokenPlaces:GetAreaNameAt(mapID, x, y)
 	if not (MapUtil and MapUtil.FindBestAreaNameAtMouse) then
 		return nil
 	end
@@ -528,9 +528,9 @@ end
 --- The city inside the zone `mapID` that the area `areaName` is, if it is one, and its story. Each
 --- city is a map of its own under its continent in the game's map tree (Stormwind City under the
 --- Eastern Kingdoms, not Elwynn Forest), so on its zone's map the game reports it only by its area
---- name, and the zone no longer lists it as one of its own areas (SpokenZones.CityIn, the lore
+--- name, and the zone no longer lists it as one of its own areas (SpokenPlaces.CityIn, the lore
 --- window's). Matched by the city map's name in the client's language, or its story's.
-function SpokenZones:CityAt(mapID, areaName)
+function SpokenPlaces:CityAt(mapID, areaName)
 	if not (mapID and areaName and self.CityIn) then
 		return nil
 	end
@@ -553,7 +553,7 @@ end
 --- story and its map (name, entry, nil, cityMapID). The click (UI/SubzoneClick.lua) and the map
 --- highlight (UI/MapHighlight.lua) both ask this, so what lights up under the pointer is what a
 --- click there opens.
-function SpokenZones:AreaAt(mapID, x, y)
+function SpokenPlaces:AreaAt(mapID, x, y)
 	if not mapID or not x or not y then
 		return nil
 	end
@@ -572,14 +572,14 @@ function SpokenZones:AreaAt(mapID, x, y)
 	return areaName
 end
 
-function SpokenZones:SelectSubzone(mapID, areaName, entry)
+function SpokenPlaces:SelectSubzone(mapID, areaName, entry)
 	self.selected = { mapID = mapID, areaName = areaName, entry = entry }
 	if self.RefreshPanel then
 		self:RefreshPanel()
 	end
 end
 
-function SpokenZones:ClearSubzone()
+function SpokenPlaces:ClearSubzone()
 	if not self.selected then
 		return
 	end
@@ -593,11 +593,11 @@ end
 -- Callback dispatch
 --------------------------------------------------------------------------------
 
-function SpokenZones:OnMapChanged(fn)
+function SpokenPlaces:OnMapChanged(fn)
 	table.insert(self.mapChangedCallbacks, fn)
 end
 
-function SpokenZones:OnZoneChanged(fn)
+function SpokenPlaces:OnZoneChanged(fn)
 	table.insert(self.zoneChangedCallbacks, fn)
 end
 
@@ -605,7 +605,7 @@ local function Dispatch(list, ...)
 	for i = 1, #list do
 		local ok, err = pcall(list[i], ...)
 		if not ok then
-			SpokenZones:Print("|cffff5555error|r: %s", tostring(err))
+			SpokenPlaces:Print("|cffff5555error|r: %s", tostring(err))
 		end
 	end
 end
@@ -625,22 +625,22 @@ local function SetupHooks()
 	-- Map is showing a different zone. Covers both player-driven navigation and
 	-- programmatic SetMapID calls; OnMapChanged is the single funnel for both.
 	hooksecurefunc(WorldMapFrame, "OnMapChanged", function()
-		Dispatch(SpokenZones.mapChangedCallbacks, WorldMapFrame.mapID)
+		Dispatch(SpokenPlaces.mapChangedCallbacks, WorldMapFrame.mapID)
 	end)
 
 	WorldMapFrame:HookScript("OnShow", function()
-		Dispatch(SpokenZones.mapChangedCallbacks, WorldMapFrame.mapID)
+		Dispatch(SpokenPlaces.mapChangedCallbacks, WorldMapFrame.mapID)
 	end)
 
 	-- Audio before autoplay: autoplay registers its combat hold on the source audio creates. Each
 	-- step on its own, its error printed and reported, so one that fails does not keep the rest
-	-- from being set up: without audio's source, Spoken's page calls Zones not installed.
+	-- from being set up: without audio's source, Spoken's page calls Places not installed.
 	for _, step in ipairs({ "SetupMapPanel", "SetupSubzoneClicks", "SetupMapHighlight", "SetupDiscovery",
 		"SetupLoreWindow", "SetupAudio", "SetupAutoplay", "SetupOptions" }) do
-		if SpokenZones[step] then
-			local ok, err = pcall(SpokenZones[step], SpokenZones)
+		if SpokenPlaces[step] then
+			local ok, err = pcall(SpokenPlaces[step], SpokenPlaces)
 			if not ok then
-				SpokenZones:Print("|cffff5555%s failed:|r %s", step, tostring(err))
+				SpokenPlaces:Print("|cffff5555%s failed:|r %s", step, tostring(err))
 				-- To BugSack and the game's error frame too, which a chat line never reaches.
 				if geterrorhandler then geterrorhandler()(err) end
 			end
@@ -665,15 +665,15 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		-- Said every login, not once: an override you have forgotten you enabled
 		-- turns every gap in an unfinished translation into a bug report nobody
 		-- can reproduce.
-		if SpokenZones:IsPreviewingLanguage() then
-			SpokenZones:Print(
+		if SpokenPlaces:IsPreviewingLanguage() then
+			SpokenPlaces:Print(
 				"|cffffcc00previewing unfinished languages|r -- reading %s. /spp lang off to stop",
-				SpokenZones:GetLanguage()
+				SpokenPlaces:GetLanguage()
 			)
 		end
 		self:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	else
-		Dispatch(SpokenZones.zoneChangedCallbacks, SpokenZones:GetPlayerMapID())
+		Dispatch(SpokenPlaces.zoneChangedCallbacks, SpokenPlaces:GetPlayerMapID())
 	end
 end)
 
@@ -683,7 +683,7 @@ end)
 
 -- Recursively enumerate the map tree so tools/seed/zones.json can be built from
 -- the client itself rather than transcribed by hand. Results land in
--- SpokenZonesSettings.dump, which is only written to disk on logout or /reload.
+-- SpokenPlacesSettings.dump, which is only written to disk on logout or /reload.
 local MAP_TYPE_NAMES = { [0] = "Cosmic", [1] = "World", [2] = "Continent", [3] = "Zone", [4] = "Dungeon", [5] = "Micro", [6] = "Orphan" }
 
 local function DumpMapTree(rootID, out, seen, depth)
@@ -717,9 +717,9 @@ local function CmdDump()
 	DumpMapTree(947, out, seen, 0)   -- Azeroth (world)
 	DumpMapTree(1414, out, seen, 0)  -- Kalimdor
 	DumpMapTree(1415, out, seen, 0)  -- Eastern Kingdoms
-	SpokenZonesSettings.dump = out
-	SpokenZones:Print("dumped %d maps to SpokenZonesSettings.dump. Run /reload, then:", #out)
-	SpokenZones:Print("  node pipelines/zones/tools/seed-from-dump.mjs")
+	SpokenPlacesSettings.dump = out
+	SpokenPlaces:Print("dumped %d maps to SpokenPlacesSettings.dump. Run /reload, then:", #out)
+	SpokenPlaces:Print("  node pipelines/places/tools/seed-from-dump.mjs")
 end
 
 -- Cross-check the generated data against the live client. Catches wrong uiMapIDs
@@ -727,74 +727,74 @@ end
 local function CmdVerify()
 	local total, missing, mismatched = 0, 0, 0
 	local ids = {}
-	for mapID in pairs(SpokenZones.Zones) do
+	for mapID in pairs(SpokenPlaces.Zones) do
 		table.insert(ids, mapID)
 	end
 	table.sort(ids)
 
 	for i = 1, #ids do
 		local mapID = ids[i]
-		local entry = SpokenZones.Zones[mapID]
+		local entry = SpokenPlaces.Zones[mapID]
 		total = total + 1
 		local info = C_Map.GetMapInfo(mapID)
 		if not info then
 			missing = missing + 1
-			SpokenZones:Print("|cffff5555%d|r (%s): no such map on this client", mapID, tostring(entry.name))
+			SpokenPlaces:Print("|cffff5555%d|r (%s): no such map on this client", mapID, tostring(entry.name))
 		elseif entry.name and info.name ~= entry.name then
 			mismatched = mismatched + 1
-			SpokenZones:Print("|cffffcc00%d|r: data says %q, client says %q", mapID, entry.name, info.name)
+			SpokenPlaces:Print("|cffffcc00%d|r: data says %q, client says %q", mapID, entry.name, info.name)
 		end
 	end
 
-	SpokenZones:Print("verified %d entries: %d unknown to client, %d name mismatches", total, missing, mismatched)
+	SpokenPlaces:Print("verified %d entries: %d unknown to client, %d name mismatches", total, missing, mismatched)
 	if missing == 0 and mismatched == 0 then
-		SpokenZones:Print("|cff55ff55all entries resolve correctly|r")
+		SpokenPlaces:Print("|cff55ff55all entries resolve correctly|r")
 	end
 end
 
 local function CmdStatus()
-	local playerMap = SpokenZones:GetPlayerMapID()
-	local shownMap = SpokenZones:GetDisplayedMapID()
+	local playerMap = SpokenPlaces:GetPlayerMapID()
+	local shownMap = SpokenPlaces:GetDisplayedMapID()
 
 	local zoneCount = 0
-	for _ in pairs(SpokenZones.Zones) do
+	for _ in pairs(SpokenPlaces.Zones) do
 		zoneCount = zoneCount + 1
 	end
 
 	local subzoneZones, subzoneCount = 0, 0
-	for _, tbl in pairs(SpokenZones.Subzones) do
+	for _, tbl in pairs(SpokenPlaces.Subzones) do
 		subzoneZones = subzoneZones + 1
 		for _ in pairs(tbl) do
 			subzoneCount = subzoneCount + 1
 		end
 	end
 
-	SpokenZones:Print(
+	SpokenPlaces:Print(
 		"v%s -- %d zones, %d subzones across %d zones",
-		SpokenZones.version, zoneCount, subzoneCount, subzoneZones
+		SpokenPlaces.version, zoneCount, subzoneCount, subzoneZones
 	)
 	-- Both axes, always, because almost every "it shows nothing" report is one of
 	-- the two being something other than what was assumed.
-	local aliases = SpokenZones.Aliases[SpokenZones.clientLocale]
+	local aliases = SpokenPlaces.Aliases[SpokenPlaces.clientLocale]
 	local aliasCount = 0
 	if aliases then
 		for _ in pairs(aliases) do
 			aliasCount = aliasCount + 1
 		end
 	end
-	SpokenZones:Print(
+	SpokenPlaces:Print(
 		"reading %s on a %s client -- %d area name aliases",
-		SpokenZones:GetLanguage(), SpokenZones.clientLocale, aliasCount
+		SpokenPlaces:GetLanguage(), SpokenPlaces.clientLocale, aliasCount
 	)
 
-	SpokenZones:Print("player is in: %s (uiMapID %s)", tostring(SpokenZones:GetMapName(playerMap)), tostring(playerMap))
-	SpokenZones:Print("map is showing: %s (uiMapID %s)", tostring(SpokenZones:GetMapName(shownMap)), tostring(shownMap))
+	SpokenPlaces:Print("player is in: %s (uiMapID %s)", tostring(SpokenPlaces:GetMapName(playerMap)), tostring(playerMap))
+	SpokenPlaces:Print("map is showing: %s (uiMapID %s)", tostring(SpokenPlaces:GetMapName(shownMap)), tostring(shownMap))
 
-	local entry = SpokenZones:GetLore(playerMap)
+	local entry = SpokenPlaces:GetLore(playerMap)
 	if entry then
-		SpokenZones:Print("lore for current zone: %d characters", #(entry.full or ""))
+		SpokenPlaces:Print("lore for current zone: %d characters", #(entry.full or ""))
 	else
-		SpokenZones:Print("|cffffcc00no lore recorded for the current zone|r")
+		SpokenPlaces:Print("|cffffcc00no lore recorded for the current zone|r")
 	end
 
 	-- Report the subzone the player is standing in. This exercises the same
@@ -802,9 +802,9 @@ local function CmdStatus()
 	-- name mismatch can be spotted just by walking around.
 	local subZone = NotSecret(GetSubZoneText())
 	if subZone and subZone ~= "" then
-		local subEntry, key = SpokenZones:GetSubzoneLore(playerMap, subZone)
-		local raw = SpokenZones:NormaliseAreaKey(subZone)
-		SpokenZones:Print(
+		local subEntry, key = SpokenPlaces:GetSubzoneLore(playerMap, subZone)
+		local raw = SpokenPlaces:NormaliseAreaKey(subZone)
+		SpokenPlaces:Print(
 			'standing in subzone "%s" -> key "%s"%s -> %s',
 			subZone, tostring(key),
 			-- Naming the alias step only when it fired keeps the common line short
@@ -814,24 +814,24 @@ local function CmdStatus()
 		)
 	end
 
-	if SpokenZones.DescribeAutoplay then
-		SpokenZones:DescribeAutoplay()
+	if SpokenPlaces.DescribeAutoplay then
+		SpokenPlaces:DescribeAutoplay()
 	end
 
-	local waiting = SpokenZones:QueueLength()
+	local waiting = SpokenPlaces:QueueLength()
 	if waiting > 0 then
-		SpokenZones:Print("queue: %d waiting", waiting)
+		SpokenPlaces:Print("queue: %d waiting", waiting)
 	end
 
-	local pack = SpokenZones:GetActiveAudioPack()
+	local pack = SpokenPlaces:GetActiveAudioPack()
 	if pack then
-		SpokenZones:Print("voice pack: %s -- %s", pack.addon, SpokenZones:GetAudioPackLabel(pack))
+		SpokenPlaces:Print("voice pack: %s -- %s", pack.addon, SpokenPlaces:GetAudioPackLabel(pack))
 	else
-		SpokenZones:Print("|cffffcc00no voice pack installed|r -- install Spoken Audio: Places to hear the lore")
+		SpokenPlaces:Print("|cffffcc00no voice pack installed|r -- install Spoken Audio: Places to hear the lore")
 	end
 
-	if SpokenZones:Get("debug") then
-		SpokenZones:Print("|cff66bbffdebug mode is on|r")
+	if SpokenPlaces:Get("debug") then
+		SpokenPlaces:Print("|cff66bbffdebug mode is on|r")
 	end
 end
 
@@ -839,14 +839,14 @@ end
 -- otherwise the zone. The same "more specific answer wins" preference the lore
 -- window applies when it opens.
 local function CurrentAudioTarget()
-	local _, resolved = SpokenZones:GetLoreWithFallback(SpokenZones:GetPlayerMapID())
+	local _, resolved = SpokenPlaces:GetLoreWithFallback(SpokenPlaces:GetPlayerMapID())
 	if not resolved then
 		return nil, nil
 	end
 
 	local subZone = NotSecret(GetSubZoneText())
 	if subZone and subZone ~= "" then
-		local entry, key, storyMapID = SpokenZones:GetSubzoneLore(resolved, subZone)
+		local entry, key, storyMapID = SpokenPlaces:GetSubzoneLore(resolved, subZone)
 		if entry then
 			return storyMapID, key
 		end
@@ -858,22 +858,22 @@ end
 local function CmdPlay()
 	local mapID, key = CurrentAudioTarget()
 	if not mapID then
-		SpokenZones:Print("|cffffcc00no lore for where you are standing|r")
+		SpokenPlaces:Print("|cffffcc00no lore for where you are standing|r")
 		return
 	end
 
-	if not SpokenZones:IsVoiceEnabled() then
-		SpokenZones:Print("|cffffcc00narration is turned off|r -- /spp voice to turn it on")
+	if not SpokenPlaces:IsVoiceEnabled() then
+		SpokenPlaces:Print("|cffffcc00narration is turned off|r -- /spp voice to turn it on")
 		return
 	end
 
-	if not SpokenZones:PlayLore(mapID, key) then
+	if not SpokenPlaces:PlayLore(mapID, key) then
 		return
 	end
 
 	-- Nothing to report when PlayLore returned false above: it has already said why.
-	local what = key or SpokenZones:GetMapName(mapID) or tostring(mapID)
-	SpokenZones:Print("playing lore for %s", what)
+	local what = key or SpokenPlaces:GetMapName(mapID) or tostring(mapID)
+	SpokenPlaces:Print("playing lore for %s", what)
 end
 
 -- `/spp audio` lists installed sound packs; `/spp audio <folder>` switches to one.
@@ -881,15 +881,15 @@ end
 -- case where the addon's behaviour is otherwise invisible: both play, and only
 -- the disk footprint differs.
 local function CmdAudioPack(arg)
-	local packs = SpokenZones:GetAudioPacks()
+	local packs = SpokenPlaces:GetAudioPacks()
 	if #packs == 0 then
 		-- Any pack would do -- packs are interchangeable across languages -- so an
 		-- empty list really does mean nothing is installed.
-		SpokenZones:Print("|cffffcc00no voice pack installed|r")
+		SpokenPlaces:Print("|cffffcc00no voice pack installed|r")
 		-- Named by CurseForge project, not by folder: a player with the pre-rename pack has a
 		-- ZoneLoreAudio folder, and saying that name sends them looking for a project that no
 		-- longer exists.
-		SpokenZones:Print("  install Spoken Audio: Places alongside Spoken Places")
+		SpokenPlaces:Print("  install Spoken Audio: Places alongside Spoken Places")
 		return
 	end
 
@@ -898,67 +898,67 @@ local function CmdAudioPack(arg)
 		-- listing and retyping it, and "zoneloreaudiohq" is the same request.
 		for i = 1, #packs do
 			if packs[i].addon:lower() == arg:lower() then
-				SpokenZones:SetActiveAudioPack(packs[i].addon)
-				SpokenZones:Print("now playing from %s -- %s", packs[i].addon, SpokenZones:GetAudioPackLabel(packs[i]))
+				SpokenPlaces:SetActiveAudioPack(packs[i].addon)
+				SpokenPlaces:Print("now playing from %s -- %s", packs[i].addon, SpokenPlaces:GetAudioPackLabel(packs[i]))
 				return
 			end
 		end
-		SpokenZones:Print('|cffffcc00"%s" is not an installed voice pack|r', arg)
+		SpokenPlaces:Print('|cffffcc00"%s" is not an installed voice pack|r', arg)
 		return
 	end
 
-	local active = SpokenZones:GetActiveAudioPack()
-	SpokenZones:Print("voice packs:")
+	local active = SpokenPlaces:GetActiveAudioPack()
+	SpokenPlaces:Print("voice packs:")
 	for i = 1, #packs do
 		local pack = packs[i]
-		SpokenZones:Print(
+		SpokenPlaces:Print(
 			"  %s %s -- %s, v%s",
 			pack == active and "|cff66bbff*|r" or " ",
-			pack.addon, SpokenZones:GetAudioPackLabel(pack), tostring(pack.packVersion)
+			pack.addon, SpokenPlaces:GetAudioPackLabel(pack), tostring(pack.packVersion)
 		)
 	end
 	if #packs > 1 then
-		SpokenZones:Print("  /spp audio <name> to switch")
+		SpokenPlaces:Print("  /spp audio <name> to switch")
 	end
 end
 
 --- What the settings' Show Diagnostics prints: the voice packs, and how reading is set up.
-function SpokenZones:ShowDiagnostics()
+function SpokenPlaces:ShowDiagnostics()
 	CmdAudioPack(nil)
 	local stories = 0
-	for _ in pairs(SpokenZones.Zones or {}) do stories = stories + 1 end
-	SpokenZones:Print("voice %s, read on discovery %s, %d zones with stories, language %s",
-		SpokenZones:IsVoiceEnabled() and "on" or "off", SpokenZones:Get("autoplay") and "on" or "off",
-		stories, tostring(SpokenZones:GetLanguage()))
+	for _ in pairs(SpokenPlaces.Zones or {}) do stories = stories + 1 end
+	SpokenPlaces:Print("voice %s, read on discovery %s, %d zones with stories, language %s",
+		SpokenPlaces:IsVoiceEnabled() and "on" or "off", SpokenPlaces:Get("autoplay") and "on" or "off",
+		stories, tostring(SpokenPlaces:GetLanguage()))
 end
 
 -- The first zone, by uiMapID, the installed voice pack has a clip for.
 local function FirstZoneWithAudio()
 	local ids = {}
-	for id in pairs(SpokenZones.Zones or {}) do table.insert(ids, id) end
+	for id in pairs(SpokenPlaces.Zones or {}) do table.insert(ids, id) end
 	table.sort(ids)
 	for _, id in ipairs(ids) do
-		if SpokenZones:HasAudio(id, nil) then return id end
+		if SpokenPlaces:HasAudio(id, nil) then return id end
 	end
 end
 
 --- A story played the way a real one is, to check it can be heard: the one for where the
 --- player stands, or else the first one the voice pack has.
-function SpokenZones:PlayTestLine()
-	if not SpokenZones:IsVoiceEnabled() then
-		SpokenZones:Print("|cffffcc00Read Stories Aloud is off|r")
+function SpokenPlaces:PlayTestLine()
+	if not SpokenPlaces:IsVoiceEnabled() then
+		SpokenPlaces:Print("|cffffcc00Read Stories Aloud is off|r")
 		return
 	end
 	-- Only a story with a clip is tried, and only one: PlayLore says why it failed.
 	local mapID, key = CurrentAudioTarget()
-	if not (mapID and SpokenZones:HasAudio(mapID, key)) then
+	if not (mapID and SpokenPlaces:HasAudio(mapID, key)) then
 		mapID, key = FirstZoneWithAudio(), nil
 	end
 	if not mapID then
-		SpokenZones:Print("|cffffcc00%s|r", SpokenZones:DescribeMissingAudio())
+		SpokenPlaces:Print("|cffffcc00%s|r", SpokenPlaces:DescribeMissingAudio())
 		return
 	end
-	SpokenZones:PlayLore(mapID, key)
+	SpokenPlaces:PlayLore(mapID, key)
 end
 
 -- `/spp lang` lists the languages that can be read; `/spp lang <code>` switches;
@@ -971,32 +971,32 @@ local function CmdLanguage(arg)
 	local code, modifier = (arg or ""):match("^(%S*)%s*(%S*)$")
 
 	if code == "off" then
-		SpokenZones:SetLanguagePreview(false)
-		SpokenZones:Print("language preview off -- /reload to go back to a finished language")
+		SpokenPlaces:SetLanguagePreview(false)
+		SpokenPlaces:Print("language preview off -- /reload to go back to a finished language")
 		return
 	end
 
 	if code == "auto" then
-		SpokenZones:SetLanguage(nil)
-		SpokenZones:Print("language set to auto (%s) -- |cffffcc00/reload to apply|r",
-			SpokenZones:GetAutoLanguage())
+		SpokenPlaces:SetLanguage(nil)
+		SpokenPlaces:Print("language set to auto (%s) -- |cffffcc00/reload to apply|r",
+			SpokenPlaces:GetAutoLanguage())
 		return
 	end
 
 	if code and code ~= "" then
-		local locale = SpokenZones:GetLocaleInfo(code)
+		local locale = SpokenPlaces:GetLocaleInfo(code)
 		-- Matched case-insensitively against the codes, since "dede" is the same
 		-- request as "deDE" and nobody remembers Blizzard's capitalisation.
 		if not locale then
-			for i = 1, #SpokenZones.LOCALES do
-				if SpokenZones.LOCALES[i].code:lower() == code:lower() then
-					locale = SpokenZones.LOCALES[i]
+			for i = 1, #SpokenPlaces.LOCALES do
+				if SpokenPlaces.LOCALES[i].code:lower() == code:lower() then
+					locale = SpokenPlaces.LOCALES[i]
 				end
 			end
 		end
 
 		if not locale then
-			SpokenZones:Print('|cffffcc00"%s" is not a WoW language code|r -- /spp lang to list', code)
+			SpokenPlaces:Print('|cffffcc00"%s" is not a WoW language code|r -- /spp lang to list', code)
 			return
 		end
 
@@ -1004,54 +1004,54 @@ local function CmdLanguage(arg)
 		-- on before the attempt -- but it must not survive a refusal, or the one
 		-- remaining refusal (no fonts) leaves the override stuck on and every
 		-- login printing the preview warning for a switch that never happened.
-		local wasPreviewing = SpokenZones:IsPreviewingLanguage()
+		local wasPreviewing = SpokenPlaces:IsPreviewingLanguage()
 		if modifier == "force" then
-			SpokenZones:SetLanguagePreview(true)
+			SpokenPlaces:SetLanguagePreview(true)
 		end
 
-		if not SpokenZones:SetLanguage(locale.code) then
+		if not SpokenPlaces:SetLanguage(locale.code) then
 			if modifier == "force" then
-				SpokenZones:SetLanguagePreview(wasPreviewing)
+				SpokenPlaces:SetLanguagePreview(wasPreviewing)
 			end
-			if not SpokenZones:CanRenderLanguage(locale.code) then
-				SpokenZones:Print(
+			if not SpokenPlaces:CanRenderLanguage(locale.code) then
+				SpokenPlaces:Print(
 					"|cffffcc00this client has no fonts for %s|r -- it would draw as boxes",
 					locale.code
 				)
 			else
-				SpokenZones:Print(
+				SpokenPlaces:Print(
 					"|cffffcc00%s is not finished yet|r -- /spp lang %s force to preview it anyway",
-					SpokenZones:GetLanguageName(locale.code), locale.code
+					SpokenPlaces:GetLanguageName(locale.code), locale.code
 				)
 			end
 			return
 		end
 
-		SpokenZones:Print("language set to %s -- |cffffcc00/reload to apply|r", SpokenZones:GetLanguageName(locale.code))
+		SpokenPlaces:Print("language set to %s -- |cffffcc00/reload to apply|r", SpokenPlaces:GetLanguageName(locale.code))
 		return
 	end
 
-	local selectable = SpokenZones:GetSelectableLanguages()
-	SpokenZones:Print("languages:")
+	local selectable = SpokenPlaces:GetSelectableLanguages()
+	SpokenPlaces:Print("languages:")
 	for i = 1, #selectable do
 		local locale = selectable[i]
-		SpokenZones:Print(
+		SpokenPlaces:Print(
 			"  %s %s -- %s",
-			locale.code == SpokenZones:GetLanguage() and "|cff66bbff*|r" or " ",
-			locale.code, SpokenZones:GetLanguageName(locale.code)
+			locale.code == SpokenPlaces:GetLanguage() and "|cff66bbff*|r" or " ",
+			locale.code, SpokenPlaces:GetLanguageName(locale.code)
 		)
 	end
-	if SpokenZones:GetLanguagePreference() == nil then
-		SpokenZones:Print("  auto (%s) -- follows the client", SpokenZones:GetAutoLanguage())
+	if SpokenPlaces:GetLanguagePreference() == nil then
+		SpokenPlaces:Print("  auto (%s) -- follows the client", SpokenPlaces:GetAutoLanguage())
 	end
 	if #selectable > 1 then
-		SpokenZones:Print("  /spp lang <code> to switch, /spp lang auto to follow the client")
+		SpokenPlaces:Print("  /spp lang <code> to switch, /spp lang auto to follow the client")
 	end
 end
 
 local function CmdHelp()
-	local L = SpokenZones.L
-	SpokenZones:Print(L.CMD_HEADING)
+	local L = SpokenPlaces.L
+	SpokenPlaces:Print(L.CMD_HEADING)
 	-- A player's commands. discover, found, debug, verify and dump are a developer's, and still
 	-- answer.
 	for _, key in ipairs({
@@ -1059,7 +1059,7 @@ local function CmdHelp()
 		"CMD_PLAY", "CMD_STOP", "CMD_VOICE", "CMD_AUTOPLAY", "CMD_AUDIO",
 		"CMD_LANG", "CMD_FORGET",
 	}) do
-		SpokenZones:Print(L[key])
+		SpokenPlaces:Print(L[key])
 	end
 end
 
@@ -1068,60 +1068,60 @@ end
 -- answers to one name, and a command that still worked would keep the retired one alive
 -- in macros and in what players tell each other. /spokenzones and /spz still work, for the macros
 -- written since.
-_G.SLASH_SPOKENZONES1 = "/spokenplaces"
-_G.SLASH_SPOKENZONES2 = "/spp"
-_G.SLASH_SPOKENZONES3 = "/spokenzones"
-_G.SLASH_SPOKENZONES4 = "/spz"
-SlashCmdList["SPOKENZONES"] = function(msg)
+_G.SLASH_SPOKENPLACES1 = "/spokenplaces"
+_G.SLASH_SPOKENPLACES2 = "/spp"
+_G.SLASH_SPOKENPLACES3 = "/spokenzones"
+_G.SLASH_SPOKENPLACES4 = "/spz"
+SlashCmdList["SPOKENPLACES"] = function(msg)
 	local cmd = (msg or ""):lower():match("^%s*(%S*)")
 	if cmd == "dump" then
 		CmdDump()
 	elseif cmd == "verify" then
 		CmdVerify()
 	elseif cmd == "panel" then
-		local enabled = not SpokenZones:Get("showMapPanel")
-		SpokenZones:SetMapPanelShown(enabled)
-		SpokenZones:Print(enabled and SpokenZones.L.PANEL_SHOWN or SpokenZones.L.PANEL_HIDDEN)
-		Dispatch(SpokenZones.mapChangedCallbacks, SpokenZones:GetDisplayedMapID())
+		local enabled = not SpokenPlaces:Get("showMapPanel")
+		SpokenPlaces:SetMapPanelShown(enabled)
+		SpokenPlaces:Print(enabled and SpokenPlaces.L.PANEL_SHOWN or SpokenPlaces.L.PANEL_HIDDEN)
+		Dispatch(SpokenPlaces.mapChangedCallbacks, SpokenPlaces:GetDisplayedMapID())
 	elseif cmd == "settings" or cmd == "options" or cmd == "config" or cmd == "opt" then
-		if SpokenZones.OpenOptions then
-			SpokenZones:OpenOptions()
+		if SpokenPlaces.OpenOptions then
+			SpokenPlaces:OpenOptions()
 		end
 	elseif cmd == "window" or cmd == "w" or cmd == "compendium" then
-		if SpokenZones.ToggleLoreWindow then
-			SpokenZones:ToggleLoreWindow()
+		if SpokenPlaces.ToggleLoreWindow then
+			SpokenPlaces:ToggleLoreWindow()
 		end
 	elseif cmd == "play" then
 		CmdPlay()
 	elseif cmd == "stop" then
-		SpokenZones:StopLore()
-		SpokenZones:Print("narration stopped")
+		SpokenPlaces:StopLore()
+		SpokenPlaces:Print("narration stopped")
 	elseif cmd == "voice" then
-		local enabled = not SpokenZones:Get("voiceEnabled")
-		SpokenZones:Set("voiceEnabled", enabled)
+		local enabled = not SpokenPlaces:Get("voiceEnabled")
+		SpokenPlaces:Set("voiceEnabled", enabled)
 		if not enabled then
-			SpokenZones:StopLore()
+			SpokenPlaces:StopLore()
 		end
-		SpokenZones:NotifyAudioChanged()
-		SpokenZones:Print("narration %s", enabled and "enabled" or "disabled")
+		SpokenPlaces:NotifyAudioChanged()
+		SpokenPlaces:Print("narration %s", enabled and "enabled" or "disabled")
 	elseif cmd == "audio" then
 		CmdAudioPack((msg or ""):match("^%s*%S+%s+(.-)%s*$"))
 	elseif cmd == "lang" or cmd == "language" then
 		CmdLanguage((msg or ""):match("^%s*%S+%s+(.-)%s*$"))
 	elseif cmd == "autoplay" then
-		local enabled = not SpokenZones:Get("autoplay")
-		SpokenZones:Set("autoplay", enabled)
+		local enabled = not SpokenPlaces:Get("autoplay")
+		SpokenPlaces:Set("autoplay", enabled)
 		if not enabled then
-			SpokenZones:StopLore()
+			SpokenPlaces:StopLore()
 		end
-		SpokenZones:Print("autoplay %s", enabled and "enabled" or "disabled")
+		SpokenPlaces:Print("autoplay %s", enabled and "enabled" or "disabled")
 	elseif cmd == "forget" then
-		if SpokenZones.ForgetAutoplayHistory then
-			SpokenZones:ForgetAutoplayHistory()
-			SpokenZones:Print(SpokenZones.L.OPT_FORGET_PLACES_DONE)
+		if SpokenPlaces.ForgetAutoplayHistory then
+			SpokenPlaces:ForgetAutoplayHistory()
+			SpokenPlaces:Print(SpokenPlaces.L.OPT_FORGET_PLACES_DONE)
 		end
 	elseif cmd == "diagnostics" then
-		SpokenZones:ShowDiagnostics()
+		SpokenPlaces:ShowDiagnostics()
 	elseif cmd == "discover" then
 		-- Simulates a discovery, because the real one happens once per character
 		-- ever and is otherwise untestable without rolling a fresh alt.
@@ -1132,16 +1132,16 @@ SlashCmdList["SPOKENZONES"] = function(msg)
 				areaName = NotSecret(GetZoneText())
 			end
 		end
-		SpokenZones:Print('simulating discovery of "%s"', tostring(areaName))
-		SpokenZones:OnAreaDiscovered(areaName)
+		SpokenPlaces:Print('simulating discovery of "%s"', tostring(areaName))
+		SpokenPlaces:OnAreaDiscovered(areaName)
 	elseif cmd == "found" then
 		-- What Azeroth's Compendium counts as found for this character, and why: for finding a place
 		-- counted found that should not be.
-		if SpokenZones.PrintFound then SpokenZones:PrintFound() end
+		if SpokenPlaces.PrintFound then SpokenPlaces:PrintFound() end
 	elseif cmd == "debug" then
-		local enabled = not SpokenZones:Get("debug")
-		SpokenZones:Set("debug", enabled)
-		SpokenZones:Print("debug mode %s", enabled and "on -- click the map to see area names" or "off")
+		local enabled = not SpokenPlaces:Get("debug")
+		SpokenPlaces:Set("debug", enabled)
+		SpokenPlaces:Print("debug mode %s", enabled and "on -- click the map to see area names" or "off")
 	elseif cmd == "help" then
 		CmdHelp()
 	else

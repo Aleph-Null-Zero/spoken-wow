@@ -26,8 +26,8 @@ const ip = `203.0.113.${Math.floor(Math.random() * 200) + 20}`;
 const fixture = (name: string) =>
   readFileSync(new URL(`../../../../../../../tests/fixtures/contributions/${name}`, import.meta.url), "utf8");
 const quests = fixture("quests-accept.txt");
-const books = fixture("books-page.txt");
-const zones = fixture("zones-subzone.txt");
+const readables = fixture("readables-page.txt");
+const places = fixture("places-subzone.txt");
 
 function post(body: unknown): Request {
   return new Request("https://example.com/api/contributions/batch", {
@@ -60,7 +60,7 @@ afterAll(async () => {
 describe("POST /api/contributions/batch", () => {
   it("stores every good envelope and counts the rest by reason", async () => {
     const response = await POST(
-      post({ envelopes: [quests, books, zones, quests.replace("9123", "9124"), 7], name: "Tester" }),
+      post({ envelopes: [quests, readables, places, quests.replace("9123", "9124"), 7], name: "Tester" }),
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
@@ -76,8 +76,8 @@ describe("POST /api/contributions/batch", () => {
       [ip],
     );
     expect(rows).toEqual([
-      { source: "books", name: "Tester" },
       { source: "quests", name: "Tester" },
+      { source: "readables", name: "Tester" },
     ]);
   });
 
@@ -113,20 +113,20 @@ describe("POST /api/contributions/batch", () => {
   });
 
   it("counts one upload as one hit against the shared limit", async () => {
-    await POST(post({ envelopes: [quests, books] }));
+    await POST(post({ envelopes: [quests, readables] }));
     const hits = await db().query(`select 1 from "contribution_hit" where "ip" = $1`, [ip]);
     expect(hits.rows).toHaveLength(1);
   });
 
   it("refuses once the hour's allowance is spent", async () => {
-    for (let i = 0; i < 10; i++) await POST(post({ envelopes: [books] }));
-    expect((await POST(post({ envelopes: [books] }))).status).toBe(429);
+    for (let i = 0; i < 10; i++) await POST(post({ envelopes: [readables] }));
+    expect((await POST(post({ envelopes: [readables] }))).status).toBe(429);
   });
 
   it("refuses an empty upload and an oversized one", async () => {
     expect((await POST(post({ envelopes: [] }))).status).toBe(400);
     expect((await POST(post({}))).status).toBe(400);
-    expect((await POST(post({ envelopes: Array(MAX_ENVELOPES + 1).fill(books) }))).status).toBe(413);
+    expect((await POST(post({ envelopes: Array(MAX_ENVELOPES + 1).fill(readables) }))).status).toBe(413);
   });
 
   it("answers a filled honeypot with 200 and writes nothing", async () => {
@@ -206,8 +206,8 @@ describe("POST /api/contributions/batch from the manager", () => {
   });
 
   it("refuses an install past its own allowance while the IP still has room", async () => {
-    for (let i = 0; i < 4; i++) await POST(post({ envelopes: [books], installId }));
-    expect((await POST(post({ envelopes: [books], installId }))).status).toBe(429);
-    expect((await POST(post({ envelopes: [books] }))).status).toBe(200);
+    for (let i = 0; i < 4; i++) await POST(post({ envelopes: [readables], installId }));
+    expect((await POST(post({ envelopes: [readables], installId }))).status).toBe(429);
+    expect((await POST(post({ envelopes: [readables] }))).status).toBe(200);
   });
 });

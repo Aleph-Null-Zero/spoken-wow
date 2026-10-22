@@ -479,7 +479,7 @@ describe('backups, repair, leftovers and downloads', () => {
   it('keeps only the backup of the job just done', async () => {
     const e = await env()
     write(path.join(e.addOns, 'Spoken', 'Spoken.toc'), toc('Spoken', '1.0.0'))
-    write(path.join(backupDirFor(e.game, 'zones-audio'), 'SpokenZonesAudio', 'old.ogg'), 'old pack')
+    write(path.join(backupDirFor(e.game, 'places-audio'), 'SpokenPlacesAudio', 'old.ogg'), 'old pack')
     write(path.join(backupDirFor(e.game, 'community/elune'), 'SpokenCommunity_elune', 'x.ogg'), 'old community')
     const zip = await yazlZip(entries('2.0.0'))
     await installProduct(e.game, productById('spoken')!, release('spoken', '2.0.0', zip, await serveZip(zip)), ctx(e))
@@ -497,9 +497,9 @@ describe('backups, repair, leftovers and downloads', () => {
     expect(fs.readdirSync(path.join(e.addOns, WORK_DIR, 'backup'))).toEqual(['community'])
     expect(fs.readdirSync(path.join(e.addOns, WORK_DIR, 'backup', 'community'))).toEqual(['a'])
 
-    write(path.join(e.addOns, 'SpokenZonesAudio', 'SpokenZonesAudio.toc'), toc('x', '1'))
-    await uninstallProduct(e.game, productById('zones-audio')!, ctx(e))
-    expect(fs.readdirSync(path.join(e.addOns, WORK_DIR, 'backup'))).toEqual(['zones-audio'])
+    write(path.join(e.addOns, 'SpokenPlacesAudio', 'SpokenPlacesAudio.toc'), toc('x', '1'))
+    await uninstallProduct(e.game, productById('places-audio')!, ctx(e))
+    expect(fs.readdirSync(path.join(e.addOns, WORK_DIR, 'backup'))).toEqual(['places-audio'])
   })
 
   it('empties staging at start but keeps a swap journal, and drops old half-finished downloads and orphan records', async () => {

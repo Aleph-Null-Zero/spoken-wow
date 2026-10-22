@@ -58,11 +58,11 @@ function post(body: unknown): Request {
 
 describe("POST /api/contributions/resolve", () => {
   it("accepts a row", async () => {
-    // Zones: accepting a quests or books row also writes it (lib/contributions/accept.ts),
+    // Places: accepting a quests or readables row also writes it (lib/contributions/accept.ts),
     // which is its own test suite (accept.test.ts). This is just the plain status flip.
     const { rows } = await db().query<{ id: number }>(
       `insert into "contribution" ("source", "key", "raw", "dedup", "text", "ip")
-       values ('zones', '123', 'raw', $2, 'Words.', $1) returning "id"`,
+       values ('places', '123', 'raw', $2, 'Words.', $1) returning "id"`,
       [ip, `${dedup}-accept`],
     );
     const response = await POST(post({ id: rows[0].id, status: "accepted" }));

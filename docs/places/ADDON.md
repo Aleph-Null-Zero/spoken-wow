@@ -3,7 +3,7 @@
 ## Spoken and the module
 
 Spoken owns the player: the queue, the windows (Small Window, subtitles, DialogueUI window), the
-minimap button and the settings. Places registers one source on it (`Spoken:RegisterSource("zones",
+minimap button and the settings. Places registers one source on it (`Spoken:RegisterSource("places",
 ...)` in `Audio.lua`) with a queue limit of 3 waiting lines and a gap of 0.25 seconds between
 clips. `docs/spoken/PLAYER-STYLES.md` describes the windows.
 
@@ -15,7 +15,7 @@ What Places adds to Spoken:
 - The Places tab of Azeroth's Compendium and a panel beside the world map ([COMPENDIUM.md](COMPENDIUM.md)).
 - A Report button on each line being read. There is no Read button of its own.
 
-The Enable switch on the Places page is Spoken's switch for the part (`Spoken:IsPartOn("zones")`).
+The Enable switch on the Places page is Spoken's switch for the part (`Spoken:IsPartOn("places")`).
 With it off the map panel, its side tab and the Compendium tab go away.
 
 ## Settings
@@ -48,13 +48,13 @@ Three settings have no row. `loreDiscoveredOnly` and `loreVoicedOnly` are the ta
 
 ### Where they are saved
 
-`SpokenZonesSettings` (saved variable) holds the settings. At load, `Spoken:BindModuleSettings`
+`SpokenPlacesSettings` (saved variable) holds the settings. At load, `Spoken:BindModuleSettings`
 swaps in the `Zones` table of Spoken's current profile (`Language.lua`, `Core.lua` `InitConfig`).
 The first time, the old table is kept in Spoken's `global.ModulesLegacy`, and a profile with no
 `Zones` table takes a copy of it at login, so every character has the values the account had.
 Choosing another profile in Spoken, copying one over or resetting it rebinds the table, and a
 profile made or reset then starts from the defaults. The `dump` key written by `/spp dump` is not
-copied, and sits in the profile's table, which is also what `SpokenZonesSettings` is saved as. `SpokenZonesCharacter` (per character) holds
+copied, and sits in the profile's table, which is also what `SpokenPlacesSettings` is saved as. `SpokenPlacesCharacter` (per character) holds
 `greeted`, `heard` and `visited`.
 
 `## LoadSavedVariablesFirst: true` is needed. The data files under `Data/` ask `Language.lua`
@@ -92,7 +92,7 @@ a language pins it on every client.
 
 ## How a story is read
 
-`SpokenZones:NewLoreSound(mapID, areaKey)` builds the clip: its key is `z:<mapID>` for a zone and
+`SpokenPlaces:NewLoreSound(mapID, areaKey)` builds the clip: its key is `z:<mapID>` for a zone and
 `s:<mapID>:<key>` for an area (frozen, see the root `AGENTS.md`), the file and length from the
 voice pack's lookup, and the `present` table Spoken's windows draw: header (the zone), label,
 words (the story in the pack's language), a font where that script needs one, the zone badge,
@@ -125,14 +125,14 @@ shift-click still read there.
 ## Voice packs
 
 A pack is an addon folder with `Data/Sounds.lua`, which registers itself in
-`SpokenZonesAudioPacks[<folder>]`. The addon also reads `ZoneLoreAudioPacks` and
+`SpokenPlacesAudioPacks[<folder>]`. The addon also reads `ZoneLoreAudioPacks` and
 `ZoneLoreAudioData`, which packs published before the rename write to.
 
 - `Sounds.lua` has `version = 1`. `PACK_FORMAT` in `Audio.lua` is 1. A pack with another number
   is skipped with a message in chat, because guessing at an unknown layout plays silence and says
   nothing. Bump `PACK_FORMAT` only when the pack's data shape changes.
-- The pack reads its folder name, `X-SpokenZones-Quality`, `X-SpokenZones-Bitrate`,
-  `X-SpokenZones-Language` and `Version` from its `.toc`, so one generated `Sounds.lua` serves
+- The pack reads its folder name, `X-SpokenPlaces-Quality`, `X-SpokenPlaces-Bitrate`,
+  `X-SpokenPlaces-Language` and `Version` from its `.toc`, so one generated `Sounds.lua` serves
   every pack. A pack with no language key is English.
 - The pack that reads is the best one in the voice language, else the best in the fallback
   language. Between two packs of one language, `/spp audio <folder>` chooses (stored per language
@@ -163,7 +163,7 @@ The game announces a discovery once per character, and Places reads that message
 - The login greeting. A new character's spawn area is announced before the map is settled, so
   two seconds after login a greeting reads it instead, up to eight tries, only for a level 1
   character standing in one of the six starting areas (`STARTING_AREAS`). `greeted` in
-  `SpokenZonesCharacter` makes it happen once, and `/spp forget` clears it.
+  `SpokenPlacesCharacter` makes it happen once, and `/spp forget` clears it.
 - Include Places Found Before also reads on zone change, once per place, for a character that
   explored before installing. `heard` records places when a clip starts, not when it is queued.
 - Entering a dungeon or raid reads its story, once per character (`heard`), with Read
@@ -177,23 +177,25 @@ The game announces a discovery once per character, and Places reads that message
 ## Reports and contributions
 
 The game cannot open a link, so a Report button shows an address to copy
-(`UI/CopyLink.lua`). `SpokenZones:ReportURL` builds it with `Spoken:ReportURL`:
-`https://spoken.rusty.one/zones/r/<mapID>/<slug>` for English and
-`https://spoken.rusty.one/<lang>/zones/r/<mapID>/<slug>` for another language. The language is
+(`UI/CopyLink.lua`). `SpokenPlaces:ReportURL` builds it with `Spoken:ReportURL`:
+`https://spoken.rusty.one/places/r/<mapID>/<slug>` for English and
+`https://spoken.rusty.one/<lang>/places/r/<mapID>/<slug>` for another language. Released older
+addons built `/zones/r/…`, which the site sends on to `/places/r/…`
+(`apps/web/src/lib/section-routes.ts`). The language is
 the one the clip is read in for Report on the player's window, and the text language for
 Report on a page. The slug is the key with spaces as hyphens and other
 characters dropped, and `zone` for a zone. `validate.mjs` fails the build if the Lua slug and
-`slugFor` in `pipelines/zones/tools/voice/naming.mjs` disagree, or two areas in a zone share one.
+`slugFor` in `pipelines/places/tools/voice/naming.mjs` disagree, or two areas in a zone share one.
 
 A place with no story shows Contribute under the sentence saying so. It sends the place the page
 shows, not where the player stands: the addon version, build, locale, the pack's language, the map,
-the zone and the area (`Contribute.lua`), through `Spoken.Contribute:Envelope("zones", ...)` to
+the zone and the area (`Contribute.lua`), through `Spoken.Contribute:Envelope("places", ...)` to
 `/contribute` on the site. The page asks for a description of at least 20 characters
 (`DESCRIPTION_MIN` in `apps/web/src/lib/contributions/contributions.ts`). Spoken's Hide Report
 Buttons and Hide Contribute Buttons settings hide both.
 
 ## Checks for this part
 
-`tests/lua/zones_*_test.lua`, run by `make test-player`. They cover the source and its queue, language,
+`tests/lua/places_*_test.lua`, run by `make test-player`. They cover the source and its queue, language,
 options, the greeting, discovery, the tab, the map click and highlight, areas, dungeons, cities,
 Forever-only places and contributions.

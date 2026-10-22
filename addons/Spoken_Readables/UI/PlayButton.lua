@@ -4,7 +4,7 @@
 -- book: the addon's two settings both mean "do not start by yourself", and neither should
 -- mean "give me no way to start it".
 --
--- A TEXT button, not an icon, for the reason the zones side once gave: an
+-- A TEXT button, not an icon, for the reason the places side once gave: an
 -- icon path cannot be verified without launching the client, and a texture that does not
 -- exist on 11509 draws nothing at all -- an invisible button is a worse failure than a plain
 -- one.
@@ -38,8 +38,8 @@
 -- re-labelling what is already here is the honest arrangement rather than a second control
 -- stacked on space that does not exist.
 
-local _, SpokenBooks = ...
-local L = SpokenBooks.L
+local _, SpokenReadables = ...
+local L = SpokenReadables.L
 
 local GAP = 4
 local BUTTON_WIDTH = 58
@@ -62,16 +62,16 @@ local function FitToLabels(button, labels)
 end
 
 --- Open in Azeroth's Compendium: the Compendium's tome in the player's round button, as Quests
---- and Zones have it, opening the tab on writing `bookId`. `tooltip`, where given, returns the
+--- and Places have it, opening the tab on writing `bookId`. `tooltip`, where given, returns the
 --- tooltip to use: DialogueUI hides the game's with the rest of the interface.
-function SpokenBooks:NewOpenButton(parent, tooltip)
+function SpokenReadables:NewOpenButton(parent, tooltip)
 	if not (_G.Spoken and Spoken.CreateRoundButton) then return nil end
 	local icon = _G.SpokenCompendium and SpokenCompendium.ICON or 5341597
 	local button = Spoken:CreateRoundButton(parent, "icon", nil, icon)
 	button:SetScript("OnClick", function(self)
 		if self.bookId then
 			if self.beforeOpen then self.beforeOpen() end
-			SpokenBooks:ShowReadables(self.bookId)
+			SpokenReadables:ShowReadables(self.bookId)
 		end
 	end)
 	button:HookScript("OnEnter", function(self)
@@ -92,7 +92,7 @@ end
 
 --- Open in Azeroth's Compendium on the book frame, left of Play where it shows, else in its corner:
 --- only for a writing whose page the Compendium would show.
-function SpokenBooks:RefreshOpenButton()
+function SpokenReadables:RefreshOpenButton()
 	local open, play = self.openButton, self.playButton
 	if not open then return end
 	local book = self:IsPartOn() and self:PlaceOf(self:PageOnScreen()) or nil
@@ -121,7 +121,7 @@ local function RefreshPlay(self)
 		return
 	end
 	-- Switched off in Spoken's settings, the part puts nothing on the book.
-	if not SpokenBooks:IsPartOn() then
+	if not SpokenReadables:IsPartOn() then
 		button:Hide()
 		return
 	end
@@ -156,7 +156,7 @@ local function RefreshPlay(self)
 end
 
 --- Play, then Open in Azeroth's Compendium beside it.
-function SpokenBooks:RefreshPlayButton()
+function SpokenReadables:RefreshPlayButton()
 	RefreshPlay(self)
 	self:RefreshOpenButton()
 end
@@ -166,7 +166,7 @@ end
 --- Called on every page as well as at login: ItemTextFrame is FrameXML on all three targets
 --- and should exist by then, but a client that builds it later still gets its button rather
 --- than going without for the session.
-function SpokenBooks:SetupPlayButton()
+function SpokenReadables:SetupPlayButton()
 	if self.playButton then
 		return self.playButton
 	end
@@ -199,20 +199,20 @@ function SpokenBooks:SetupPlayButton()
 	end
 
 	button:SetScript("OnClick", function()
-		if SpokenBooks.playButtonMode == "contribute" then
-			SpokenBooks:ShowContribution()
+		if SpokenReadables.playButtonMode == "contribute" then
+			SpokenReadables:ShowContribution()
 			return
 		end
 
-		local book = SpokenBooks:PlaceOf(SpokenBooks:PageOnScreen())
-		if book and SpokenBooks:IsNarrating(book) then
-			SpokenBooks:StopReading(book)
+		local book = SpokenReadables:PlaceOf(SpokenReadables:PageOnScreen())
+		if book and SpokenReadables:IsNarrating(book) then
+			SpokenReadables:StopReading(book)
 		else
 			-- The same call `/spr read` makes, so a page with no clip explains itself here
 			-- exactly as it does in the chat frame.
-			SpokenBooks:ReadOrExplain()
+			SpokenReadables:ReadOrExplain()
 		end
-		SpokenBooks:RefreshPlayButton()
+		SpokenReadables:RefreshPlayButton()
 	end)
 
 	button:SetScript("OnEnter", function(self)
@@ -220,7 +220,7 @@ function SpokenBooks:SetupPlayButton()
 			return
 		end
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		if SpokenBooks.playButtonMode == "contribute" then
+		if SpokenReadables.playButtonMode == "contribute" then
 			GameTooltip:SetText(L.NO_LINE)
 			GameTooltip:AddLine(L.NO_LINE_TIP, 1, 0.8, 0.2, true)
 		elseif self:GetText() == L.STOP then
@@ -239,7 +239,7 @@ function SpokenBooks:SetupPlayButton()
 
 	self.playButton = button
 
-	local open = SpokenBooks:NewOpenButton(frame)
+	local open = SpokenReadables:NewOpenButton(frame)
 	if open then
 		open:SetFrameLevel(button:GetFrameLevel())
 		self.openButton = open
@@ -250,7 +250,7 @@ function SpokenBooks:SetupPlayButton()
 	-- Toggling the hide setting in the Spoken settings fires no game event.
 	if _G.Spoken and Spoken.RegisterCallback then
 		Spoken:RegisterCallback("CONTRIBUTE_SETTINGS_CHANGED", function()
-			SpokenBooks:RefreshPlayButton()
+			SpokenReadables:RefreshPlayButton()
 		end)
 	end
 

@@ -22,8 +22,8 @@ const REASONS: Record<Exclude<Match, { file: string }>["reason"], string> = {
 /** What each section's files are called, for the hint under the zone. */
 const NAMING: Record<Source, string> = {
   quests: "the line's file name: 33-accept.ogg, m-33-accept.ogg (male player), or a gossip hash",
-  zones: "map id and place: 1411-razor-hill.ogg, or 1411-zone.ogg for the zone itself",
-  books: "the page id: 1381.ogg",
+  places: "map id and place: 1411-razor-hill.ogg, or 1411-zone.ogg for the zone itself",
+  readables: "the page id: 1381.ogg",
 };
 
 type Matched = Extract<Match, { file: string }>;

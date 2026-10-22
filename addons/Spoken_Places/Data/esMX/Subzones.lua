@@ -7,15 +7,15 @@
 -- leading "the " removed, apostrophes dropped, punctuation collapsed to
 -- single spaces. The client reports "The Bulwark" where the wiki titles the
 -- page "Bulwark", so both sides are reduced to the same key at lookup time
--- via SpokenZones:NormaliseAreaKey.
+-- via SpokenPlaces:NormaliseAreaKey.
 --
 -- Every language is keyed by the ENGLISH name: a place is one place whatever
 -- it is called, and a non-English client gets from its own name to this key
 -- through Data/<locale>/Aliases.lua.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("esMX") then
+if not SpokenPlaces:ShouldLoadLanguage("esMX") then
 	return
 end
 
@@ -4912,4 +4912,4 @@ local subzones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("esMX", "subzones", subzones)
+SpokenPlaces:RegisterLoreData("esMX", "subzones", subzones)

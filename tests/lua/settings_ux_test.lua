@@ -475,9 +475,9 @@ local function Hit(query)
         if result.entry.label == query then return result.entry.frame end
     end
 end
--- A module or a style is found on its own row of its list, not at the list's top: Books, after
+-- A module or a style is found on its own row of its list, not at the list's top: Readables, after
 -- Quests, and Voice Only, the last style.
-for _, query in ipairs({ L.OPT_PART_BOOKS, L.OPT_STYLE_NONE }) do
+for _, query in ipairs({ L.OPT_PART_READABLES, L.OPT_STYLE_NONE }) do
     local hit = Hit(query)
     local list = hit and hit.layoutRow and hit.layoutRow.control
     local index
@@ -546,13 +546,13 @@ do
     local cfg, shows = env.Addon.db.profile.Transcript, function(key) return env.Addon:ShowsNarrator({ source = { key = key } }) end
     local was = cfg.Enabled
     cfg.Enabled = true
-    Expect("every module shows its lines by default", shows("quests") and shows("gossip") and shows("zones") and shows("books"), true)
+    Expect("every module shows its lines by default", shows("quests") and shows("gossip") and shows("places") and shows("readables"), true)
     cfg.WordsOff.quests = true
     Expect("a module turned off shows none", shows("quests"), false)
-    Expect("...and the others keep showing", shows("zones"), true)
+    Expect("...and the others keep showing", shows("places"), true)
     cfg.WordsOff.quests = nil
     cfg.Enabled = false
-    Expect("with Show Narrator off none show", shows("zones"), false)
+    Expect("with Show Narrator off none show", shows("places"), false)
     cfg.Enabled = was
     -- The window stands for no line of a module turned off, while the line itself goes on playing.
     local head = { source = { key = "quests" } }

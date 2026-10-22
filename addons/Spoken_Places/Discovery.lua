@@ -1,4 +1,4 @@
--- SpokenZones -- which places this character has found, for Azeroth's Compendium's list.
+-- SpokenPlaces -- which places this character has found, for Azeroth's Compendium's list.
 --
 -- Azeroth's Compendium opens only the places found and lists the rest greyed out, each count out of
 -- all, unless the player turns on Unlock Undiscovered Zones. A place counts as found when either:
@@ -9,7 +9,7 @@
 --     explored before Spoken Places was installed.
 --   * the character has stood in it since. Small places and the cities' districts have no
 --     overlay and never count as explored, so every zone change records where the character is
---     (SpokenZonesCharacter.visited).
+--     (SpokenPlacesCharacter.visited).
 --
 -- A zone is found when it, or any of its areas, is; a city also when its name is explored on
 -- the zone around it (Orgrimmar on Durotar's map). A continent is found only through its zones
@@ -17,7 +17,7 @@
 -- and the zone the character is in is scanned again whenever the list is drawn, so a discovery
 -- shows the next time Azeroth's Compendium is opened.
 
-local ADDON_NAME, SpokenZones = ...
+local ADDON_NAME, SpokenPlaces = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
@@ -31,13 +31,13 @@ local explored = {}       -- [mapID] = { zone = bool, keys = { [areaKey] = true 
 local exploredNames = {}  -- every explored area's name seen in a scan, for the cities
 
 local function CharDB()
-	if type(SpokenZonesCharacter) ~= "table" then
-		SpokenZonesCharacter = {}
+	if type(SpokenPlacesCharacter) ~= "table" then
+		SpokenPlacesCharacter = {}
 	end
-	if type(SpokenZonesCharacter.visited) ~= "table" then
-		SpokenZonesCharacter.visited = {}
+	if type(SpokenPlacesCharacter.visited) ~= "table" then
+		SpokenPlacesCharacter.visited = {}
 	end
-	return SpokenZonesCharacter
+	return SpokenPlacesCharacter
 end
 
 local function VisitKey(mapID, areaKey)
@@ -76,7 +76,7 @@ local function Scan(mapID)
 							exploredNames[name] = exploredNames[name] or mapID
 							result.zone = true
 							result.why.zone = result.why.zone or ("explored on its map: " .. name)
-							local key = SpokenZones:ResolveAreaKey(name, mapID)
+							local key = SpokenPlaces:ResolveAreaKey(name, mapID)
 							if key then result.keys[key] = true end
 						end
 					end
@@ -96,7 +96,7 @@ local everyZone = false
 local function ScanEveryZone()
 	if everyZone then return end
 	everyZone = true
-	for mapID in pairs(SpokenZones.Zones or {}) do
+	for mapID in pairs(SpokenPlaces.Zones or {}) do
 		Explored(mapID)
 	end
 end
@@ -104,13 +104,13 @@ end
 --- Forget what the maps said, so they are read again when next asked: exploring anywhere since
 --- (a GM's .cheat explore too) shows. Called when the world map or Azeroth's Compendium opens and when
 --- the game reports something explored.
-function SpokenZones:RefreshFound()
+function SpokenPlaces:RefreshFound()
 	explored, exploredNames, everyZone = {}, {}, false
 end
 
 --- Whether the character has found the zone `mapID` (areaKey nil) or its area `areaKey`, and
 --- as a second value why: what /spp found prints.
-function SpokenZones:IsFound(mapID, areaKey)
+function SpokenPlaces:IsFound(mapID, areaKey)
 	if not mapID then
 		return false
 	end
@@ -145,12 +145,12 @@ end
 
 --- An area a click on the map just resolved: only an explored one resolves, so it is found, even
 --- where the samples IsFound reads miss its shape (a road, a riverbank).
-function SpokenZones:MarkFound(mapID, areaKey)
+function SpokenPlaces:MarkFound(mapID, areaKey)
 	if mapID and areaKey then CharDB().visited[VisitKey(mapID, areaKey)] = true end
 end
 
 --- Every place counted found, and why, for /spp found.
-function SpokenZones:PrintFound()
+function SpokenPlaces:PrintFound()
 	ScanEveryZone()
 	local lines = 0
 	for mapID in pairs(self.Zones or {}) do
@@ -172,13 +172,13 @@ function SpokenZones:PrintFound()
 end
 
 --- Whether Azeroth's Compendium lists every place or only those found.
-function SpokenZones:ShowsUndiscovered()
+function SpokenPlaces:ShowsUndiscovered()
 	return self:Get("showUndiscovered") == true
 end
 
 -- Where the character stands, recorded on every zone change.
 local function RecordVisit()
-	local _, mapID = SpokenZones:GetLoreWithFallback(SpokenZones:GetPlayerMapID())
+	local _, mapID = SpokenPlaces:GetLoreWithFallback(SpokenPlaces:GetPlayerMapID())
 	if not mapID then
 		return
 	end
@@ -191,13 +191,13 @@ local function RecordVisit()
 	visited[VisitKey(mapID)] = true
 	local subZone = GetSubZoneText and NotSecret(GetSubZoneText())
 	if subZone and subZone ~= "" then
-		local _, key = SpokenZones:GetSubzoneLore(mapID, subZone)
+		local _, key = SpokenPlaces:GetSubzoneLore(mapID, subZone)
 		if key then visited[VisitKey(mapID, key)] = true end
 	end
 end
 
-function SpokenZones:SetupDiscovery()
-	local function Refresh() SpokenZones:RefreshFound() end
+function SpokenPlaces:SetupDiscovery()
+	local function Refresh() SpokenPlaces:RefreshFound() end
 	-- The game says when exploration changes, where it has the event; a zone change covers the rest.
 	self:OnZoneChanged(function() RecordVisit(); Refresh() end)
 	if WorldMapFrame and WorldMapFrame.HookScript then WorldMapFrame:HookScript("OnShow", Refresh) end

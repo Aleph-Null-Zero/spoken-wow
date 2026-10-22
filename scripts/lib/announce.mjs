@@ -18,17 +18,17 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parseFrontmatter } from "./frontmatter.mjs";
-import { changelogSection, docsFolder, isLanguageHeading, loadPacks } from "./packs.mjs";
+import { changelogSection, isLanguageHeading, loadPacks } from "./packs.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
-const ADDONS = ["spoken", "quests", "zones", "books"];
+const ADDONS = ["spoken", "quests", "places", "readables"];
 
 // Which `## <version> ...` heading in the section's CHANGELOG.md is this release's. The addon
-// and its English audio share one file and, in zones and books, one heading shape, so the kind
-// words are what tell them apart: quests says `— player` / `— sound pack(s)` or `— Spoken Quests
-// Audio`, zones marks its audio `— audio` or `(sound packs)`. Books numbers its English audio with
-// the addon, so a books-audio tag takes whichever heading carries its version.
+// and its English audio share one file and, in places and readables, one heading shape, so the
+// kind words are what tell them apart: quests says `— player` / `— sound pack(s)` or `— Spoken
+// Quests Audio`, places marks its audio `— audio` or `(sound packs)`. Readables numbers its
+// English audio with the addon, so a readables-audio tag takes whichever heading carries its version.
 const AUDIO_WORDS = /\b(audio|sound packs?)\b/i;
 
 function addonHeading(section) {
@@ -37,7 +37,7 @@ function addonHeading(section) {
 }
 
 function englishAudioHeading(section) {
-  if (section === "quests" || section === "zones") return (l) => AUDIO_WORDS.test(l);
+  if (section === "quests" || section === "places") return (l) => AUDIO_WORDS.test(l);
   return () => true;
 }
 
@@ -77,7 +77,7 @@ export function announcement(tag, { publishersDir = join(ROOT, "publishers"), do
   let name, section, notes;
   if (pack) {
     ({ name, section } = pack);
-    const text = readFileSync(join(docsDir, docsFolder(section), "CHANGELOG.md"), "utf8");
+    const text = readFileSync(join(docsDir, section, "CHANGELOG.md"), "utf8");
     if (pack.lang === "enUS") {
       notes = sectionFor(text, version, englishAudioHeading(section));
     } else {
@@ -90,7 +90,7 @@ export function announcement(tag, { publishersDir = join(ROOT, "publishers"), do
   } else if (ADDONS.includes(prefix)) {
     name = addonName(publishersDir, prefix);
     section = prefix;
-    notes = sectionFor(readFileSync(join(docsDir, docsFolder(section), "CHANGELOG.md"), "utf8"), version, addonHeading(section));
+    notes = sectionFor(readFileSync(join(docsDir, section, "CHANGELOG.md"), "utf8"), version, addonHeading(section));
   }
   // Legacy and freeze tags have no public addon behind them; a name a player cannot find is
   // worse than no announcement.

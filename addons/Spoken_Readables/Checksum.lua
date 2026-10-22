@@ -1,4 +1,4 @@
--- The Lua half of pipelines/books/tools/lib/naming.mjs.
+-- The Lua half of pipelines/readables/tools/lib/naming.mjs.
 --
 -- THE TWO MUST AGREE EXACTLY. The exporter keys Data/Books.lua on this number, so a page
 -- whose checksum differs by one is a page this addon can never find -- and it fails
@@ -9,7 +9,7 @@
 -- bytes rather than characters. The modulus is the largest signed 32-bit prime, so every
 -- intermediate value stays exact in the doubles Lua stores numbers as.
 
-local ADDON_NAME, SpokenBooks = ...
+local ADDON_NAME, SpokenReadables = ...
 
 local MODULUS = 2147483647
 local FACTOR = 31
@@ -30,7 +30,7 @@ end
 
 ---@param text string the page as the client is showing it
 ---@return number
-function SpokenBooks:ChecksumOf(text)
+function SpokenReadables:ChecksumOf(text)
 	if type(text) ~= "string" then
 		return 0
 	end
@@ -45,7 +45,7 @@ end
 --- page without it are keyed. Nil for any other page, whose two checksums are the same.
 ---@param text string the page as the client is showing it
 ---@return number|nil
-function SpokenBooks:MarkedChecksumOf(text)
+function SpokenReadables:MarkedChecksumOf(text)
 	if type(text) ~= "string" then
 		return nil
 	end
@@ -102,7 +102,7 @@ end
 
 --- The storage form the exporter hashes. Mirrors normaliseText in tools/lib/text.mjs.
 --- `keepMarkup` stops before the HTML is laid out, for MarkedChecksumOf.
-function SpokenBooks:Normalise(text, keepMarkup)
+function SpokenReadables:Normalise(text, keepMarkup)
 	text = gsub(text, "\r\n", "\n")
 	text = gsub(text, "\r", "\n")
 	text = gsub(text, "%$[Bb]", "\n")

@@ -6,7 +6,7 @@
 
 **Architecture:** A new `book_page` table holds identity and structure. `book_line` stays the per-language text table. A single matcher (`lib/contributions/book-match.ts`) decides what a books contribution is: known, correction, translation, new page, new book or ambiguous. Triage, intake, the corrections tab and accept all ask it. A page the game never named gets `b:n{uuid}`. Packs carry their own index and page placement for pages the English data module lacks, in tables older addon versions never read.
 
-**Tech Stack:** Postgres migrations (`apps/web/migrations`), Next.js/TypeScript with vitest (`apps/web`), Node ESM pipeline (`pipelines/books/tools`, `node --test`), Lua 5.1 addon with luajit tests (`tests/lua`), one Python importer (`pipelines/quests/tools/import_questit.py`).
+**Tech Stack:** Postgres migrations (`apps/web/migrations`), Next.js/TypeScript with vitest (`apps/web`), Node ESM pipeline (`pipelines/readables/tools`, `node --test`), Lua 5.1 addon with luajit tests (`tests/lua`), one Python importer (`pipelines/quests/tools/import_questit.py`).
 
 **Spec:** `docs/readables/docs/language-decoupling.md`
 
@@ -21,7 +21,7 @@
 - The user's shell is fish. Every command given to the user is in fish syntax.
 - Comments match the surrounding code: say what the code does, not its history, and don't point at sibling files for context.
 - PR descriptions follow the user's guideline: about 200 words of prose, no change lists, and no Claude attribution line.
-- Tests run before each commit and push: `make web-test` for `apps/web`, `make books-test` for the pipeline, `make test-player` for Lua.
+- Tests run before each commit and push: `make web-test` for `apps/web`, `make readables-test` for the pipeline, `make test-player` for Lua.
 
 ## Review Focus
 
@@ -99,7 +99,7 @@ git commit -m "Books: what the client says about a readable it opens"
 
 **Files:**
 - Create: `apps/web/migrations/0074_book_page.sql`
-- Test: `apps/web/src/lib/books/book-page.test.ts`
+- Test: `apps/web/src/lib/readables/book-page.test.ts`
 
 **Interfaces:**
 - Produces: table `book_page("lineId" text pk, "pageTextId" int null, "bookId" text not null, "pageNumber" int not null, "ownerKind" text null, "ownerIds" int[] null, "material" int null, "aliasOf" text null references book_page)`, unique `("bookId", "pageNumber") where "aliasOf" is null`. Columns on `contribution`: `"matchLineId" text`, `"matchBookId" text`, `"matchPageNumber" int`, `"matchNewBook" boolean not null default false`.
@@ -150,7 +150,7 @@ describe("book_page", () => {
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/books/book-page.test.ts`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/readables/book-page.test.ts`
 Expected: FAIL, `relation "book_page" does not exist`.
 
 - [ ] **Step 3: Write the migration**
@@ -214,13 +214,13 @@ update "contribution" set "matchLineId" = 'b:' || "pageId"
 
 - [ ] **Step 4: Apply it and run the test**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; deploy/web/bin/migrate.sh $PWD/apps/web; and pnpm --filter web exec vitest run src/lib/books/book-page.test.ts`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; deploy/web/bin/migrate.sh $PWD/apps/web; and pnpm --filter web exec vitest run src/lib/readables/book-page.test.ts`
 Expected: PASS, 3 tests.
 
 - [ ] **Step 5: Commit**
 
 ```fish
-git add apps/web/migrations/0074_book_page.sql apps/web/src/lib/books/book-page.test.ts
+git add apps/web/migrations/0074_book_page.sql apps/web/src/lib/readables/book-page.test.ts
 git commit -m "Books: book_page, a page's place in its book once for every language"
 ```
 
@@ -229,11 +229,11 @@ git commit -m "Books: book_page, a page's place in its book once for every langu
 Every writer that can create a page now writes `book_page` in the same transaction. Writers that only add text to an existing page are unchanged in this PR.
 
 **Files:**
-- Modify: `pipelines/books/tools/import.mjs` (the insert loop and the structural update)
-- Modify: `pipelines/books/tools/import-locale.mjs` (the comment on `withoutEnglish` only; see below)
-- Modify: `make/web.mk:154-166` (`migrate-books`), `make/books.mk:84` (`sync`)
-- Create: `pipelines/books/tools/lib/page.mjs`
-- Test: `pipelines/books/tools/lib/page.test.mjs`
+- Modify: `pipelines/readables/tools/import.mjs` (the insert loop and the structural update)
+- Modify: `pipelines/readables/tools/import-locale.mjs` (the comment on `withoutEnglish` only; see below)
+- Modify: `make/web.mk:154-166` (`migrate-readables`), `make/readables.mk:84` (`sync`)
+- Create: `pipelines/readables/tools/lib/page.mjs`
+- Test: `pipelines/readables/tools/lib/page.test.mjs`
 
 **Interfaces:**
 - Produces: `bookPageUpsert(entry) -> { text: string, values: unknown[] }` in `lib/page.mjs`, the SQL that inserts or moves an extracted page's `book_page` row.
@@ -261,7 +261,7 @@ test("an extracted page is written under its own id, its book as text", () => {
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `node --test pipelines/books/tools/lib/page.test.mjs`
+Run: `node --test pipelines/readables/tools/lib/page.test.mjs`
 Expected: FAIL, `Cannot find module './page.mjs'`.
 
 - [ ] **Step 3: Write `lib/page.mjs`**
@@ -293,7 +293,7 @@ export function bookPageUpsert(entry) {
 
 - [ ] **Step 4: Run it to see it pass**
 
-Run: `node --test pipelines/books/tools/lib/page.test.mjs`
+Run: `node --test pipelines/readables/tools/lib/page.test.mjs`
 Expected: PASS.
 
 - [ ] **Step 5: Call it from `import.mjs`**
@@ -316,13 +316,13 @@ Two pages of the same book that swap numbers in one re-extract would collide on 
 
 - [ ] **Step 6: Sync and migrate both tables**
 
-`make/books.mk`, in `sync`:
+`make/readables.mk`, in `sync`:
 
 ```make
 	@$(DB_ENV) scripts/db/sync-section.sh books book_line book_page
 ```
 
-`make/web.mk`, in `migrate-books`: truncate both, then dump both.
+`make/web.mk`, in `migrate-readables`: truncate both, then dump both.
 
 ```make
 	@( echo 'begin;'; \
@@ -334,13 +334,13 @@ Leave the sequence reset line as it is (`book_page` has no sequence). `--table=b
 
 - [ ] **Step 7: Run the pipeline tests against a fresh import**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; make books-test; and node pipelines/books/tools/import.mjs; and psql spoken_ci_pin -tAc 'select count(*) from book_page'`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; make readables-test; and node pipelines/readables/tools/import.mjs; and psql spoken_ci_pin -tAc 'select count(*) from book_page'`
 Expected: tests pass. The import reports `0 promoted … unchanged`, and the count equals `select count(distinct "lineId") from book_line`.
 
 - [ ] **Step 8: Commit**
 
 ```fish
-git add pipelines/books/tools/lib/page.mjs pipelines/books/tools/lib/page.test.mjs pipelines/books/tools/import.mjs make/books.mk make/web.mk docs/readables/docs/language-decoupling.md
+git add pipelines/readables/tools/lib/page.mjs pipelines/readables/tools/lib/page.test.mjs pipelines/readables/tools/import.mjs make/readables.mk make/web.mk docs/readables/docs/language-decoupling.md
 git commit -m "Books: the import places pages in book_page, and sync carries it"
 ```
 
@@ -351,9 +351,9 @@ git commit -m "Books: the import places pages in book_page, and sync carries it"
 ### Task 3: Page keys and file names that are not numbers
 
 **Files:**
-- Modify: `pipelines/books/tools/lib/naming.mjs`
-- Modify: `apps/web/src/lib/books/tools.ts:44-45`
-- Test: `pipelines/books/tools/lib/naming.test.mjs`
+- Modify: `pipelines/readables/tools/lib/naming.mjs`
+- Modify: `apps/web/src/lib/readables/tools.ts:44-45`
+- Test: `pipelines/readables/tools/lib/naming.test.mjs`
 
 **Interfaces:**
 - Produces: `pageKeyOf(lineId: string) -> string` ('b:1381' gives '1381', 'b:n…' gives 'n…'); `lineIdOfKey(key: string) -> string | null` (null unless the key is all digits or `n` followed by a uuid); `fileFor(pageIdOrKey: number | string) -> string` (unchanged for numbers); `mintPageId() -> string` ('b:n' + uuid); `mintBookId() -> string` ('n' + uuid); `isMinted(lineId: string) -> boolean`.
@@ -392,7 +392,7 @@ test("minted ids never look like a page the world database has", () => {
 
 - [ ] **Step 2: Run them to see them fail**
 
-Run: `node --test pipelines/books/tools/lib/naming.test.mjs`
+Run: `node --test pipelines/readables/tools/lib/naming.test.mjs`
 Expected: FAIL, `pageKeyOf is not a function`.
 
 - [ ] **Step 3: Implement in `naming.mjs`**
@@ -432,7 +432,7 @@ export function isMinted(lineId) {
 }
 ```
 
-In `apps/web/src/lib/books/tools.ts`, replace the `fileFor` export and add the rest:
+In `apps/web/src/lib/readables/tools.ts`, replace the `fileFor` export and add the rest:
 
 ```ts
 /** Store-relative and extension-less, e.g. '1381'. AGENTS.md freezes it for extracted pages. */
@@ -451,25 +451,25 @@ export const isMinted = namingModule.isMinted as (lineId: string) => boolean;
 
 - [ ] **Step 4: Run the tests**
 
-Run: `node --test pipelines/books/tools/lib/naming.test.mjs`
+Run: `node --test pipelines/readables/tools/lib/naming.test.mjs`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```fish
-git add pipelines/books/tools/lib/naming.mjs pipelines/books/tools/lib/naming.test.mjs apps/web/src/lib/books/tools.ts
+git add pipelines/readables/tools/lib/naming.mjs pipelines/readables/tools/lib/naming.test.mjs apps/web/src/lib/readables/tools.ts
 git commit -m "Books: page keys and minted ids, beside the frozen numeric ones"
 ```
 
 ### Task 4: The catalogue reads `book_page`, and English is one language
 
 **Files:**
-- Modify: `apps/web/src/lib/books/catalogue.ts` (`BookPage`, `stampOf`, `buildTranslated`, `build`, `pageById`, `BookFacet`, `bookFacets`)
-- Modify: `apps/web/src/lib/books/search.ts:23-24,89-90,142,164`
-- Modify: `apps/web/src/lib/books/filters.ts:34,93,113-119,137`
-- Modify: `apps/web/src/components/books/SearchBar.tsx:75,101-103`, `apps/web/src/components/books/Player.tsx:45`, `apps/web/src/components/books/BookList.tsx:58` (type only)
-- Modify: `apps/web/src/app/[lang]/books/r/[pageId]/page.tsx:36,114`, `apps/web/src/app/api/reports/route.ts:139`, `apps/web/src/lib/reports/detail.ts:51`
-- Test: `apps/web/src/lib/books/catalogue.test.ts` (new), `apps/web/src/lib/books/search.test.ts` (update fixtures)
+- Modify: `apps/web/src/lib/readables/catalogue.ts` (`BookPage`, `stampOf`, `buildTranslated`, `build`, `pageById`, `BookFacet`, `bookFacets`)
+- Modify: `apps/web/src/lib/readables/search.ts:23-24,89-90,142,164`
+- Modify: `apps/web/src/lib/readables/filters.ts:34,93,113-119,137`
+- Modify: `apps/web/src/components/readables/SearchBar.tsx:75,101-103`, `apps/web/src/components/readables/Player.tsx:45`, `apps/web/src/components/readables/BookList.tsx:58` (type only)
+- Modify: `apps/web/src/app/[lang]/readables/r/[pageId]/page.tsx:36,114`, `apps/web/src/app/api/reports/route.ts:139`, `apps/web/src/lib/reports/detail.ts:51`
+- Test: `apps/web/src/lib/readables/catalogue.test.ts` (new), `apps/web/src/lib/readables/search.test.ts` (update fixtures)
 
 **Interfaces:**
 - Consumes: `fileFor`, `pageKeyOf`, `lineIdOfKey` from Task 3.
@@ -509,7 +509,7 @@ export type BookPage = {
 
 - [ ] **Step 1: Write the failing test**
 
-`apps/web/src/lib/books/catalogue.test.ts`:
+`apps/web/src/lib/readables/catalogue.test.ts`:
 
 ```ts
 /**
@@ -570,7 +570,7 @@ The `book_line` insert fills the structure columns with placeholders because the
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/books/catalogue.test.ts`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/readables/catalogue.test.ts`
 Expected: FAIL. The page is absent from the English catalogue (`page` is undefined).
 
 - [ ] **Step 3: Rewrite `build` around `book_page`**
@@ -720,22 +720,22 @@ Run `pnpm --filter web typecheck` and fix each error with these exact changes:
 
 - [ ] **Step 5: Run the books and reports suites**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/books src/app/api/reports src/lib/reports`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/readables src/app/api/reports src/lib/reports`
 Expected: PASS, the new `catalogue.test.ts` included.
 
 - [ ] **Step 6: Commit**
 
 ```fish
-git add -A apps/web/src/lib/books apps/web/src/components/books apps/web/src/app/[lang]/books apps/web/src/app/api/reports apps/web/src/lib/reports
+git add -A apps/web/src/lib/readables apps/web/src/components/readables apps/web/src/app/[lang]/readables apps/web/src/app/api/reports apps/web/src/lib/reports
 git commit -m "Books: the catalogue lists every page in every language, English included"
 ```
 
 ### Task 5: `<no text>` in the explorer
 
 **Files:**
-- Modify: `apps/web/src/components/books/PageRow.tsx:184-186`
-- Create: `apps/web/src/lib/books/shown.ts`
-- Test: `apps/web/src/lib/books/shown.test.ts`
+- Modify: `apps/web/src/components/readables/PageRow.tsx:184-186`
+- Create: `apps/web/src/lib/readables/shown.ts`
+- Test: `apps/web/src/lib/readables/shown.test.ts`
 
 **Interfaces:**
 - Consumes: `BookPage.missing.text` and `BookPage.text === ""` from Task 4.
@@ -765,12 +765,12 @@ describe("shownText", () => {
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `pnpm --filter web exec vitest run src/lib/books/shown.test.ts`
+Run: `pnpm --filter web exec vitest run src/lib/readables/shown.test.ts`
 Expected: FAIL, cannot resolve `./shown`.
 
 - [ ] **Step 3: Implement, and use it in `PageRow.tsx`**
 
-`apps/web/src/lib/books/shown.ts`:
+`apps/web/src/lib/readables/shown.ts`:
 
 ```ts
 /** What the explorer shows for a page no language it can borrow from has words for. */
@@ -788,26 +788,26 @@ export function shownText(line: { text: string; missing?: { text: boolean } }): 
             <Untranslated missing={line.missing?.text}>{shownText(line)}</Untranslated>
 ```
 
-with `import { shownText } from "@/lib/books/shown";`.
+with `import { shownText } from "@/lib/readables/shown";`.
 
 - [ ] **Step 4: Run it to see it pass, then commit**
 
-Run: `pnpm --filter web exec vitest run src/lib/books/shown.test.ts; and pnpm --filter web typecheck`
+Run: `pnpm --filter web exec vitest run src/lib/readables/shown.test.ts; and pnpm --filter web typecheck`
 Expected: PASS.
 
 ```fish
-git add apps/web/src/lib/books/shown.ts apps/web/src/lib/books/shown.test.ts apps/web/src/components/books/PageRow.tsx
+git add apps/web/src/lib/readables/shown.ts apps/web/src/lib/readables/shown.test.ts apps/web/src/components/readables/PageRow.tsx
 git commit -m "Books: a page with no words in this language says so"
 ```
 
 ### Task 5b: Pipeline readers — export, lookup, text writers
 
 **Files:**
-- Modify: `pipelines/books/tools/export.mjs:30-36`
-- Modify: `pipelines/books/tools/lib/lookup.mjs:133-160` (the clips query and the locale pages query)
-- Modify: `apps/web/src/lib/books/text.ts:105-120,150-163` (`saveBookText`'s first-translation source)
+- Modify: `pipelines/readables/tools/export.mjs:30-36`
+- Modify: `pipelines/readables/tools/lib/lookup.mjs:133-160` (the clips query and the locale pages query)
+- Modify: `apps/web/src/lib/readables/text.ts:105-120,150-163` (`saveBookText`'s first-translation source)
 - Modify: `pipelines/quests/tools/import_questit.py:139-151`
-- Test: `apps/web/src/lib/books/text.test.ts`, `pipelines/books/tools/lib/lookup.test.mjs`
+- Test: `apps/web/src/lib/readables/text.test.ts`, `pipelines/readables/tools/lib/lookup.test.mjs`
 
 **Interfaces:**
 - Consumes: `book_page`.
@@ -830,7 +830,7 @@ Use the file's existing user fixture for `USER`.
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/books/text.test.ts`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/readables/text.test.ts`
 Expected: FAIL, `BookMissing: … is not in book_line`.
 
 - [ ] **Step 3: Take a first text's structure from `book_page`**
@@ -843,7 +843,7 @@ In `saveBookText`, replace the "first translation" lookup and the insert's `sele
       [args.lineId],
     );
     if (!current && !placed[0]) {
-      throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make books-import`);
+      throw new BookMissing(`${args.lineId} is not a page -- seed the table with: make readables-import`);
     }
 ```
 
@@ -925,13 +925,13 @@ QuestIT matches Italian to English pages by hash, so the join on English stays. 
 
 - [ ] **Step 6: Run every affected suite**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/books; and make books-test; and cd pipelines/quests; and uv run pytest -q tests -k questit; cd -`
-Expected: PASS. Also run `make books-export` against `spoken_ci_pin`: `git diff --stat addons/Spoken_Books/Data/Books.lua` must show no change.
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/readables; and make readables-test; and cd pipelines/quests; and uv run pytest -q tests -k questit; cd -`
+Expected: PASS. Also run `make readables-export` against `spoken_ci_pin`: `git diff --stat addons/Spoken_Books/Data/Books.lua` must show no change.
 
 - [ ] **Step 7: Commit**
 
 ```fish
-git add apps/web/src/lib/books/text.ts apps/web/src/lib/books/text.test.ts pipelines/books/tools/export.mjs pipelines/books/tools/lib/lookup.mjs pipelines/quests/tools/import_questit.py
+git add apps/web/src/lib/readables/text.ts apps/web/src/lib/readables/text.test.ts pipelines/readables/tools/export.mjs pipelines/readables/tools/lib/lookup.mjs pipelines/quests/tools/import_questit.py
 git commit -m "Books: export, lookup and text saves take structure from book_page"
 ```
 
@@ -946,7 +946,7 @@ git commit -m "Books: export, lookup and text saves take structure from book_pag
 - Test: `apps/web/src/lib/contributions/book-match.test.ts`
 
 **Interfaces:**
-- Consumes: `normaliseText` from `@books-tools/lib/text.mjs` (already imported by `submission.ts`).
+- Consumes: `normaliseText` from `@readables-tools/lib/text.mjs` (already imported by `submission.ts`).
 - Produces:
 
 ```ts
@@ -1086,7 +1086,7 @@ Expected: FAIL, cannot resolve `./book-match`.
  * Computed against the corpus as it stands, never stored: once a new book's first page is
  * accepted, its other pages find it by title.
  */
-import { normaliseText } from "@books-tools/lib/text.mjs";
+import { normaliseText } from "@readables-tools/lib/text.mjs";
 
 import { db } from "@/lib/db";
 
@@ -1490,13 +1490,13 @@ To have `bookMatches` available there, move the `bookMatchesFor(shown)` call ahe
 
 - [ ] **Step 7: `ContributionTable.tsx`'s Match cell**
 
-Rename `BookMatchCell` to `MatchCell` and change its content. It shows `book.label`; for `known`/`correction`/`translation` it links the page at `/books/r/${pageKeyOf(lineId)}` (import `pageKeyOf` is server-only, so compute `href` in `page.tsx` and pass it as `book.href`). Its controls are:
+Rename `BookMatchCell` to `MatchCell` and change its content. It shows `book.label`; for `known`/`correction`/`translation` it links the page at `/readables/r/${pageKeyOf(lineId)}` (import `pageKeyOf` is server-only, so compute `href` in `page.tsx` and pass it as `book.href`). Its controls are:
 - a `<select>` of books from the `books` datalist plus a `"new"` option labelled "New book",
 - the page number input (start value `book.number ?? 1`),
 - **Match**, which POSTs `{ id, bookId, pageNumber }`, or `{ id, newBook: true }` when "new" is selected,
 - **Clear**, shown only when `book.match.via === "moderator"`, which POSTs `{ id, clear: true }`.
 
-Change the placeholder from "English book" to "Book". Add `href: string | null` to `BookSummary` and fill it in `bookFor`'s caller: for a `lineId` match, `localeHref(lang, \`/books/r/${pageKeyOf(lineId)}\`)`, otherwise null.
+Change the placeholder from "English book" to "Book". Add `href: string | null` to `BookSummary` and fill it in `bookFor`'s caller: for a `lineId` match, `localeHref(lang, \`/readables/r/${pageKeyOf(lineId)}\`)`, otherwise null.
 
 Replace the accept-button guard that disabled books rows with no `pageId` (search `match === null` / `needs-page` in the component) with `book.match.kind === "ambiguous" || book.match.kind === "known"`, and a tooltip: "Pick the page first" or "Already in the corpus".
 
@@ -1507,7 +1507,7 @@ Expected: PASS.
 
 - [ ] **Step 9: Check it in the browser on `spoken_dev`**
 
-Run `make dev` with `DATABASE_URL=postgres:///spoken_dev` and open `/contributions/books`. Expected: contribution 30090 reads "Correction · Registro de Reclutamiento de la Horda p.1" (or "Translation", if esES has no row for page 340), and an unknown title reads "New book · …".
+Run `make dev` with `DATABASE_URL=postgres:///spoken_dev` and open `/contributions/readables`. Expected: contribution 30090 reads "Correction · Registro de Reclutamiento de la Horda p.1" (or "Translation", if esES has no row for page 340), and an unknown title reads "New book · …".
 
 - [ ] **Step 10: Commit**
 
@@ -1764,7 +1764,7 @@ async function addOwner(client: PoolClient, lineId: string, meta: Record<string,
 
 Here `lineIdWritten` is `match.lineId` for a correction or translation, and the minted `lineId` for a new page or book. Add a test to Step 2: a translation row with `meta.object = "696299"` leaves `book_page.ownerIds` holding both the seeded id and 696299, and accepting a second row with the same id adds nothing.
 
-Imports: `import { loadBookCorpus, matchBook } from "./book-match";` and `import { mintBookId, mintPageId } from "@/lib/books/tools";`. `loadBookCorpus(client)` takes the transaction's client, so it reads rows the lock has serialised. Its `Queryable` type must accept `PoolClient`. If TypeScript objects, type the parameter as `Pick<PoolClient, "query">`.
+Imports: `import { loadBookCorpus, matchBook } from "./book-match";` and `import { mintBookId, mintPageId } from "@/lib/readables/tools";`. `loadBookCorpus(client)` takes the transaction's client, so it reads rows the lock has serialised. Its `Queryable` type must accept `PoolClient`. If TypeScript objects, type the parameter as `Pick<PoolClient, "query">`.
 
 In `resolveContribution`, the books branch drops the `contribution.locale !== BASE_LANG` condition and calls the new function:
 
@@ -1790,13 +1790,13 @@ async function booksInExplorer(contributions: readonly Contribution[]): Promise<
 
 - [ ] **Step 5: Run the tests**
 
-Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/contributions src/lib/books`
+Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/contributions src/lib/readables`
 Expected: PASS. If the concurrency test is flaky, the lock key is wrong. Check that both rows' `meta.book` are identical after `trim()`.
 
 - [ ] **Step 6: Commit**
 
 ```fish
-git add apps/web/migrations/0075_book_line_structure_nullable.sql apps/web/src/lib/contributions/accept.ts apps/web/src/lib/contributions/accept.test.ts apps/web/src/lib/books/catalogue.test.ts
+git add apps/web/migrations/0075_book_line_structure_nullable.sql apps/web/src/lib/contributions/accept.ts apps/web/src/lib/contributions/accept.test.ts apps/web/src/lib/readables/catalogue.test.ts
 git commit -m "Contributions: accepting a books row writes its page in any language, minting where needed"
 ```
 
@@ -1895,18 +1895,18 @@ and add a books branch before the `lang === BASE_LANG` one:
     } else if (lang === BASE_LANG) {
 ```
 
-Import `saveBookText` and `BookMissing`/`BookConflict` from `@/lib/books/text`, and add both to the `instanceof` list in the catch. Note that `setContributionMatch`'s one-way guard (Task 7) already lists `correctionNote`'s text.
+Import `saveBookText` and `BookMissing`/`BookConflict` from `@/lib/readables/text`, and add both to the `instanceof` list in the catch. Note that `setContributionMatch`'s one-way guard (Task 7) already lists `correctionNote`'s text.
 
 - [ ] **Step 5: Open the corrections page to books**
 
-`corrections/page.tsx`: `if (!["quests", "books"].includes((await params).source)) notFound();`. Pass `stage` filtering only for quests: wrap the `matchesStage` filter in `source === "quests" ? … : rows`. In `CorrectionTable.tsx`, wherever `row.quest` is read, guard with `row.quest &&`. The row's link goes to `/books/r/${pageKeyOf(lineId)}` for books (compute it in the page).
+`corrections/page.tsx`: `if (!["quests", "books"].includes((await params).source)) notFound();`. Pass `stage` filtering only for quests: wrap the `matchesStage` filter in `source === "quests" ? … : rows`. In `CorrectionTable.tsx`, wherever `row.quest` is read, guard with `row.quest &&`. The row's link goes to `/readables/r/${pageKeyOf(lineId)}` for books (compute it in the page).
 
 Also show the Corrections sub-tab for books in `ContributionsTabs` if it is limited to quests: `grep -n "corrections" apps/web/src/components/ContributionsTabs.tsx`, and widen the condition to `source === "quests" || source === "books"`.
 
 - [ ] **Step 6: Run the suites and look at the page**
 
 Run: `set -x DATABASE_URL postgres:///spoken_ci_pin; pnpm --filter web exec vitest run src/lib/contributions src/app/api/contributions; and pnpm --filter web typecheck`
-Expected: PASS. On `spoken_dev`, `/contributions/books/corrections` lists the Wiley-shaped rows with their diff.
+Expected: PASS. On `spoken_dev`, `/contributions/readables/corrections` lists the Wiley-shaped rows with their diff.
 
 - [ ] **Step 7: Commit**
 
@@ -1952,9 +1952,9 @@ git commit -m "Contributions: accept all takes every books row the matcher place
 ### Task 11: A language pack carries the pages English lacks, and both checksums
 
 **Files:**
-- Modify: `pipelines/books/tools/lib/lookup.mjs` (`localeEntries`, `packLua`, `buildLookup`'s queries)
-- Modify: `pipelines/books/tools/lib/lua.mjs` (`pageIndex` takes string ids and several texts per page)
-- Test: `pipelines/books/tools/lib/lookup.test.mjs`, `pipelines/books/tools/lib/lua.test.mjs`
+- Modify: `pipelines/readables/tools/lib/lookup.mjs` (`localeEntries`, `packLua`, `buildLookup`'s queries)
+- Modify: `pipelines/readables/tools/lib/lua.mjs` (`pageIndex` takes string ids and several texts per page)
+- Test: `pipelines/readables/tools/lib/lookup.test.mjs`, `pipelines/readables/tools/lib/lua.test.mjs`
 
 **Interfaces:**
 - Produces, in a language's `Data/Sounds.lua`:
@@ -2006,7 +2006,7 @@ test("a pack keeps pages English lacks out of the index older addons read", () =
 
 - [ ] **Step 2: Run them to see them fail**
 
-Run: `node --test pipelines/books/tools/lib/lua.test.mjs pipelines/books/tools/lib/lookup.test.mjs`
+Run: `node --test pipelines/readables/tools/lib/lua.test.mjs pipelines/readables/tools/lib/lookup.test.mjs`
 Expected: FAIL.
 
 - [ ] **Step 3: `lua.mjs`**
@@ -2131,13 +2131,13 @@ Update the existing `lookup.test.mjs` and `lua.test.mjs` cases that pass `text` 
 
 - [ ] **Step 5: Run the tests and rebuild one pack**
 
-Run: `make books-test; and set -x DATABASE_URL postgres:///spoken_dev; and make books-lookup LOCALE=esES`
-Expected: tests pass. `build/books/esES/Data/Sounds.lua` has an `extraIndex` once a minted esES page has a take, and otherwise an index that differs from the previous build only by added checksums.
+Run: `make readables-test; and set -x DATABASE_URL postgres:///spoken_dev; and make readables-lookup LOCALE=esES`
+Expected: tests pass. `build/readables/esES/Data/Sounds.lua` has an `extraIndex` once a minted esES page has a take, and otherwise an index that differs from the previous build only by added checksums.
 
 - [ ] **Step 6: Commit**
 
 ```fish
-git add pipelines/books/tools/lib/lookup.mjs pipelines/books/tools/lib/lookup.test.mjs pipelines/books/tools/lib/lua.mjs pipelines/books/tools/lib/lua.test.mjs
+git add pipelines/readables/tools/lib/lookup.mjs pipelines/readables/tools/lib/lookup.test.mjs pipelines/readables/tools/lib/lua.mjs pipelines/readables/tools/lib/lua.test.mjs
 git commit -m "Books packs: pages English lacks, placed in the pack, and every text a client shows"
 ```
 
@@ -2148,16 +2148,16 @@ git commit -m "Books packs: pages English lacks, placed in the pack, and every t
 - Modify: `addons/Spoken_Books/Audio.lua` (`ClipFor`, `HasAudio`)
 - Modify: `addons/Spoken_Books/Core.lua:274-284` (`ReportURL`)
 - Modify: `addons/Spoken_Books/Contribute.lua:40-45` (envelope ids, if the probe found any)
-- Test: `tests/lua/books_language_test.lua`, `tests/lua/books_contribute_test.lua`
+- Test: `tests/lua/readables_language_test.lua`, `tests/lua/readables_contribute_test.lua`
 
 **Interfaces:**
 - Consumes: the pack tables from Task 11.
 
-- [ ] **Step 1: Write the failing tests** in `books_language_test.lua`, using its `Install`
+- [ ] **Step 1: Write the failing tests** in `readables_language_test.lua`, using its `Install`
 
 ```lua
 local MINTED = "n0b8f4e2a-1c1d-4f7e-9a51-2a0c9d6c7e11"
-local PACK_ES = { addon = "SpokenBooksAudio_esES", language = "esES",
+local PACK_ES = { addon = "SpokenReadablesAudio_esES", language = "esES",
     pages = { [MINTED] = { file = MINTED, len = 2, text = "Trotamundos." } },
     index = {}, loose = {},
     extraIndex = { ["Instrucciones"] = { [1] = { [stub.Checksum("Trotamundos.")] = MINTED } } },
@@ -2173,7 +2173,7 @@ do
     local clip = SpokenBooks:ClipFor(MINTED)
     Expect(clip and clip.path:find(MINTED .. ".mp3", 1, true), "read from the pack's own file")
     Expect(clip and clip.key == "b:" .. MINTED, "queued under its lineId")
-    Expect(SpokenBooks:ReportURL(MINTED, "esES"):find("/books/r/" .. MINTED, 1, true), "reported by its key")
+    Expect(SpokenBooks:ReportURL(MINTED, "esES"):find("/readables/r/" .. MINTED, 1, true), "reported by its key")
 end
 
 do
@@ -2188,7 +2188,7 @@ Check `wow_client_stub` for the helpers that show a page and compute a checksum 
 
 - [ ] **Step 2: Run them to see them fail**
 
-Run: `luajit tests/lua/books_language_test.lua`
+Run: `luajit tests/lua/readables_language_test.lua`
 Expected: FAIL, "an esES client finds a page only its pack knows".
 
 - [ ] **Step 3: `Reader.lua`**
@@ -2296,7 +2296,7 @@ This builds on `feat/books-owner-lookup`, which adds `Spoken:BagItemID(title)` a
 		{ "object", SpokenBooks:ObjectEntry() or "" },
 ```
 
-where `ObjectEntry` is the branch's GUID parse (the sixth `-`-separated field of a `GameObject-` GUID from `UnitGUID("npc")`). If the branch named it differently, use its name. Check `lib/contributions/envelope.ts` and accept `item` and `object` as optional digit fields. Add a case to `books_contribute_test.lua`: with a bag item named like the title and an `npc` GUID stubbed, the envelope carries `item=9555` and `object=175761`.
+where `ObjectEntry` is the branch's GUID parse (the sixth `-`-separated field of a `GameObject-` GUID from `UnitGUID("npc")`). If the branch named it differently, use its name. Check `lib/contributions/envelope.ts` and accept `item` and `object` as optional digit fields. Add a case to `readables_contribute_test.lua`: with a bag item named like the title and an `npc` GUID stubbed, the envelope carries `item=9555` and `object=175761`.
 
 The pack side mirrors the branch's `owners` table: in Task 11, also write `extraOwners = { object = { [entry] = bookId }, item = { [id] = bookId } }` for pages in `extraIndex`, and in Step 3 have `Find` try it by owner and page number before the checksum, as the branch does for `Books.lua`.
 
@@ -2315,7 +2315,7 @@ git commit -m "Spoken Books: find, place and read pages only a language pack has
 ### Task 13: Landing page and report route accept minted keys
 
 **Files:**
-- Modify: `apps/web/src/app/[lang]/books/r/[pageId]/page.tsx` (docstring: the address is the page's key)
+- Modify: `apps/web/src/app/[lang]/readables/r/[pageId]/page.tsx` (docstring: the address is the page's key)
 - Test: `apps/web/src/app/api/reports/route.test.ts` (books case)
 
 - [ ] **Step 1: Write the failing test**
@@ -2329,10 +2329,10 @@ Expected: PASS already, if Task 4 changed `booksTarget` to `pageById(raw)`. If i
 
 - [ ] **Step 3: Update the docstring and commit**
 
-Change "The address is /books/r/{pageTextID}" to "The address is /books/r/{key}: the pageTextID, or a minted page's n{uuid}".
+Change "The address is /readables/r/{pageTextID}" to "The address is /readables/r/{key}: the pageTextID, or a minted page's n{uuid}".
 
 ```fish
-git add apps/web/src/app/[lang]/books/r apps/web/src/app/api/reports
+git add apps/web/src/app/[lang]/readables/r apps/web/src/app/api/reports
 git commit -m "Books: a minted page has a landing page and takes reports"
 ```
 
@@ -2343,9 +2343,9 @@ git commit -m "Books: a minted page has a landing page and takes reports"
 ### Task 14: The import absorbs a minted page into the real one
 
 **Files:**
-- Create: `pipelines/books/tools/lib/absorb.mjs`
-- Modify: `pipelines/books/tools/import.mjs` (call it after the loop)
-- Test: `pipelines/books/tools/lib/absorb.test.mjs`
+- Create: `pipelines/readables/tools/lib/absorb.mjs`
+- Modify: `pipelines/readables/tools/import.mjs` (call it after the loop)
+- Test: `pipelines/readables/tools/lib/absorb.test.mjs`
 
 **Interfaces:**
 - Produces: `findAbsorptions(minted, extracted) -> { from: string, to: string }[]`, a pure function, and `absorb(client, { from, to })`.
@@ -2381,7 +2381,7 @@ test("two extracted candidates, or two minted claimants, absorb nothing", () => 
 
 - [ ] **Step 2: Run it to see it fail**
 
-Run: `node --test pipelines/books/tools/lib/absorb.test.mjs`
+Run: `node --test pipelines/readables/tools/lib/absorb.test.mjs`
 Expected: FAIL, module not found.
 
 - [ ] **Step 3: Implement**
@@ -2449,7 +2449,7 @@ In `import.mjs`, after the loop, inside the import's transaction:
 
 - [ ] **Step 4: Run tests**
 
-Run: `node --test pipelines/books/tools/lib/absorb.test.mjs; and make books-test`
+Run: `node --test pipelines/readables/tools/lib/absorb.test.mjs; and make readables-test`
 Expected: PASS.
 
 - [ ] **Step 5: Lookup keeps the old file playable**
@@ -2459,7 +2459,7 @@ A pack built after absorption keys the page under its real numeric id, and its t
 - [ ] **Step 6: Commit**
 
 ```fish
-git add pipelines/books/tools/lib/absorb.mjs pipelines/books/tools/lib/absorb.test.mjs pipelines/books/tools/import.mjs pipelines/books/tools/lib/lookup.test.mjs
+git add pipelines/readables/tools/lib/absorb.mjs pipelines/readables/tools/lib/absorb.test.mjs pipelines/readables/tools/import.mjs pipelines/readables/tools/lib/lookup.test.mjs
 git commit -m "Books: the import folds a minted page into the real one it turns out to be"
 ```
 
@@ -2475,7 +2475,7 @@ git commit -m "Books: the import folds a minted page into the real one it turns 
 
 - [ ] **Step 1:** Remove the structure columns from every insert. Run `grep -rn '"pageCount"\|"ownerIds"' apps/web/src pipelines` and expect only `book_page` reads to be left.
 - [ ] **Step 2:** The migration: `alter table "book_line" drop column "pageId", drop column "bookId", drop column "pageNumber", drop column "pageCount", drop column "ownerKind", drop column "ownerIds", drop column "material"; alter table "contribution" drop column "pageId";`. Rewrite `entity_name_from_book_line` to read owners from `book_page` first, in the same migration.
-- [ ] **Step 3:** Run every suite (`make web-test`, `make books-test`, `make test-player`, quests pytest), then commit.
+- [ ] **Step 3:** Run every suite (`make web-test`, `make readables-test`, `make test-player`, quests pytest), then commit.
 
 ---
 

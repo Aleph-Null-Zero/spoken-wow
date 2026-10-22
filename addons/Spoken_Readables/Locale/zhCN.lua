@@ -1,10 +1,10 @@
-local _, SpokenBooks = ...
+local _, SpokenReadables = ...
 
 -- Simplified Chinese interface strings for Spoken Readables.
 --
 -- Keyed exactly as in Locale/enUS.lua; anything missing falls back to English.
 
-local L = SpokenBooks.L
+local L = SpokenReadables.L
 
 if GetLocale() ~= "zhCN" then
 	return

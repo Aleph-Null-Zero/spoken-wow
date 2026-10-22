@@ -1406,7 +1406,7 @@ function C.MapName(mapID)
 end
 
 --- A dungeon or raid by its instance map (Data/Dungeons.lua): { zone = its entrance's, story =
---- { mapID, key } of the Zones area telling it or nil, its name by locale }; nil for any other map.
+--- { mapID, key } of the Places area telling it or nil, its name by locale }; nil for any other map.
 function C.Dungeon(map)
 	return _G.SpokenDungeons and SpokenDungeons.dungeons and SpokenDungeons.dungeons[map] or nil
 end
@@ -1486,19 +1486,19 @@ function C.PlayerContinent(listed)
 end
 
 --- The picture of a place's story (Spoken Places'), for Page:Show's `picture` on another tab's page of
---- the place: { file, mask }, or nil where Zones is not there, has none or has pictures off.
+--- the place: { file, mask }, or nil where Places is not there, has none or has pictures off.
 --- `place` is { mapID = a zone, a city or a continent } or { mapID = the zone of a dungeon's entrance,
 --- dungeon = its instance map }.
 function C.PlacePicture(place)
-	local zones = _G.SpokenZones
-	if not (zones and zones.Picture) then return nil end
+	local spoken = _G.Spoken
+	if not (spoken and spoken.PlacePicture) then return nil end
 	local mapID, key = place.mapID, nil
 	if place.dungeon then
 		local dungeon = C.Dungeon(place.dungeon)
 		if not (dungeon and dungeon.story) then return nil end
 		mapID, key = dungeon.story[1], dungeon.story[2]
 	end
-	local file, mask = zones:Picture(mapID, key)
+	local file, mask = spoken:PlacePicture(mapID, key)
 	return file and { file = file, mask = mask } or nil
 end
 
@@ -1560,7 +1560,7 @@ local PAD, TOP, RIGHT = 24, 36, 36
 -- started this far left of the page, and cut there.
 local BACKPLATE_CUT, BACKPLATE_FULL = 40, 460
 
-local function ZonesLoaded()
+local function PlacesLoaded()
 	if C_AddOns and C_AddOns.IsAddOnLoaded then return C_AddOns.IsAddOnLoaded("Spoken_Places") end
 	return IsAddOnLoaded and IsAddOnLoaded("Spoken_Places") or false
 end
@@ -1668,7 +1668,7 @@ function C.NewPage(parent, addon, play, report, look)
 	-- Spoken Places' copy of the spellbook's page where it is installed, so every tab is on the same
 	-- paper as the places; the game's own atlas where the client has it; a plain colour where
 	-- neither. Drawn from a file wherever it can be, so the text's fade is cut from the same picture.
-	local art = look.art or (ZonesLoaded() and SPELLBOOK_PAGE) or nil
+	local art = look.art or (PlacesLoaded() and SPELLBOOK_PAGE) or nil
 	local file, coords
 	if art then
 		file, coords = art.file, art.coords
@@ -1686,7 +1686,7 @@ function C.NewPage(parent, addon, play, report, look)
 	-- each heading. Laid out as if it started BACKPLATE_CUT left of the page, and cut there and at
 	-- the page's right edge rather than drawn past them: past the left it showed over the window's
 	-- list and over the map's border beside the panel.
-	if ZonesLoaded() then
+	if PlacesLoaded() then
 		local plate = look.backplate or { full = BACKPLATE_FULL, height = 110 }
 		local backplate = frame:CreateTexture(nil, "BORDER")
 		backplate:SetTexture(ZONES_ART .. "spellbook-list-backplate")
@@ -1761,7 +1761,7 @@ function C.NewPage(parent, addon, play, report, look)
 	divider:SetHeight(11)
 	divider:SetPoint("TOPLEFT", sub, "BOTTOMLEFT", -6, -10)
 	local rule
-	if ZonesLoaded() then
+	if PlacesLoaded() then
 		rule = { file = ZONES_ART .. "spellbook-divider", width = 657, left = 0, right = 0.641602, top = 0, bottom = 0.6875 }
 	else
 		local spot = AtlasSpot("spellbook-divider")

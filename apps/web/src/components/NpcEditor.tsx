@@ -305,7 +305,7 @@ export default function NpcEditor({
   const pathname = usePathname();
   const params = useSearchParams();
   // The filters live in the URL, so a reload or a shared link keeps the view. Written with
-  // native history calls rather than the router, for zones/Explorer.tsx's reason: the rows
+  // native history calls rather than the router, for places/Explorer.tsx's reason: the rows
   // are all here already, and Next re-renders useSearchParams() from a native history call.
   const query = params.get("q") ?? "";
   const speakerParam = params.get("speaker");

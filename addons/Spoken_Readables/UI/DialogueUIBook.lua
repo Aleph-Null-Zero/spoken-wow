@@ -5,8 +5,8 @@
 -- DialogueUI loads every page of a book as it opens it and leaves the game on the last, so Play
 -- reads the book from its first page, not from the page the game is on.
 
-local _, SpokenBooks = ...
-local L = SpokenBooks.L
+local _, SpokenReadables = ...
+local L = SpokenReadables.L
 
 local ROUND, ROUND_GAP = 24, 4
 -- DialogueUI's speaker, as it draws it, given back when the row goes.
@@ -14,7 +14,7 @@ local THEIRS_ALPHA = 0.6
 local LOOK_EVERY = 0.1
 
 local Book = {}
-SpokenBooks.DialogueUIBook = Book
+SpokenReadables.DialogueUIBook = Book
 
 local function View()
 	return _G.DUIBookFrame
@@ -23,9 +23,9 @@ end
 --- The book open in the view: its key and its first page, or nil for a page nothing
 --- carries.
 local function OpenBook()
-	local pageId = SpokenBooks.lastPage
-	local key = pageId and SpokenBooks:PlaceOf(pageId)
-	local entry = key and SpokenBooks:BookById(key)
+	local pageId = SpokenReadables.lastPage
+	local key = pageId and SpokenReadables:PlaceOf(pageId)
+	local entry = key and SpokenReadables:BookById(key)
 	if not entry then
 		return nil, nil
 	end
@@ -36,8 +36,8 @@ end
 --- one open in the view.
 local function ReadingPage(key, first)
 	local head = Spoken.GetCurrent and Spoken:GetCurrent()
-	if key and head and head.pageId and SpokenBooks:IsQueued(head.pageId)
-		and SpokenBooks:PlaceOf(head.pageId) == key then
+	if key and head and head.pageId and SpokenReadables:IsQueued(head.pageId)
+		and SpokenReadables:PlaceOf(head.pageId) == key then
 		return head.pageId
 	end
 	return first
@@ -52,7 +52,7 @@ function Book:Tooltip()
 	local view = View()
 	local tooltip = self.tooltip
 	if not tooltip then
-		tooltip = CreateFrame("GameTooltip", "SpokenBooksDialogueUITooltip", view, "GameTooltipTemplate")
+		tooltip = CreateFrame("GameTooltip", "SpokenReadablesDialogueUITooltip", view, "GameTooltipTemplate")
 		tooltip:SetFrameStrata("TOOLTIP")
 		self.tooltip = tooltip
 	end
@@ -63,9 +63,9 @@ end
 --- What a click on Play does now, and Read Automatically, which a right-click switches.
 local function PlayTip(tooltip)
 	local key = OpenBook()
-	local reading = key and SpokenBooks:IsNarrating(key)
+	local reading = key and SpokenReadables:IsNarrating(key)
 	tooltip:SetText(reading and L.STOP_TIP or L.PLAY_TIP)
-	local on = SpokenBooksSettings and SpokenBooksSettings.autoplay
+	local on = SpokenReadablesSettings and SpokenReadablesSettings.autoplay
 	tooltip:AddDoubleLine(L.OPT_AUTOPLAY, on and L.DUI_ON or L.DUI_OFF, 1, 1, 1,
 		on and 0.1 or 1, on and 1 or 0.125, on and 0.1 or 0.125)
 	tooltip:AddLine(L.DUI_PLAY_RIGHT_CLICK, 1, 0.82, 0, true)
@@ -81,15 +81,15 @@ function Book:Row()
 	row:SetTip(play, PlayTip)
 	play:SetScript("OnClick", function(_, mouse)
 		if mouse == "RightButton" then
-			if SpokenBooksSettings then
-				SpokenBooksSettings.autoplay = not SpokenBooksSettings.autoplay
+			if SpokenReadablesSettings then
+				SpokenReadablesSettings.autoplay = not SpokenReadablesSettings.autoplay
 			end
 		else
 			local key, first = OpenBook()
-			if key and SpokenBooks:IsNarrating(key) then
-				SpokenBooks:StopReading(key)
+			if key and SpokenReadables:IsNarrating(key) then
+				SpokenReadables:StopReading(key)
 			elseif first then
-				SpokenBooks:SyncTo(first, nil, true)
+				SpokenReadables:SyncTo(first, nil, true)
 			end
 		end
 		Book:Draw()
@@ -97,7 +97,7 @@ function Book:Row()
 	end)
 	report:SetScript("OnClick", function()
 		local pageId = ReadingPage(OpenBook())
-		if pageId then SpokenBooks:ShowReport(pageId) end
+		if pageId then SpokenReadables:ShowReport(pageId) end
 	end)
 	row:SetTip(report, function(tooltip)
 		tooltip:SetText(L.REPORT_PROBLEM)
@@ -106,7 +106,7 @@ function Book:Row()
 	local since = 0
 	-- Open in Azeroth's Compendium, on a writing it lists. The view is a child of UIParent, which
 	-- DialogueUI hides while it is open, so the view closes first.
-	local open = SpokenBooks.NewOpenButton and SpokenBooks:NewOpenButton(row.frame, function() return Book:Tooltip() end)
+	local open = SpokenReadables.NewOpenButton and SpokenReadables:NewOpenButton(row.frame, function() return Book:Tooltip() end)
 	if open then
 		open:SetFrameStrata("FULLSCREEN")
 		open.beforeOpen = function()
@@ -168,7 +168,7 @@ function Book:Lower(contentHeight, maxPage)
 	end
 	local view = View()
 	local close, header, scroll = view.CloseButton, view.Header, view.ScrollFrame
-	if not (SpokenBooks:IsPartOn() and type(close) == "table" and close.GetWidth and type(header) == "table"
+	if not (SpokenReadables:IsPartOn() and type(close) == "table" and close.GetWidth and type(header) == "table"
 		and type(header.Title) == "table" and type(scroll) == "table") then
 		return
 	end
@@ -288,7 +288,7 @@ end
 --- The row while the view is open with the part on; DialogueUI's own buttons back otherwise.
 function Book:Draw()
 	local view = View()
-	if not (view and view:IsShown() and SpokenBooks:IsPartOn()) then
+	if not (view and view:IsShown() and SpokenReadables:IsPartOn()) then
 		CoverTheirs(false)
 		self:RestoreClose()
 		if self.row and self.row.frame:IsShown() then
@@ -303,16 +303,16 @@ function Book:Draw()
 	CoverTheirs(true)
 	self:PlaceClose()
 	local key, first = OpenBook()
-	local voiced = first ~= nil and SpokenBooks:HasAudio(first)
+	local voiced = first ~= nil and SpokenReadables:HasAudio(first)
 	SetEnabled(row.play, voiced)
-	local state = key and SpokenBooks:IsNarrating(key) and "stop" or "play"
+	local state = key and SpokenReadables:IsNarrating(key) and "stop" or "play"
 	if row.play.state ~= state then
 		row.play:SetState(state)
 	end
 	SetEnabled(row.skip, Spoken.GetCurrent ~= nil and Spoken:GetCurrent() ~= nil)
 	row.report:SetShown(voiced and not ReportsHidden())
 	if row.open then
-		local shown = SpokenBooks.CompendiumHas ~= nil and SpokenBooks:CompendiumHas(key) or false
+		local shown = SpokenReadables.CompendiumHas ~= nil and SpokenReadables:CompendiumHas(key) or false
 		row.open.bookId = shown and key or nil
 		if (row.open:IsShown() and true or false) ~= shown then row.open:SetShown(shown) end
 	end
@@ -392,7 +392,7 @@ end
 
 --- A clip of the book open in the view.
 local function Mine(clip)
-	local key = clip and clip.pageId and SpokenBooks:PlaceOf(clip.pageId)
+	local key = clip and clip.pageId and SpokenReadables:PlaceOf(clip.pageId)
 	return key ~= nil and key == OpenBook()
 end
 
@@ -488,7 +488,7 @@ function Book:HookScroll()
 end
 
 --- Hooked once DialogueUI's book view exists, with the player there to draw the buttons.
-function SpokenBooks:SetupDialogueUIBook()
+function SpokenReadables:SetupDialogueUIBook()
 	local view = View()
 	if Book.hooked or not (view and view.HookScript and _G.Spoken and Spoken.CreateDialogueUIRow) then
 		return

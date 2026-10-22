@@ -81,7 +81,7 @@ VoiceOver.DataModules:Register("{module}", {module})
 # only once no supported release still looks for it.
 #
 # The Interface line names every client the packs ship for - Era, Anniversary, Forever - as
-# the zones and books packs do. DataModules turns checkAddonVersion off around LoadAddOn, which
+# the places and readables packs do. DataModules turns checkAddonVersion off around LoadAddOn, which
 # loads a pack a client calls out of date, but Forever build 70170 calls an Interface it does
 # not list incompatible instead, and nothing turns that off: the pack has to name the client.
 DEFAULT_TITLE = "Spoken Audio: Quests"

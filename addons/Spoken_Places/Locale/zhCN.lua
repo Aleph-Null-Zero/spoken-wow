@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "zhCN" then
 	return
@@ -92,4 +92,4 @@ L.OPT_DEV_PREVIEW = "提供未完成的翻译"
 
 L.OPEN_IN_COMPENDIUM = "在艾泽拉斯百科中打开"
 
-SpokenZones:RegisterStrings("zhCN", L)
+SpokenPlaces:RegisterStrings("zhCN", L)

@@ -29,8 +29,8 @@ import {
 } from "@/lib/contributions/intake";
 import { countRecentContributions, recordContributionHit } from "@/lib/contributions/store";
 import { formatTarget, parseTarget, resolveTarget } from "@/lib/reports/target";
-import { pageById } from "@/lib/books/catalogue";
-import { lineByPath } from "@/lib/zones/catalogue";
+import { pageById } from "@/lib/readables/catalogue";
+import { lineByPath } from "@/lib/places/catalogue";
 import { type Source, isSource } from "@/lib/sections";
 
 export const dynamic = "force-dynamic";
@@ -65,21 +65,21 @@ export async function POST(request: Request) {
    * load there is no sound data at all, and that is the failure most worth reporting. So it
    * is validated for shape and the lineId is filled in only if it resolves.
    *
-   * A zones address is the line's own audio path, because that is what the report link is,
+   * A places address is the line's own audio path, because that is what the report link is,
    * and it either names a line or it does not. Accepting one that names nothing would put a
    * row in triage that nobody can act on -- there is no equivalent of a data module having
    * failed to load, since the address came from a page this site rendered.
    *
-   * A books address is the page id the addon built its link from, and is resolved as strictly
-   * as a zones one for the same reason: the reporter got here from a page this site rendered,
+   * A readables address is the page id the addon built its link from, and is resolved as strictly
+   * as a places one for the same reason: the reporter got here from a page this site rendered,
    * so an id naming nothing is a typo in the URL bar rather than a corpus that failed to load.
    */
   const raw = typeof body.target === "string" ? body.target : null;
   const addressed =
-    source === "zones"
-      ? await zonesTarget(raw)
-      : source === "books"
-        ? await booksTarget(raw)
+    source === "places"
+      ? await placesTarget(raw)
+      : source === "readables"
+        ? await readablesTarget(raw)
         : await questsTarget(raw, body.lineId);
 
   if (!addressed) {
@@ -137,9 +137,9 @@ export async function POST(request: Request) {
  * "Nothing played" with the text attached is also a contribution: the player's client holds a
  * line the corpus may not. Filed through the contribute route's own checks and allowance, and
  * dropped as that route drops it when the corpus already has the line -- then the audio, not
- * the text, is what is missing, and the report says so. Zones never: a zones report is about
- * lore that exists, and a zones contribution is a description someone wrote. Books never in
- * practice: a books report names a corpus page by `id`, so submissionFrom finds no `page`.
+ * the text, is what is missing, and the report says so. Places never: a places report is about
+ * lore that exists, and a places contribution is a description someone wrote. Readables never
+ * in practice: a readables report names a corpus page by `id`, so submissionFrom finds no `page`.
  */
 async function contributeMissing(
   envelope: Envelope,
@@ -147,7 +147,7 @@ async function contributeMissing(
   complaint: string,
   identity: Omit<Identity, "body"> & { ip: string },
 ): Promise<void> {
-  if (envelope.source === "zones") return;
+  if (envelope.source === "places") return;
   const submission = submissionFrom(envelope, raw);
   if (!submission) return;
   const [recent, [known]] = await Promise.all([
@@ -181,12 +181,12 @@ async function questsTarget(
 }
 
 /**
- * A books address: the page id, '261'.
+ * A readables address: the page id, '261'.
  *
  * The lineId is taken from the page the id resolves to rather than from the body, as the
- * zones branch does. Nothing the reporter can edit decides which row triage sees.
+ * places branch does. Nothing the reporter can edit decides which row triage sees.
  */
-async function booksTarget(
+async function readablesTarget(
   raw: string | null,
 ): Promise<{ lineId: string | null; target: string } | null> {
   if (!raw) return null;
@@ -197,8 +197,8 @@ async function booksTarget(
   return { lineId: page.id, target: page.file };
 }
 
-/** A zones address: the line's own audio path, '1411/razor-hill'. */
-async function zonesTarget(
+/** A places address: the line's own audio path, '1411/razor-hill'. */
+async function placesTarget(
   raw: string | null,
 ): Promise<{ lineId: string | null; target: string } | null> {
   if (!raw) return null;

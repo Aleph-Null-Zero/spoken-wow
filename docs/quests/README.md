@@ -165,8 +165,8 @@ else the unsuffixed one, which Forever reads), so a single archive serves them a
 client chooses.
 
 The sound packs are the same files on every client. Their
-`## Interface: 11509, 20506, 16001` names Era, Anniversary and Forever, as the zones and
-books packs do. `DataModules` sets `checkAddonVersion` to 0 around
+`## Interface: 11509, 20506, 16001` names Era, Anniversary and Forever, as the places and
+readables packs do. `DataModules` sets `checkAddonVersion` to 0 around
 `LoadAddOn` so a client that considers a pack out of date loads it anyway. That switch reaches "out of date" and nothing else: the Forever client marks an
 Interface it does not list as incompatible (since build 70170), which no setting overrides, so
 every client a pack is filed against has to be on the line. Packs up to quests 2.2.0 carried
@@ -944,7 +944,7 @@ credits, so nothing public can start one; someone reads the report, listens, and
 file through the normal flow.
 
 `/reports/sort` is the same triage one line at a time, laid out for a phone. It offers quests
-(gossip included), books and zones with how many lines each has open, then walks one section's
+(gossip included), readables and places with how many lines each has open, then walks one section's
 lines, most reported first, each with its line, its takes, its reports, the explorers' player
 and Play, Edit and Regenerate.
 Fixed, Not a problem and Minor answer every open report on the line. Skip is per person and stored in
@@ -1502,7 +1502,7 @@ Two generated files feed it, both committed so the addon never needs a database:
   quest with its English title, its zone as uiMapIDs (the quest log's zone, a dungeon counting as
   the zone of its entrance, else where its giver stands: the area the repack's map files put the
   spawn in, `COMPENDIUM_MAPS` (the repack's `data/maps` folder; the run with the DB stops
-  without it, `--no-db` uses the rectangles), as the books' places have it, else the smallest zone
+  without it, `--no-db` uses the rectangles), as the readables' places have it, else the smallest zone
   rectangle where no tile was extracted, and a city's rectangle over the ground around it), or the QuestSort of a class, profession
   or season with its name in every language, and the races and classes allowed to take it. Areas,
   zones and sorts are read from Forever's client tables (build 1.60.1.70338 on wago.tools, pinned
@@ -1518,7 +1518,7 @@ Two generated files feed it, both committed so the addon never needs a database:
   dungeon's own area, an area of its map, or an area of its name (Gnomeregan's quests are under
   133, an area of Dun Morogh), else the client's `zoneAreaId` is (`Maps.dungeon_of_area`). The
   dungeons, their entrances' zones and the other instances come from `pipelines/lib/dungeons.json`,
-  which the books' places read too; their names in every language are Spoken's
+  which the readables' places read too; their names in every language are Spoken's
   `Data/Dungeons.lua` (`make dungeons`). The Excavation Site in the Wetlands is an instance of the
   Wetlands' own quests, not a dungeon.
   Battleground quests are under the battleground: the quest log files a few under an area of its

@@ -26,7 +26,7 @@ Neither one can be accepted today:
   which names no page, and intake does not try to match.
 
 The import skips every locale page with no English row (`withoutEnglish` in
-`pipelines/books/tools/lib/locale.mjs`). That skip is right and stays: a `locales_page_text` entry
+`pipelines/readables/tools/lib/locale.mjs`). That skip is right and stays: a `locales_page_text` entry
 is a `page_text` entry, and the English extract already holds every one something can open. The
 rest are the orphans the README counts.
 
@@ -156,7 +156,7 @@ number. No row is refused for lacking an English page.
 
 ## Packs and the addon
 
-- A language's `Data/Sounds.lua` index (`pipelines/books/tools/lib/lookup.mjs`) is built from
+- A language's `Data/Sounds.lua` index (`pipelines/readables/tools/lib/lookup.mjs`) is built from
   `book_page` joined with that language's `book_line`, so minted pages are in it. Each page is
   indexed under the checksum of its current text, and also under the checksum of its extracted
   text when the two differ. Era's wording and Forever's then both play.

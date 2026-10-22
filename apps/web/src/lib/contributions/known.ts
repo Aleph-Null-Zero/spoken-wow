@@ -22,7 +22,7 @@
  * as a body its voice is not, it is missing until the NPC is split by body: the voice the site
  * has is the wrong one, and storing the row is what splits it.
  *
- * A books row is compared through the books matcher (book-match.ts): the same words on the page
+ * A readables row is compared through the readables matcher (book-match.ts): the same words on the page
  * it matches (the page a moderator named, if one did) are known, other words a correction. A zone has no text to compare.
  */
 import type { PoolClient } from "pg";
@@ -52,7 +52,7 @@ export type LineState =
    */
   | { kind: "changed"; wordings: CorpusText[]; closest: number };
 
-/** A stored row also carries a moderator's books answer; an intake submission has none. */
+/** A stored row also carries a moderator's readables answer; an intake submission has none. */
 type Comparable = Pick<Submission, "source" | "locale" | "text" | "meta"> &
   Partial<Pick<Contribution, "matchLineId" | "matchBookId" | "matchPageNumber" | "matchNewBook">>;
 
@@ -191,9 +191,9 @@ async function voicedBodies(npcIds: number[]): Promise<Map<number, VoicedBodies>
   return voiced;
 }
 
-/** Each contribution's LineState, in the order given: three queries for the lot, and the books corpus when a books row is in it. */
+/** Each contribution's LineState, in the order given: three queries for the lot, and the readables corpus when a readables row is in it. */
 export async function lineStates(rows: readonly Comparable[]): Promise<LineState[]> {
-  const books = rows.some((row) => row.source === "books" && row.text) ? await loadBookCorpus() : null;
+  const books = rows.some((row) => row.source === "readables" && row.text) ? await loadBookCorpus() : null;
   const moments: { locale: string; moment: string }[] = [];
   const greetings: { locale: string; npcId: number }[] = [];
   // Only a greeting that reports a sex can be seen as another body, as only such a row splits.
@@ -215,7 +215,7 @@ export async function lineStates(rows: readonly Comparable[]): Promise<LineState
   ]);
 
   return rows.map((row) => {
-    if (row.source === "books") {
+    if (row.source === "readables") {
       if (!books || !row.text) return MISSING;
       // A moderator's stored answer overrides the matcher, as it does when the row is accepted.
       const match = matchBook(

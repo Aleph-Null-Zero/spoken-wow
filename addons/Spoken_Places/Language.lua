@@ -1,4 +1,4 @@
--- SpokenZones -- the language axis.
+-- SpokenPlaces -- the language axis.
 --
 -- Two identifiers live here and are deliberately never merged:
 --
@@ -23,23 +23,30 @@
 -- This file loads before Core.lua and before anything under Data/, because the
 -- generated data files ask ShouldLoadLanguage whether to build their tables at
 -- all. That question can only be answered this early because Spoken_Places.toc sets
--- LoadSavedVariablesFirst -- SpokenZonesSettings is already populated when these files
+-- LoadSavedVariablesFirst -- SpokenPlacesSettings is already populated when these files
 -- run. Removing that .toc line does not error; it silently pins every player to
 -- English.
 
-local ADDON_NAME, SpokenZones = ...
+local ADDON_NAME, SpokenPlaces = ...
+
+-- The saved variables were SpokenZonesSettings and SpokenZonesCharacter before the module was
+-- Places. The .toc lists the old names after the new, so they are loaded once more and carried
+-- over here; left nil, they are not saved again.
+if SpokenPlacesSettings == nil then SpokenPlacesSettings = SpokenZonesSettings end
+if SpokenPlacesCharacter == nil then SpokenPlacesCharacter = SpokenZonesCharacter end
+SpokenZonesSettings, SpokenZonesCharacter = nil, nil
 
 -- The settings live in Spoken's profile (Spoken:BindModuleSettings), copied from
 -- SpokenZonesSettings the first time. `dump` is a developer's scratch table, not a setting.
 -- Bound here, before anything reads the language, and again in Core.lua's InitConfig.
-function SpokenZones:BindSettings()
+function SpokenPlaces:BindSettings()
 	if not (Spoken and Spoken.BindModuleSettings) then return end
-	Spoken:BindModuleSettings("Zones", SpokenZonesSettings, function(settings)
-		SpokenZonesSettings = settings
-		if SpokenZones.OnSettingsBound then SpokenZones:OnSettingsBound() end
+	Spoken:BindModuleSettings("Places", SpokenPlacesSettings, function(settings)
+		SpokenPlacesSettings = settings
+		if SpokenPlaces.OnSettingsBound then SpokenPlaces:OnSettingsBound() end
 	end, { dump = true })
 end
-SpokenZones:BindSettings()
+SpokenPlaces:BindSettings()
 
 -- Every locale a Classic Era or Anniversary client can run in, plus the
 -- languages a community translates into that no client ships (`client = false`:
@@ -57,7 +64,7 @@ SpokenZones:BindSettings()
 --
 -- Must stay in step with LOCALES in tools/lib/locales.mjs; tools/validate.mjs
 -- fails the build if the two lists drift.
-SpokenZones.LOCALES = {
+SpokenPlaces.LOCALES = {
 	{ code = "enUS", name = "English", native = "English", script = "latin" },
 	{ code = "deDE", name = "German", native = "Deutsch", script = "latin" },
 	{ code = "esES", name = "Spanish (EU)", native = "Español (España)", script = "latin" },
@@ -75,24 +82,24 @@ SpokenZones.LOCALES = {
 local BASE = "enUS"
 
 local byCode = {}
-for i = 1, #SpokenZones.LOCALES do
-	byCode[SpokenZones.LOCALES[i].code] = SpokenZones.LOCALES[i]
+for i = 1, #SpokenPlaces.LOCALES do
+	byCode[SpokenPlaces.LOCALES[i].code] = SpokenPlaces.LOCALES[i]
 end
 
-SpokenZones.clientLocale = GetLocale()
+SpokenPlaces.clientLocale = GetLocale()
 
 -- Whether a game client runs in this language. See `client` on LOCALES.
-function SpokenZones:IsClientLanguage(code)
+function SpokenPlaces:IsClientLanguage(code)
 	local locale = code and byCode[code]
 	return locale ~= nil and locale.client ~= false
 end
 
 -- Localized area name -> English corpus key, keyed by *client* locale.
 -- Populated by Data/<locale>/Aliases.lua.
-SpokenZones.Aliases = {}
+SpokenPlaces.Aliases = {}
 -- Localized area name -> uiMapID -> English corpus key, for a name the client gives more than
 -- one place. Only in the alias files built since the table existed.
-SpokenZones.ZoneAliases = {}
+SpokenPlaces.ZoneAliases = {}
 
 --------------------------------------------------------------------------------
 -- Readiness
@@ -102,10 +109,10 @@ SpokenZones.ZoneAliases = {}
 -- Data/Languages.lua. Declared here so this file works before that one loads and
 -- on a build where it is missing: without it only English exists, which is the
 -- state the addon shipped in for its whole life so far.
-SpokenZones.Languages = SpokenZones.Languages or {}
+SpokenPlaces.Languages = SpokenPlaces.Languages or {}
 
 local function coverage(code)
-	local list = SpokenZones.Languages
+	local list = SpokenPlaces.Languages
 	for i = 1, #list do
 		if list[i].code == code then
 			return list[i]
@@ -118,7 +125,7 @@ end
 -- non-English language a client runs in, an alias table). Interface strings are not required -- they
 -- fall back to English per key. Computed at build time rather than counted
 -- here, because the addon cannot know how many lines there are supposed to be.
-function SpokenZones:IsLanguageReady(code)
+function SpokenPlaces:IsLanguageReady(code)
 	if code == BASE then
 		return true
 	end
@@ -144,7 +151,7 @@ local function draws(text, path)
 	return width > 0 and math.abs(width - missing) > 0.5
 end
 
-function SpokenZones:FontDraws(text, path)
+function SpokenPlaces:FontDraws(text, path)
 	if not (path and UIParent and UIParent.CreateFontString) then
 		return false
 	end
@@ -169,7 +176,7 @@ local SCRIPT_FONTS = {
 --- The font file to write `code` (the lore's language by default) in where a page uses
 --- `fontObject`: the object's own file where it draws that script, else the client's font for the
 --- script. Nil where neither draws it.
-function SpokenZones:FontFor(fontObject, code)
+function SpokenPlaces:FontFor(fontObject, code)
 	local path = fontObject and fontObject.GetFont and fontObject:GetFont()
 	local locale = byCode[code or self:GetLanguage()]
 	if not path or not locale or locale.script == "latin" then
@@ -199,7 +206,7 @@ end
 -- German client is a screen of boxes, a bug report that looks like corrupted data. English is
 -- always allowed: it is what the addon falls back to, and every client can draw it. Another
 -- script is tested once a session by drawing the language's own name.
-function SpokenZones:CanRenderLanguage(code)
+function SpokenPlaces:CanRenderLanguage(code)
 	if code == BASE then
 		return true
 	end
@@ -235,19 +242,19 @@ end
 -- The stored preference, or nil for "follow the client". The two are not the
 -- same: a player who never chose should start reading German the day German
 -- ships, while one who explicitly picked English must keep English.
-function SpokenZones:GetLanguagePreference()
-	local pref = SpokenZonesSettings and SpokenZonesSettings.language
+function SpokenPlaces:GetLanguagePreference()
+	local pref = SpokenPlacesSettings and SpokenPlacesSettings.language
 	return type(pref) == "string" and byCode[pref] and pref or nil
 end
 
-function SpokenZones:IsPreviewingLanguage()
-	return (SpokenZonesSettings and SpokenZonesSettings.languagePreview) and true or false
+function SpokenPlaces:IsPreviewingLanguage()
+	return (SpokenPlacesSettings and SpokenPlacesSettings.languagePreview) and true or false
 end
 
 -- Whether a language may be selected at all. Preview mode relaxes readiness so
 -- an unfinished translation can be looked at, but never relaxes the font check:
 -- previewing boxes tells you nothing.
-function SpokenZones:IsLanguageSelectable(code)
+function SpokenPlaces:IsLanguageSelectable(code)
 	if not byCode[code] then
 		return false
 	end
@@ -260,7 +267,7 @@ end
 -- What Auto reads: the client's own language once it is finished, English until
 -- then. Options names it beside Auto, so a player can see what they will get
 -- without having to pick it -- and picking it would pin them to it.
-function SpokenZones:GetAutoLanguage()
+function SpokenPlaces:GetAutoLanguage()
 	local client = self.clientLocale
 	if self:IsClientLanguage(client) and self:IsLanguageReady(client) and self:CanRenderLanguage(client) then
 		return client
@@ -269,30 +276,30 @@ function SpokenZones:GetAutoLanguage()
 end
 
 local function resolve()
-	local pref = SpokenZones:GetLanguagePreference()
-	if pref and SpokenZones:IsLanguageSelectable(pref) then
+	local pref = SpokenPlaces:GetLanguagePreference()
+	if pref and SpokenPlaces:IsLanguageSelectable(pref) then
 		return pref
 	end
-	return SpokenZones:GetAutoLanguage()
+	return SpokenPlaces:GetAutoLanguage()
 end
 
 -- What the settings in force now would read: not what was loaded (GetLanguage), which a profile
 -- chosen later can disagree with until the interface reloads.
-function SpokenZones:ResolveLanguage()
+function SpokenPlaces:ResolveLanguage()
 	return resolve()
 end
 
 -- Resolved once, at load, and never recomputed: the generated data files consult
 -- it as they load and only get one chance to build their table. Everything that
 -- changes the answer therefore asks for a /reload.
-SpokenZones.language = resolve()
+SpokenPlaces.language = resolve()
 
-function SpokenZones:GetLanguage()
+function SpokenPlaces:GetLanguage()
 	return self.language
 end
 
 -- Every language the player could pick right now, in LOCALES order.
-function SpokenZones:GetSelectableLanguages()
+function SpokenPlaces:GetSelectableLanguages()
 	local out = {}
 	for i = 1, #self.LOCALES do
 		local locale = self.LOCALES[i]
@@ -303,7 +310,7 @@ function SpokenZones:GetSelectableLanguages()
 	return out
 end
 
-function SpokenZones:GetLocaleInfo(code)
+function SpokenPlaces:GetLocaleInfo(code)
 	return byCode[code]
 end
 
@@ -311,7 +318,7 @@ end
 -- drawable -- the dropdown, the language list and the pack label all list
 -- renderable languages only. Anywhere else (the no-fonts warning) uses the code,
 -- which is ASCII on every client.
-function SpokenZones:GetLanguageName(code)
+function SpokenPlaces:GetLanguageName(code)
 	local locale = byCode[code or BASE]
 	if not locale then
 		return tostring(code)
@@ -327,22 +334,22 @@ end
 -- Takes effect on /reload. Nothing here fakes a live switch: the tables for a
 -- language that was not active at load were never built, and pretending
 -- otherwise would show half-translated screens.
-function SpokenZones:SetLanguage(code)
+function SpokenPlaces:SetLanguage(code)
 	if code ~= nil and not self:IsLanguageSelectable(code) then
 		return false
 	end
-	SpokenZonesSettings.language = code
+	SpokenPlacesSettings.language = code
 	return true
 end
 
-function SpokenZones:SetLanguagePreview(enabled)
-	SpokenZonesSettings.languagePreview = enabled and true or false
+function SpokenPlaces:SetLanguagePreview(enabled)
+	SpokenPlacesSettings.languagePreview = enabled and true or false
 end
 
 --------------------------------------------------------------------------------
 -- Interface strings
 --
--- SpokenZones.L is every string the interface can show, looked up by name:
+-- SpokenPlaces.L is every string the interface can show, looked up by name:
 -- the active language first, English second, and the key itself last so a
 -- missing string is legible on screen rather than a nil concatenation error.
 --
@@ -353,22 +360,22 @@ end
 -- exactly what a translator cannot fix inside a Lua concatenation.
 --------------------------------------------------------------------------------
 
-SpokenZones.Strings = { enUS = {} }
+SpokenPlaces.Strings = { enUS = {} }
 
 local warnedMissing = {}
 
-SpokenZones.L = setmetatable({}, {
+SpokenPlaces.L = setmetatable({}, {
 	__index = function(_, key)
 		-- Interface strings follow the client, not the content language: the
 		-- locale file for any other code never loads on this client, so there
 		-- is nothing else it could fall back to before English.
-		local active = SpokenZones.Strings[SpokenZones.clientLocale]
+		local active = SpokenPlaces.Strings[SpokenPlaces.clientLocale]
 		local value = active and active[key]
 		if value ~= nil then
 			return value
 		end
 
-		value = SpokenZones.Strings.enUS[key]
+		value = SpokenPlaces.Strings.enUS[key]
 		if value ~= nil then
 			return value
 		end
@@ -376,9 +383,9 @@ SpokenZones.L = setmetatable({}, {
 		-- Only in debug mode, and only once: a key with no English string is a
 		-- bug in this addon rather than a gap in a translation, and it should be
 		-- findable by playing rather than by grepping.
-		if SpokenZones:Get("debug") and not warnedMissing[key] then
+		if SpokenPlaces:Get("debug") and not warnedMissing[key] then
 			warnedMissing[key] = true
-			SpokenZones:Print("|cffffcc00no string for|r [[%s]]", key)
+			SpokenPlaces:Print("|cffffcc00no string for|r [[%s]]", key)
 		end
 		return "[[" .. key .. "]]"
 	end,
@@ -393,7 +400,7 @@ SpokenZones.L = setmetatable({}, {
 -- missing line of lore has an honest empty state, which prose from another language
 -- does not improve on. The readiness gate demands 100% of both before a language is
 -- offered, so both paths are safety nets rather than plans.
-function SpokenZones:RegisterStrings(code, strings)
+function SpokenPlaces:RegisterStrings(code, strings)
 	self.Strings[code] = strings
 end
 
@@ -410,7 +417,7 @@ end
 --
 -- Keep English available for captions when a translated sound pack lacks a clip.
 -- The lore browser still uses only the selected language.
-function SpokenZones:ShouldLoadLanguage(code)
+function SpokenPlaces:ShouldLoadLanguage(code)
 	if code == self.language or code == BASE then return true end
 	if not self:CanRenderLanguage(code) then return false end
 	-- Packs can load after the lore tables. Their metadata is available before
@@ -419,13 +426,15 @@ function SpokenZones:ShouldLoadLanguage(code)
 	local metadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
 	if count and metadata then
 		for index = 1, count() do
-			if metadata(index, "X-SpokenZones-Language") == code then return true end
+			-- X-SpokenZones-Language: a pack released under the old name.
+			local language = metadata(index, "X-SpokenPlaces-Language") or metadata(index, "X-SpokenZones-Language")
+			if language == code then return true end
 		end
 	end
 	return false
 end
 
-function SpokenZones:RegisterLoreData(code, kind, data)
+function SpokenPlaces:RegisterLoreData(code, kind, data)
 	if not self:ShouldLoadLanguage(code) then
 		return
 	end
@@ -439,11 +448,11 @@ end
 
 -- Aliases are keyed by client locale, not content language, so this guard is
 -- deliberately not ShouldLoadLanguage.
-function SpokenZones:ShouldLoadAliases(locale)
+function SpokenPlaces:ShouldLoadAliases(locale)
 	return locale == self.clientLocale
 end
 
-function SpokenZones:RegisterAliases(locale, data, byZone)
+function SpokenPlaces:RegisterAliases(locale, data, byZone)
 	self.Aliases[locale] = data
 	self.ZoneAliases[locale] = byZone
 end

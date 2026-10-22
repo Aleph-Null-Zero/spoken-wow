@@ -98,7 +98,7 @@ describe("listActivity", () => {
     await recordActivity({
       kind: "batch.queued",
       lang: "deDE",
-      source: "zones",
+      source: "places",
       actorId: actor,
       subject: batchId,
       detail: { batchId, count: 2 },
@@ -107,7 +107,7 @@ describe("listActivity", () => {
       await recordActivity({
         kind: "take.generated",
         lang: "deDE",
-        source: "zones",
+        source: "places",
         actorId: actor,
         subject: `1411/test-${version}`,
         detail: { version, batchId },
@@ -116,7 +116,7 @@ describe("listActivity", () => {
     await recordActivity({
       kind: "take.generated",
       lang: "deDE",
-      source: "zones",
+      source: "places",
       actorId: actor,
       subject: "1411/by-hand",
       detail: { version: 1 },
@@ -196,7 +196,7 @@ describe("listActivity by day, with a batch that runs past midnight", () => {
     await recordActivity({
       kind: "batch.queued",
       lang: "deDE",
-      source: "zones",
+      source: "places",
       actorId: actor,
       subject: batchId,
       detail: { batchId, count: Object.keys(takes).length },
@@ -206,7 +206,7 @@ describe("listActivity by day, with a batch that runs past midnight", () => {
       await recordActivity({
         kind: "take.generated",
         lang: "deDE",
-        source: "zones",
+        source: "places",
         actorId: actor,
         subject,
         detail: { version: 1, batchId },

@@ -63,9 +63,9 @@ export const LINKED_MESSAGE = 'This folder is linked to a development checkout. 
 
 // ---------------------------------------------------------------- allowed names
 
-/** The folder names a product may install: voice packs' own, Spoken's list. */
+/** The folder names a product may install: voice packs' own and their names before a rename, Spoken's list. */
 export function allowedFolders(product: Product): string[] {
-  return product.folders ?? SPOKEN_FOLDERS
+  return [...(product.folders ?? SPOKEN_FOLDERS), ...(product.legacy?.folders ?? [])]
 }
 
 export type EntryCheck = { ok: true; segments: string[]; directory: boolean } | { ok: false; reason: string }

@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "ruRU" then
 	return
@@ -92,4 +92,4 @@ L.OPT_DEV_PREVIEW = "Незаконченные переводы"
 
 L.OPEN_IN_COMPENDIUM = "Открыть в «Компендиуме Азерота»"
 
-SpokenZones:RegisterStrings("ruRU", L)
+SpokenPlaces:RegisterStrings("ruRU", L)

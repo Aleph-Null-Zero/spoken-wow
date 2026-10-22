@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 -- esMX shares this file: nothing in these strings varies by region. Both codes
 -- register the same table, so check-strings.mjs (which reads one file per code)
@@ -107,5 +107,5 @@ L.DUNGEONS = "Mazmorras y bandas"
 
 L.OPEN_IN_COMPENDIUM = "Abrir en el Compendio de Azeroth"
 
-SpokenZones:RegisterStrings("esES", L)
-SpokenZones:RegisterStrings("esMX", L)
+SpokenPlaces:RegisterStrings("esES", L)
+SpokenPlaces:RegisterStrings("esMX", L)

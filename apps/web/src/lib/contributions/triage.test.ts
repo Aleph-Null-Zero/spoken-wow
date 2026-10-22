@@ -36,8 +36,8 @@ describe("questFor", () => {
   });
 
   it("is null for a source that has no quest concept at all", async () => {
-    expect(questFor({ source: "zones", meta: { map: "1519" } })).toBe(null);
-    expect(questFor({ source: "books", meta: { page: "42" } })).toBe(null);
+    expect(questFor({ source: "places", meta: { map: "1519" } })).toBe(null);
+    expect(questFor({ source: "readables", meta: { page: "42" } })).toBe(null);
   });
 
   it("is 'gossip' rather than a half-answer when only one of the two fields is present", async () => {
@@ -235,15 +235,15 @@ describe("labelOf", () => {
 describe("bookFor", () => {
   const match: BookMatchResult = { kind: "translation", lineId: "b:1", via: "owner" };
 
-  it("summarises a books row, with a link where the match names a page", () => {
-    const row = { source: "books", meta: { book: " Livro ", number: "2" } };
-    expect(bookFor(row, match, (id) => id, (id) => `/books/r/${id}`)).toEqual({
-      title: "Livro", number: 2, match, label: "Translation · b:1", href: "/books/r/b:1",
+  it("summarises a readables row, with a link where the match names a page", () => {
+    const row = { source: "readables", meta: { book: " Livro ", number: "2" } };
+    expect(bookFor(row, match, (id) => id, (id) => `/readables/r/${id}`)).toEqual({
+      title: "Livro", number: 2, match, label: "Translation · b:1", href: "/readables/r/b:1",
     });
     expect(bookFor(row, { kind: "new-book", title: "Livro", pageNumber: 2, via: "none" }, (id) => id, (id) => id)?.href).toBeNull();
   });
 
-  it("is null for a row that is not books", () => {
-    expect(bookFor({ source: "zones", meta: {} }, match, (id) => id)).toBeNull();
+  it("is null for a row that is not readables", () => {
+    expect(bookFor({ source: "places", meta: {} }, match, (id) => id)).toBeNull();
   });
 });

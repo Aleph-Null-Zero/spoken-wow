@@ -3,8 +3,8 @@
  *
  * Everything else about a take is the same in all three -- one table, one commit, one
  * history panel -- but the paths are frozen by AGENTS.md and differ on purpose. A quests
- * file carries its extension and is shared by several NPCs ('gossip/31ab….mp3'); a zones or
- * books file is extension-less and belongs to one line ('1411/razor-hill'). Renaming either
+ * file carries its extension and is shared by several NPCs ('gossip/31ab….mp3'); a places or
+ * readables file is extension-less and belongs to one line ('1411/razor-hill'). Renaming either
  * means re-shipping a sound pack every user has already downloaded.
  *
  * Every take of a file lives in one directory named after the file, one level deeper than
@@ -22,18 +22,18 @@
  * English v1 and the Portuguese v1 of a file would share a directory and be told apart only
  * by a content hash. English stays exactly where it is -- the archive is irreplaceable and a
  * path it is already at is not moved -- and no English path can begin with a language code:
- * quests paths begin quests/ or gossip/, zones paths a map id, books paths a page id.
+ * quests paths begin quests/ or gossip/, places paths a map id, readables paths a page id.
  */
 import "server-only";
 
 import path from "node:path";
 
-import { historyDir as booksHistory } from "@/lib/books/audio";
+import { historyDir as readablesHistory } from "@/lib/readables/audio";
 import { BASE_LANG, type Lang } from "@/lib/lang";
 import { AUDIO_HISTORY_DIR } from "@/lib/paths";
 import { isSafeAudioPath } from "@/lib/range";
 import type { Source } from "@/lib/sections";
-import { historyDir as zonesHistory } from "@/lib/zones/tools";
+import { historyDir as placesHistory } from "@/lib/places/tools";
 
 type StoreAdapter = {
   /** The section's archive, which a deployment points at its own directory. */
@@ -56,12 +56,12 @@ const ADAPTERS: Record<Source, StoreAdapter> = {
     root: () => AUDIO_HISTORY_DIR,
     relative: (file) => path.join(path.dirname(questsFile(file)), path.basename(file, ".mp3")),
   },
-  zones: {
-    root: zonesHistory,
+  places: {
+    root: placesHistory,
     relative: (file) => file,
   },
-  books: {
-    root: booksHistory,
+  readables: {
+    root: readablesHistory,
     relative: (file) => file,
   },
 };

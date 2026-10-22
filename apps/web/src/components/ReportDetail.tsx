@@ -113,7 +113,7 @@ export default function ReportDetail({
           <Button size="sm" variant="outline" disabled={busy} onClick={() => void regenerate()}>
             {busy ? "Regenerating…" : "Regenerate"}
           </Button>
-          {/* Quests only: the override endpoint is theirs, and zones and books have no text a
+          {/* Quests only: the override endpoint is theirs, and places and readables have no text a
               triager may edit - their lines are the corpus itself. */}
           {source === "quests" ? (
             <Button size="sm" variant="outline" disabled={busy} onClick={() => setEditing(true)}>

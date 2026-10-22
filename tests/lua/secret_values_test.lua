@@ -11,8 +11,8 @@ local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local ZONES = here .. "/../../addons/Spoken_Places/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local PLACES = here .. "/../../addons/Spoken_Places/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 --- Runs fn, and answers true or the error it raised.
@@ -246,23 +246,23 @@ stub.Secrets()
 CloseGossip()
 Expect("nothing went wrong in a callback", #_G.SpokenEnv.Callbacks.errors, 0)
 
----------------------------------------------------------------- zones
-local function BootZones()
+--------------------------------------------------------------- places
+local function BootPlaces()
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     world.inCombat = false
     world.playerLevel = 1
-    _G.SpokenZonesSettings = nil
-    _G.SpokenZonesCharacter = {}
-    _G.SpokenZonesAudioPacks = {
-        SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
+    _G.SpokenPlacesSettings = nil
+    _G.SpokenPlacesCharacter = {}
+    _G.SpokenPlacesAudioPacks = {
+        SpokenPlacesAudio = { version = 1, addon = "SpokenPlacesAudio", language = "enUS",
             zones = { [1411] = { file = "1411\\zone", len = 80 } },
             subzones = { [1411] = { ["valley of trials"] = { file = "1411\\valley", len = 35 } } } },
     }
     local zenv = stub.LoadSpoken(SPOKEN)
     zenv.Addon:Enable()
-    local Z = H.LoadZones(ZONES)
-    assert(loadfile(ZONES .. "Locale/enUS.lua"))("Spoken_Places", Z)
-    assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
+    local Z = H.LoadPlaces(PLACES)
+    assert(loadfile(PLACES .. "Locale/enUS.lua"))("Spoken_Places", Z)
+    assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
     Z.Zones[1411] = { name = "Durotar", full = "Durotar lore." }
     Z.Subzones[1411] = { ["valley of trials"] = { name = "Valley of Trials", full = "Valley lore." } }
     stub.SetZone({ map = 1411, zone = "Durotar", subzone = "Valley of Trials" })
@@ -271,7 +271,7 @@ local function BootZones()
     return Z
 end
 
-local Z = BootZones()
+local Z = BootPlaces()
 stub.Secrets(1411)
 Expect("a secret map is no map", Z:GetPlayerMapID(), nil)
 stub.Secrets()
@@ -285,15 +285,15 @@ Expect("a secret subzone raises no error in the login greeting", Quietly(functio
     stub.Advance(3)
 end), true)
 Expect("...which reads nothing", _G.Spoken:GetQueueSize(), 0)
-Expect("...and does not count as greeted", _G.SpokenZonesCharacter.greeted, nil)
+Expect("...and does not count as greeted", _G.SpokenPlacesCharacter.greeted, nil)
 stub.Secrets()
 stub.Advance(3)
 Expect("the subzone no longer secret, the greeting reads it", _G.Spoken:GetQueueSize(), 1)
 
 -- The discovery message, as #357 reported it from Shadowfang Keep.
-Z = BootZones()
-_G.SpokenZonesCharacter.greeted = true
-assert(loadfile(ZONES .. "Autoplay.lua"))("Spoken_Places", Z)
+Z = BootPlaces()
+_G.SpokenPlacesCharacter.greeted = true
+assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
 Z:SetupAutoplay()
 stub.Secrets("Discovered Durotar.")
 Expect("a secret discovery message raises no error",
@@ -305,15 +305,15 @@ Expect("not secret, it discovers the zone", _G.Spoken:GetQueueSize(), 1)
 
 ---------------------------------------------------------------- writings
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 stub.LoadSpoken(SPOKEN).Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
+dofile(READABLES .. "Data/Books.lua")
 local REGISTRY_1 = "Hillsbrad Town Registry\n\nWe the people of Hillsbrad do solemny swear our faith and devotion to the Alliance maintained by the great monarchs, King Magni Bronzebeard of Ironforge and King Anduin Wrynn of Stormwind.\n\nHerein lies the town registry for purposes of governing this fair city in the foothills of the great Alterac Mountains as well as serving as a record of those who have paid their taxes to their Kings and to the great almighty Alliance."
 stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1 })
 stub.Secrets(REGISTRY_1, "Hillsbrad Town Registry")

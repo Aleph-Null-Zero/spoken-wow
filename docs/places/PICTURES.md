@@ -6,22 +6,22 @@ Only pictures chosen by hand and reviewed ship, so a place with no picture shows
 
 ## From the wiki to a texture
 
-1. `node pipelines/zones/tools/pictures/fetch.mjs [--refresh]` asks warcraft.wiki.gg for a picture
+1. `node pipelines/places/tools/pictures/fetch.mjs [--refresh]` asks warcraft.wiki.gg for a picture
    for each zone and area page, preferring files the wiki marks as Classic. It writes
    `pictures/manifest.json` (page, file, licence, author) and the downloads to
-   `pipelines/zones/tools/cache/pictures/raw/`.
-2. `node pipelines/zones/tools/pictures/gallery.mjs [out]` downloads every picture on each place's
+   `pipelines/places/tools/cache/pictures/raw/`.
+2. `node pipelines/places/tools/pictures/gallery.mjs [out]` downloads every picture on each place's
    pages into a folder per place, to choose from by eye. The one `fetch.mjs` chose is prefixed
    `[picked]`.
 3. The chosen picture of each place is cleaned and sharpened with an image model
    (`Textures/Pictures/CREDITS.md` names it). That step runs outside this repository. What `prepare.py` reads is its result: in a folder laid out
    as the Places tab is (`Azeroth/<continent>/<zone>[/<area>]`), `<place> - new.png` beside the
    original, `<place> - old.<ext>`. A place with no `- new` has no picture.
-4. `make zones-pictures` runs `pipelines/zones/tools/pictures/prepare.py`, which writes the textures,
+4. `make places-pictures` runs `pipelines/places/tools/pictures/prepare.py`, which writes the textures,
    `Data/Pictures.lua` and `Textures/Pictures/CREDITS.md`.
 
 ```sh
-make zones-pictures CHOICES=<folder> ARGS="--force"
+make places-pictures CHOICES=<folder> ARGS="--force"
 ```
 
 `prepare.py` needs Python with numpy, Pillow and scipy. `CHOICES` defaults to the script's own
@@ -55,9 +55,9 @@ given the picture of the one that was reviewed.
 
 ## In the game
 
-`SpokenZones:Picture(mapID, key)` (`Core.lua`) returns the picture's path and its mask's, or nil
+`SpokenPlaces:Picture(mapID, key)` (`Core.lua`) returns the picture's path and its mask's, or nil
 for a place with none or with Show Pictures off. `Data/Pictures.lua` is
-`SpokenZones.pictures[mapID][key or ""] = { texture, mask number }`, where `""` is the zone itself.
+`SpokenPlaces.pictures[mapID][key or ""] = { texture, mask number }`, where `""` is the zone itself.
 `TextView.lua` draws the picture 2:1 and as wide as the text up to `PICTURE_MOST` (400), centred,
 `PICTURE_GAP` (10) above the words, at `PICTURE_ALPHA` (0.95), cut by the mask through a mask
 texture.

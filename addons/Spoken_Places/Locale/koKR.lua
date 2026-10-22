@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "koKR" then
 	return
@@ -92,4 +92,4 @@ L.OPT_DEV_PREVIEW = "미완성 번역 제공"
 
 L.OPEN_IN_COMPENDIUM = "아제로스 백과사전에서 열기"
 
-SpokenZones:RegisterStrings("koKR", L)
+SpokenPlaces:RegisterStrings("koKR", L)

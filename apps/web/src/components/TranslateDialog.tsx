@@ -13,7 +13,7 @@ import { useLang } from "./LangProvider";
 //
 // One dialog for both because a translation is the same job whatever is being translated:
 // the English above, the box below, the versions behind it. What differs is only where it is
-// saved and what addresses it, which the caller passes. The books and zones editors keep
+// saved and what addresses it, which the caller passes. The readables and places editors keep
 // their own dialogs because they edit English too, with fields a translation does not have.
 
 type Version = {

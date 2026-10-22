@@ -12,12 +12,12 @@ local Expect, Failures = H.Expecter(stub.print)
 local instanceType = "none"
 _G.IsInInstance = function() return instanceType ~= "none", instanceType end
 
-local env, quests, zones, Q
+local env, quests, places, Q
 local function Fresh()
     instanceType = "none"
     -- Each load reads the same saved variables: a fresh one starts from the defaults.
     _G.SpokenSettings = nil
-    env, quests, zones = H.Fresh(stub, SPOKEN)
+    env, quests, places = H.Fresh(stub, SPOKEN)
     Q = env.SoundQueue
 end
 local function Setting(on) env.Addon.db.profile.Audio.ReadInBattlegrounds = on end
@@ -34,7 +34,7 @@ for _, kind in ipairs({ "pvp", "arena" }) do
     Fresh()
     Setting(false)
     instanceType = kind
-    local added, why = zones:Enqueue(H.Clip())
+    local added, why = places:Enqueue(H.Clip())
     Expect("off, a line in a " .. kind .. " instance is refused", added, nil)
     Expect("...with the reason for the debug log", why, "Read in Battlegrounds is off")
     Expect("...nothing is queued", Q:GetQueueSize(), 0)
@@ -107,7 +107,7 @@ Expect("off, a line the player asked for is queued in a battleground", quests:En
 Expect("...and plays", world.played[1], asked.path)
 
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 
 local function BootModules()
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
@@ -171,16 +171,16 @@ stub.FireEvent("GOSSIP_CLOSED")
 -- A book: opening one reads it by itself; /spw read is the player asking.
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 instanceType = "none"
-_G.SpokenSettings, _G.SpokenBooksSettings = nil, nil
+_G.SpokenSettings, _G.SpokenReadablesSettings = nil, nil
 stub.LoadSpoken(SPOKEN).Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", B)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", B)
 end
 B:InitDB()
 B:SetupSource()
-dofile(BOOKS .. "Data/Books.lua")
-_G.SpokenBooksAudioPacks = { SpokenBooksAudio = { version = 1, addon = "SpokenBooksAudio", language = "enUS",
+dofile(READABLES .. "Data/Books.lua")
+_G.SpokenReadablesAudioPacks = { SpokenReadablesAudio = { version = 1, addon = "SpokenReadablesAudio", language = "enUS",
     pages = { [261] = { file = "261", len = 30 } } } }
 _G.SpokenEnv.Addon.db.profile.Audio.ReadInBattlegrounds = false
 instanceType = "pvp"

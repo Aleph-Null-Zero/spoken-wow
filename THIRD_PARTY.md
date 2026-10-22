@@ -53,12 +53,12 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **Zone and subzone lore prose** in `addons/Spoken_Places/Data/` is derived from
   [Warcraft Wiki](https://warcraft.wiki.gg), which publishes under
   **CC BY-SA 4.0**. Re-use of that text carries the same terms, including attribution
-  and share-alike. `pipelines/zones/tools/scrape.mjs` is what fetches it and records
+  and share-alike. `pipelines/places/tools/scrape.mjs` is what fetches it and records
   which article each line came from.
 - **Boss and dungeon stories** (`addons/Spoken_NPCs/Data/Stories.lua`) are written from
   Blizzard's Adventure Guide text and from Warcraft Wiki (**CC BY-SA 4.0**), rewritten
   into one voice. The file is committed;
-  `pipelines/zones/tools/build-boss-stories.mjs`, `boss-history.mjs` and
+  `pipelines/places/tools/build-boss-stories.mjs`, `boss-history.mjs` and
   `assemble-boss-stories.mjs` make it, and `apply-boss-stories.mjs` writes it. Where the guide has no text
   for a boss, the story is that boss's History section on Warcraft Wiki, kept to Classic.
   The Forever-only dungeons' stories come from Forever's quest text (credited below), and the
@@ -70,7 +70,7 @@ None of this is the project's to license, and the MIT grant does not reach it.
   objects involved, are read from a [TrinityCore](https://github.com/TrinityCore/TrinityCore)
   world database (the one the Forever repack ships), another community reconstruction of
   Blizzard's content; the zone each spawn stands in is worked out against the client's own map
-  tables, from [wago.tools](https://wago.tools). `pipelines/books/tools/places.mjs` is what reads both.
+  tables, from [wago.tools](https://wago.tools). `pipelines/readables/tools/places.mjs` is what reads both.
 - **Italian quest, gossip and book text** comes from QuestIT, an Italian community
   translation by Drakanast whose addon code is MIT-licensed; the quest text it translates
   is Blizzard's. `pipelines/quests/tools/import_questit.py` imports it.
@@ -101,8 +101,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **Addon-list icons** (`icon.tga` in Spoken, Spoken_Quests, Spoken_Developer and
   SpokenContributions, `Textures/AddonIcon.tga` in
   Spoken_Readables, Spoken_Places and the two sound packs, and the badged copies the language
-  packs ship): the Spoken shields, drawn for this project by Nucabe, from the sources in `pipelines/quests/assets/icon/`, `pipelines/books/assets/` and
-  `pipelines/zones/assets/`.
+  packs ship): the Spoken shields, drawn for this project by Nucabe, from the sources in `pipelines/quests/assets/icon/`, `pipelines/readables/assets/` and
+  `pipelines/places/assets/`.
 - **Round vignette** (`addons/Spoken/Textures/RoundVignette.tga`): a black alpha gradient made for
   this project.
 - **Zone icons** (`addons/Spoken/Textures/Zones/*.tga`): the game's zone achievement icons and the
@@ -119,7 +119,7 @@ None of this is the project's to license, and the MIT grant does not reach it.
 - **Zone pictures** (`addons/Spoken_Places/Textures/Pictures/*.blp`): screenshots of the game,
   chosen by hand, mostly from each place's [Warcraft Wiki](https://warcraft.wiki.gg) page, cleaned
   up and sharpened with Gemini 3.1 Flash Image, then cropped, tinted and edged by
-  `pipelines/zones/tools/pictures/prepare.py`. The game in them is Blizzard's; each picture's
+  `pipelines/places/tools/pictures/prepare.py`. The game in them is Blizzard's; each picture's
   source file is listed in that folder's `CREDITS.md`, whose wiki page gives its uploader and
   terms. The edge masks (`Mask*.blp`) are made for this project.
 - **Lore page art** (`addons/Spoken_Places/Textures/Art/*.tga`): the spellbook's parchment,

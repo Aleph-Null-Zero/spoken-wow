@@ -126,6 +126,20 @@ Defaults = {
     },
 }
 
+local RENAMED_PARTS = { zones = "places", books = "readables" }
+local RENAMED_MODULES = { Zones = "Places", Writings = "Readables" }
+
+-- Moves `saved[old]` to `saved[new]` for each pair, keeping what is already under `new`.
+local function MoveKeys(saved, renamed)
+    if type(saved) ~= "table" then return end
+    for old, new in pairs(renamed) do
+        if saved[old] ~= nil then
+            if saved[new] == nil then saved[new] = saved[old] end
+            saved[old] = nil
+        end
+    end
+end
+
 --- Idempotent, so the test harness and ADDON_LOADED can both call it.
 function Addon:InitDB()
     if self.db then
@@ -153,7 +167,15 @@ function Addon:InitDB()
             else frame.Style = "minimal" end
             frame.SubtitlePlayer, frame.HideFrame, frame.MinimalPlayer = nil, nil, nil
         end
+        -- Places and Readables were keyed zones and books: a module switched off under its old
+        -- key stays off under the new one. Their settings tables were Zones and Writings, and are
+        -- bound under the new names.
+        if type(profile) == "table" then
+            MoveKeys(profile.Parts, RENAMED_PARTS)
+            MoveKeys(profile.Modules, RENAMED_MODULES)
+        end
     end
+    MoveKeys(self.db.global.ModulesLegacy, RENAMED_MODULES)
     -- Another profile chosen, copied over this one or reset, from Spoken's page or anywhere
     -- else: its settings apply now rather than at the next reload.
     if self.db.RegisterCallback then
@@ -558,7 +580,7 @@ function Addon:IsGamepadUI()
 end
 
 -- Folders an older release installed, which nothing ships any more: Spoken's own before it was
--- renamed, and the old names of Quests and Zones, whether the addons themselves or the empty
+-- renamed, and the old names of Quests and Places, whether the addons themselves or the empty
 -- folders that stood in for them. Loaded beside this release, the old code narrates over it and
 -- the empty ones only clutter the AddOns list.
 --
@@ -575,13 +597,27 @@ end
 -- Each one found is switched off for the next login, and the player is offered the reload that
 -- finishes it. The Forever client accepts DisableAddOn from an addon (checked 2026-10-04); the
 -- pcall is for a client that does not, where the popup still names the folders to delete.
+--
+-- The sound packs were SpokenZonesAudio* and SpokenBooksAudio* before their modules were Places and
+-- Readables. One is old only once its SpokenPlacesAudio* or SpokenReadablesAudio* replacement is
+-- loaded beside it, the same pack one release later; alone it is the player's pack, and stays.
 local OLD_FOLDERS = { "SpokenPlayer", "VoiceOverRedux", "ZoneLore", "SpokenQuests", "SpokenZones", "SpokenBooks",
     "Spoken_Books", "Spoken_Zones", "Spoken_Writings" }
+local RENAMED_PACKS = { SpokenZonesAudio = "SpokenPlacesAudio", SpokenBooksAudio = "SpokenReadablesAudio" }
 function Addon:FindOldFolders()
     local found = {}
     if not IsAddOnLoaded then return found end
     for _, folder in ipairs(OLD_FOLDERS) do
         if IsAddOnLoaded(folder) then table.insert(found, folder) end
+    end
+    local count = (C_AddOns and C_AddOns.GetNumAddOns) or GetNumAddOns
+    local info = (C_AddOns and C_AddOns.GetAddOnInfo) or GetAddOnInfo
+    for index = 1, (count and info) and count() or 0 do
+        local folder = info(index)
+        for old, new in pairs(RENAMED_PACKS) do
+            local rest = type(folder) == "string" and folder:match("^" .. old .. "(.*)$")
+            if rest and IsAddOnLoaded(folder) and IsAddOnLoaded(new .. rest) then table.insert(found, folder) end
+        end
     end
     return found
 end

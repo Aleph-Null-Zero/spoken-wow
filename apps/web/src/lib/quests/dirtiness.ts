@@ -6,7 +6,7 @@
  * that alters how a line SOUNDS without altering a character of it -- is invisible to every
  * comparison that module makes.
  *
- * The rule itself is lib/generation/dirty.ts, shared with zones and books. This is the
+ * The rule itself is lib/generation/dirty.ts, shared with places and readables. This is the
  * quests-shaped half: the corpus is a file index rather than a table, and the text that
  * matters is the text that would be SENT, overrides and regex rules applied, because that is
  * the string the dictionary is applied to.

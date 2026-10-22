@@ -2,9 +2,9 @@
  * Resolving a contribution -- the route's whole verb, now that accepting a quests row can also
  * write a line.
  *
- * Everything except quests-accept and books-accept is the plain status flip
+ * Everything except quests-accept and readables-accept is the plain status flip
  * setContributionStatus always did: a moderator moving any row to "new" or "rejected" changes
- * nothing else. Books-accept writes the page in the row's language (acceptBookContribution).
+ * nothing else. Readables-accept writes the page in the row's language (acceptBookContribution).
  * Quests-accept is different because the accepted line must appear in the explorer, and the
  * explorer reads the quest tables (lib/quests/catalogue.ts) -- so accepting writes into them:
  * a `quest_line` row with origin "contributed" and a `quest_line_speaker` row carrying the
@@ -26,8 +26,8 @@
 import { skipReasonFor } from "@/lib/text-gate";
 import type { PoolClient } from "pg";
 
-import { BOOK_ID_COMPAT, PAGE_COUNT } from "@books-tools/lib/page.mjs";
-import { normaliseText } from "@books-tools/lib/text.mjs";
+import { BOOK_ID_COMPAT, PAGE_COUNT } from "@readables-tools/lib/page.mjs";
+import { normaliseText } from "@readables-tools/lib/text.mjs";
 
 import { recordActivity } from "@/lib/activity/store";
 import { db, inTransaction } from "@/lib/db";
@@ -42,7 +42,7 @@ import {
 } from "@/lib/npc/store";
 import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import type { CorpusLine } from "@/lib/corpus";
-import { isGeneratable, mintBookId, mintPageId } from "@/lib/books/tools";
+import { isGeneratable, mintBookId, mintPageId } from "@/lib/readables/tools";
 import { branchesOnPlayerGender, speakPlayerTokens } from "@/lib/player-words";
 import { corpus } from "@/lib/quests/catalogue";
 import { forgetIgnores, writeIgnore } from "@/lib/quests/ignores";
@@ -331,11 +331,11 @@ export async function lineIsInExplorer(contribution: Contribution): Promise<bool
  * once -- what the moderator page asks of every accepted row it shows.
  */
 export async function linesInExplorer(contributions: readonly Contribution[]): Promise<Set<number>> {
-  const books = await booksInExplorer(contributions);
+  const readables = await readablesInExplorer(contributions);
   const candidates = contributions.filter((c) => c.source === "quests" && c.status === "accepted");
-  if (candidates.length === 0) return books;
+  if (candidates.length === 0) return readables;
   const quests = await questsInExplorer(candidates);
-  return new Set([...books, ...quests]);
+  return new Set([...readables, ...quests]);
 }
 
 /**
@@ -374,15 +374,15 @@ function momentsOf(
 }
 
 /**
- * The books side of linesInExplorer: an accepted row is there once it has written its page,
+ * The readables side of linesInExplorer: an accepted row is there once it has written its page,
  * as a first version or a correction.
  *
- * A row accepted before accept wrote books rows in every language wrote nothing in English, and
+ * A row accepted before accept wrote readables rows in every language wrote nothing in English, and
  * in another language only where the page lacked that language: such an English row is there,
  * and another language's is once its page has that language's text.
  */
-async function booksInExplorer(contributions: readonly Contribution[]): Promise<Set<number>> {
-  const accepted = contributions.filter((c) => c.source === "books" && c.status === "accepted");
+async function readablesInExplorer(contributions: readonly Contribution[]): Promise<Set<number>> {
+  const accepted = contributions.filter((c) => c.source === "readables" && c.status === "accepted");
   const found = new Set(accepted.filter((c) => c.locale === BASE_LANG).map((c) => c.id));
   const rest = accepted.filter((c) => !found.has(c.id));
   if (rest.length === 0) return found;
@@ -753,8 +753,8 @@ async function ignoreWrittenLines(client: PoolClient, contribution: Contribution
 }
 
 /**
- * Whether a books contribution has written a page, a first version or a correction -- the
- * books side of contributedLineExists.
+ * Whether a readables contribution has written a page, a first version or a correction -- the
+ * readables side of contributedLineExists.
  */
 async function contributedPageExists(contributionId: number, client: PoolClient): Promise<boolean> {
   const { rowCount } = await client.query(
@@ -765,9 +765,9 @@ async function contributedPageExists(contributionId: number, client: PoolClient)
 }
 
 /**
- * A books contribution, in any language: what the matcher says it is, written.
+ * A readables contribution, in any language: what the matcher says it is, written.
  *
- * Matched again here, inside the transaction and under a lock every books accept takes, so two
+ * Matched again here, inside the transaction and under a lock every readables accept takes, so two
  * pages of one new book accepted at once find each other rather than minting two books.
  * A page the game names keeps its id; one only a player's client has shown gets a minted
  * `b:n{uuid}`, in a minted `n{uuid}` book when it starts one. A correction is a new version of
@@ -786,8 +786,9 @@ async function acceptBookContribution(
   if (!text) return { ok: false, reason: "malformed", message: "contribution has no text to voice" };
   const lang = contribution.locale as Lang;
   const title = contribution.meta.book?.trim() || null;
-  // One books accept at a time, in any language: two rows of one new page or book may be in
+  // One readables accept at a time, in any language: two rows of one new page or book may be in
   // different languages, or shown under different titles.
+  // The key keeps the section's old name: a release being replaced still takes that one.
   await client.query(`select pg_advisory_xact_lock(hashtext('books.accept'))`);
 
   const corpus = await loadBookCorpus(client);
@@ -947,7 +948,7 @@ async function addOwner(
  *
  * `corpusLines` is the English catalogue to match against, read by the caller -- a batch reads
  * it once for all its rows. Left out, it is read here. `bookMatch` is what the caller saw a
- * books row match; the accept refuses when the row matches otherwise by the time it writes.
+ * readables row match; the accept refuses when the row matches otherwise by the time it writes.
  */
 export async function resolveContribution(
   id: number,
@@ -988,7 +989,7 @@ export async function resolveContribution(
     }
 
     const written =
-      contribution.source === "books"
+      contribution.source === "readables"
         ? await contributedPageExists(id, client)
         : await contributedLineExists(id, client);
 
@@ -1013,7 +1014,7 @@ export async function resolveContribution(
       }
     }
 
-    if (status === "accepted" && contribution.source === "books" && !written) {
+    if (status === "accepted" && contribution.source === "readables" && !written) {
       const refused = await acceptBookContribution(client, contribution, userId, bookMatch);
       if (refused) {
         await client.query("rollback");
@@ -1174,7 +1175,7 @@ const BATCH_CONCURRENCY = 8;
  *
  * Each row is still its own transaction, so one refused (or failing) row leaves the rest
  * landed. A row that throws is answered as an Error, in its place. `bookMatches` holds, per
- * books row, the match the caller checked it by (resolveContribution's `bookMatch`).
+ * readables row, the match the caller checked it by (resolveContribution's `bookMatch`).
  */
 export async function resolveContributions(
   ids: readonly number[],

@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "deDE" then
 	return
@@ -92,4 +92,4 @@ L.OPT_DEV_PREVIEW = "Unfertige Übersetzungen"
 
 L.OPEN_IN_COMPENDIUM = "Im „Kompendium von Azeroth“ öffnen"
 
-SpokenZones:RegisterStrings("deDE", L)
+SpokenPlaces:RegisterStrings("deDE", L)

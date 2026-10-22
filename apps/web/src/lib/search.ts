@@ -89,7 +89,7 @@ export type LineFilters = {
   dirty?: boolean;
   /**
    * 'open' selects lines carrying at least one unresolved report. A value rather than a
-   * boolean, and `fb` in the URL, to match the zones and books filters it mirrors.
+   * boolean, and `fb` in the URL, to match the places and readables filters it mirrors.
    */
   reports?: "open";
   /**
@@ -191,8 +191,8 @@ export type ResultLine = CorpusLine & {
   reportsOpen: number;
   /**
    * The live take of this line's file, and how many takes it has. Null when none is
-   * recorded, which means the line has never been generated. Shaped like the zones and
-   * books rows' `take` for the same reason the Audio column is shaped like theirs.
+   * recorded, which means the line has never been generated. Shaped like the places and
+   * readables rows' `take` for the same reason the Audio column is shaped like theirs.
    */
   take: { version: number; takes: number } | null;
   /** The live take was cut from text that has since changed. */

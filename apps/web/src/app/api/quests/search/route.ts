@@ -22,8 +22,8 @@ export const dynamic = "force-dynamic";
 /**
  * One page of quests lines, each carrying everything its row shows.
  *
- * Every row says whether its audio is stale and whether it is dirty, the way the zones and
- * books rows always have. Quests used to leave both out and have the explorer ask a second
+ * Every row says whether its audio is stale and whether it is dirty, the way the places and
+ * readables rows always have. Quests used to leave both out and have the explorer ask a second
  * route for them per page, holding the answers in state beside the rows -- a second source
  * for the same facts, which the explorer then had to reconcile after every regeneration.
  */
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         : undefined,
     ]);
   } catch (error) {
-    // The zones and books searches answer an empty table the same way: a page can say "no
+    // The places and readables searches answer an empty table the same way: a page can say "no
     // lines yet" where an unexplained 500 says nothing.
     if (!isCorpusEmpty(error)) throw error;
     return NextResponse.json({ error: (error as Error).message, code: "corpus_empty" }, { status: 503 });
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
   const context = { ...base, recordings, broadcast: broadcastStatus };
 
   // "Clear all" needs every dirty file the filter matches, not a page of rows. The same
-  // shape the zones search route answers for its own explorer.
+  // shape the places search route answers for its own explorer.
   if (params.get("ids") === "1") {
     const all = search(lines, voiced, { ...filters, offset: 0, limit: Number.MAX_SAFE_INTEGER }, context);
     // The whole dirty set, intersected here, rather than the match set sent to Postgres as a

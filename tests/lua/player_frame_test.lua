@@ -24,12 +24,12 @@ local function Boot(client)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()   -- what PLAYER_LOGIN does: builds the frame, the button, the panel
     local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
-    local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2 })
-    return env, quests, zones
+    local places = env.Sources:Register("places", { title = "Places", addon = "Spoken_Places", order = 2 })
+    return env, quests, places
 end
 
 ---------------------------------------------------------------- loads, shows, hides
-local env, quests, zones = Boot()
+local env, quests, places = Boot()
 -- Refresh greys a slider out with SetEnabled, and without it where a slider has none.
 do
     local test = _G.SpokenLayout.New(CreateFrame("Frame"), 25, -16)
@@ -67,7 +67,7 @@ env.SoundQueue:RemoveAllSoundsFromQueue()
 ---------------------------------------------------------------- fading in and out
 -- The window fades in as a line starts and out when the queue empties, its 3D portrait with it (a
 -- model takes no alpha from its parent), the words staying until it has gone.
-env, quests, zones = Boot(); F = env.PlayerFrame
+env, quests, places = Boot(); F = env.PlayerFrame
 quests:Enqueue(H.Clip({ present = { header = "Thrall", transcript = "Lok'tar ogar.",
     portrait = { kind = "model", creatureID = 4949 } } }))
 Expect("a line starting: the window shown, from clear", tostring(F.frame:IsShown()) .. " " .. F.frame:GetAlpha(), "true 0")
@@ -91,7 +91,7 @@ end, "false nil")
 
 -- From one line to the next: the window fades out whole with the first line's name and words,
 -- and fades in with the next's.
-env, quests, zones = Boot(); F = env.PlayerFrame
+env, quests, places = Boot(); F = env.PlayerFrame
 local first = H.Clip({ present = { header = "Thrall", transcript = "Lok'tar ogar.", portrait = { kind = "none" } } })
 local second = H.Clip({ present = { header = "Cairne", transcript = "Walk with the Earth Mother.", portrait = { kind = "none" } } })
 quests:Enqueue(first); quests:Enqueue(second)
@@ -114,7 +114,7 @@ env.SoundQueue:RemoveAllSoundsFromQueue()
 -- 3D portrait: the whole window goes, and comes back when the dialog closes on a line playing on.
 _G.DUIQuestFrame = CreateFrame("Frame")
 _G.DUIQuestFrame:Hide()
-env, quests, zones = Boot(); F = env.PlayerFrame
+env, quests, places = Boot(); F = env.PlayerFrame
 quests:Enqueue(H.Clip({ present = { header = "Thrall", portrait = { kind = "none" } } }))
 F.fader:Step(1)
 _G.DUIQuestFrame:Show()
@@ -134,11 +134,11 @@ _G.DUIQuestFrame = nil
 env.SoundQueue:RemoveAllSoundsFromQueue()
 
 ---------------------------------------------------------------- the lines waiting are counted, not listed
-env, quests, zones = Boot(); F = env.PlayerFrame
-zones:AddGate(function() return "in combat" end)
+env, quests, places = Boot(); F = env.PlayerFrame
+places:AddGate(function() return "in combat" end)
 local held = H.Clip({ present = { header = "Durotar", label = "Valley of Trials", bullet = "zone", portrait = { kind = "none" } } })
 local free = H.Clip({ present = { header = "Thrall", label = "Warchief", bullet = "quest-accept", portrait = { kind = "none" } } })
-zones:Enqueue(held); quests:Enqueue(free)
+places:Enqueue(held); quests:Enqueue(free)
 Expect("the speaking clip heads the window even if queued second", F.frame.container.name:GetText(), "Thrall")
 ExpectOf("a waiting line gets no row: the header counts it after the name, as the DialogueUI window does", function()
     return tostring(F.frame.container.buttons) .. " " .. tostring(F.count:IsShown()) .. " " .. F.count:GetText()
@@ -152,9 +152,9 @@ F:Update()
 ExpectOf("...and gone with no line waiting", function() return F.count:IsShown() end, false)
 
 -- A line held at the head says why after its name, or it looks like narration that failed.
-env, quests, zones = Boot(); F = env.PlayerFrame
-zones:AddGate(function() return "in combat" end)
-zones:Enqueue(H.Clip({ present = { header = "Durotar", bullet = "zone", portrait = { kind = "none" } } }))
+env, quests, places = Boot(); F = env.PlayerFrame
+places:AddGate(function() return "in combat" end)
+places:Enqueue(H.Clip({ present = { header = "Durotar", bullet = "zone", portrait = { kind = "none" } } }))
 ExpectOf("a held line says why after its name", function()
     return tostring(F.held:IsShown()) .. " " .. F.held:GetText()
 end, "true • (in combat)")
@@ -166,9 +166,9 @@ F:RefreshConfig()
 Expect("...and on shows it", F.progress.track:IsShown(), true)
 
 ---------------------------------------------------------------- portrait dispatch
-env, quests, zones = Boot(); F = env.PlayerFrame
+env, quests, places = Boot(); F = env.PlayerFrame
 local P = env.Portrait
-zones:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b",
+places:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b",
     portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } }))
 Expect("kind=texture shows a texture", F.frame.portrait.active, "texture")
 Expect("...the one asked for", F.frame.portrait.texture:GetTexture(), [[Interface\AddOns\Spoken\Textures\Book]])
@@ -206,9 +206,9 @@ env.Addon.db.profile.Frame.HidePortrait = false
 F:RefreshConfig()
 
 ---------------------------------------------------------------- actions
-env, quests, zones = Boot(); F = env.PlayerFrame
+env, quests, places = Boot(); F = env.PlayerFrame
 local clicked
-zones:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "none" },
+places:Enqueue(H.Clip({ present = { header = "h", label = "l", bullet = "b", portrait = { kind = "none" },
     actions = {
         { id = "read", icon = "Read", onClick = function(clip) clicked = "read:" .. clip.key end },
         { id = "report", icon = "Report", onClick = function() clicked = "report" end },
@@ -231,7 +231,7 @@ ExpectOf("no actions, Stop and Skip alone", function() return #F.frame.actions.b
 -- portrait 21 in from the top left, the name beside it, the words 3 under the name ending 42 from
 -- the right and 12 from the foot, and the round controls 12 in from the top right corner, where
 -- the Talking Head has its close button.
-env, quests, zones = Boot(); F = env.PlayerFrame
+env, quests, places = Boot(); F = env.PlayerFrame
 local T = env.Transcript
 local words = "One two three four five six seven eight nine ten eleven twelve thirteen fourteen."
 quests:Enqueue(H.Clip({ length = 10, present = { header = "Thrall", label = "Warchief",
@@ -363,20 +363,20 @@ Expect("...in the Talking Head's size", F.frame:GetWidth() .. "x" .. F.frame:Get
 _G.C_Texture = nil
 
 ---------------------------------------------------------------- one minimap button
-env, quests, zones = Boot()
+env, quests, places = Boot()
 Expect("exactly one LDB object, named Spoken", stub.ldbObjects.Spoken ~= nil and stub.dbIcons.Spoken ~= nil, true)
 Expect("...registered against the player's saved position", stub.dbIcons.Spoken.db, env.Addon.db.profile.Minimap.LibDBIcon)
 -- The frame the lib keeps for the addon; the lib's clicks pass it, and it is the anchor
 -- the addon holds for the compartment's clicks too.
 local mmButton = stub.dbIcons.Spoken.button
-env.Minimap:AddEntry("zones", { id = "lore", text = "Open lore window", order = 1, onClick = function() end })
+env.Minimap:AddEntry("places", { id = "lore", text = "Open lore window", order = 1, onClick = function() end })
 env.Minimap:AddEntry("quests", { id = "opts", text = "Quest settings", order = 1, onClick = function() end })
 local menu = env.Minimap:BuildMenu()
 local labels = {}
 for _, entry in ipairs(menu) do table.insert(labels, entry.text) end
 Expect("the menu is the player's entries then each source's in order", table.concat(labels, "|"),
     "Stop or Replay|Skip Line|Stop All|Settings|Quest settings|Open lore window")
-env.Minimap:RemoveEntry("zones", "lore")
+env.Minimap:RemoveEntry("places", "lore")
 Expect("RemoveEntry", getn(env.Minimap:BuildMenu()), 5)
 
 -- A click on the icon opens the settings at once; the menu is a right-click away.
@@ -445,7 +445,7 @@ Expect("...and the menu closes itself", stub.openDropDown, nil)
 ---------------------------------------------------------------- the menu where there is no menu API
 -- Without UIDropDownMenu the player draws its own: a background, a highlight, a catcher for
 -- the click that dismisses it.
-env, quests, zones = Boot()
+env, quests, places = Boot()
 stub.SetMenuAPI(false)
 mmButton = stub.dbIcons.Spoken.button
 env.Minimap:AddEntry("quests", { id = "opts", text = "Quest settings", order = 1, onClick = function() end })
@@ -657,7 +657,7 @@ Expect("the finer settings are in sections named for what they hold",
     tostring(labels["Look"] and labels["Words"] and labels["Playback"]), "true")
 Expect("...not the queue's title", labels["Up next"], nil)
 -- The scale slider was built with no height and no orientation, so it drew nothing: the
--- setting sat on the panel invisible, with a gap where it should have been. The zones
+-- setting sat on the panel invisible, with a gap where it should have been. The Places
 -- addon's own sliders, which do render, set both.
 -- Label on the left, control on the right, value beside it: one row, not two.
 Expect("the scale slider is labelled", labels["Window Size"], true)
@@ -703,7 +703,7 @@ local function CornerClip()
         } } })
 end
 
-env, quests, zones = Boot("16001")
+env, quests, places = Boot("16001")
 quests:Enqueue(CornerClip())
 env.PlayerFrame:Update()
 local corner = env.PlayerFrame.frame.actions.buttons[1]
@@ -722,7 +722,7 @@ ExpectOf("...as large as Stop and Skip", function()
 end, "0 0")
 Expect("...and it still does what it is for", (corner:Click() or reported), 1)
 
-env, quests, zones = Boot("16001")
+env, quests, places = Boot("16001")
 quests:Enqueue(CornerClip())
 env.PlayerFrame:Update()
 corner = env.PlayerFrame.frame.actions.buttons[1]
@@ -740,20 +740,20 @@ Expect("...and back", corner:IsShown(), true)
 -- Both shipped addons call their action "report". Keyed by id alone they are one button,
 -- so whichever addon created it first owns its click: reporting a quest line would file a
 -- zone. Keyed by source they are two, and the other addon's are hidden when the head moves.
-env, quests, zones = Boot()
+env, quests, places = Boot()
 local zoneClicks, questClicks = 0, 0
 local function Clip(source, label, actions)
     return H.Clip({ present = { header = "h", label = label, bullet = "b",
         portrait = { kind = "none" }, actions = actions } })
 end
-local zoneClip = Clip(zones, "Durotar", {
+local zoneClip = Clip(places, "Durotar", {
     { id = "read", icon = "ZoneRead", onClick = function() end },
     { id = "report", icon = "ZoneReport", onClick = function() zoneClicks = zoneClicks + 1 end },
 })
 local questClip = Clip(quests, "Cutting Teeth", {
     { id = "report", icon = "QuestReport", onClick = function() questClicks = questClicks + 1 end },
 })
-zones:Enqueue(zoneClip)
+places:Enqueue(zoneClip)
 env.PlayerFrame:Update()
 Expect("the zone line brings two actions", #env.PlayerFrame.frame.actions.buttons, 2)
 env.SoundQueue:RemoveSoundFromQueue(zoneClip)
@@ -771,7 +771,7 @@ Expect("...not to the other one", zoneClicks, 0)
 
 -- An addon may build its own button, and such a button keeps its own click handler. Shared
 -- under one id, the first addon to build one would answer for both.
-env, quests, zones = Boot()
+env, quests, places = Boot()
 local built = 0
 local ownClip = Clip(quests, "Cutting Teeth", {
     { id = "report", create = function(parent)
@@ -781,13 +781,13 @@ local ownClip = Clip(quests, "Cutting Teeth", {
         return button
     end },
 })
-local plainClip = Clip(zones, "Durotar", {
+local plainClip = Clip(places, "Durotar", {
     { id = "report", text = "Report", onClick = function() zoneClicks = zoneClicks + 1 end },
 })
 quests:Enqueue(ownClip)
 env.PlayerFrame:Update()
 env.SoundQueue:RemoveSoundFromQueue(ownClip)
-zones:Enqueue(plainClip)
+places:Enqueue(plainClip)
 env.PlayerFrame:Update()
 Expect("the other addon does not inherit a button built by this one",
     env.PlayerFrame.frame.actions.buttons[1].builtBy, nil)
@@ -797,7 +797,7 @@ Expect("the other addon does not inherit a button built by this one",
 -- abandons the rest of the update: the header, every row and the actions. The frame then
 -- shows a portrait over an empty band, which reads as an empty queue.
 for _, client in ipairs({ "16001", "11509" }) do
-    env, quests, zones = Boot(client)
+    env, quests, places = Boot(client)
     local clip = H.Clip({ present = { header = "Gornek", label = "Cutting Teeth", bullet = "b",
         portrait = { kind = "model", creatureID = 3143, animation = 60,
             fallback = { kind = "texture", texture = "Book" } } } })
@@ -819,7 +819,7 @@ Expect("...and so is the word that reaches it", rawget(_G, "SLASH_SPOKEN1"), "/s
 ---------------------------------------------------------------- what the frame reports
 -- A header that is set but drawn nowhere looks, from outside, exactly like one that was never
 -- set. /spoken diagnostics tells the two apart.
-env, quests, zones = Boot()
+env, quests, places = Boot()
 quests:Enqueue(H.Clip({ present = { header = "Gornek", label = "Cutting Teeth", bullet = "b",
     portrait = { kind = "none" } } }))
 env.PlayerFrame:Update()

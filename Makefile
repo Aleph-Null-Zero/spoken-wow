@@ -1,6 +1,6 @@
 # Spoken -- the dispatcher.
 #
-# The four projects (quests, zones, books and web) keep their own Makefiles. They share about
+# The four projects (quests, places, readables and web) keep their own Makefiles. They share about
 # thirty target names (help, package, release, pull, sync and the rest) and each target is
 # commented with the failure it exists to prevent, several of them guarding an
 # rsync --delete against audio that cannot be regenerated. Merging them is a
@@ -8,9 +8,9 @@
 # they are dispatched instead and the prefix disambiguates:
 #
 #     make quests-package        ->  make -f make/quests.mk package
-#     make zones-release-dry     ->  make -f make/zones.mk  release-dry
-#     make web-dev               ->  make -f make/web.mk    dev
-#     make books-extract         ->  make -f make/books.mk  extract
+#     make places-release-dry    ->  make -f make/places.mk release-dry
+#     make web-dev               ->  make -f make/web.mk dev
+#     make readables-extract     ->  make -f make/readables.mk extract
 #
 # Every .mk file uses paths relative to the repo root, so they must be run from
 # here -- which is what the pattern rules below guarantee.
@@ -30,9 +30,9 @@ LUA ?= $(shell command -v luajit || command -v lua5.1)
 help: ## Show this help
 	@printf 'Spoken\n\n'
 	@printf '  make quests-<target>   see make/quests.mk  (make quests-help)\n'
-	@printf '  make zones-<target>    see make/zones.mk   (make zones-help)\n'
+	@printf '  make places-<target>   see make/places.mk  (make places-help)\n'
 	@printf '  make web-<target>      see make/web.mk     (make web-help)\n'
-	@printf '  make books-<target>    see make/books.mk   (make books-help)\n\n'
+	@printf '  make readables-<target> see make/readables.mk (make readables-help)\n\n'
 	@printf 'Repo-wide:\n'
 	@grep -E '^[a-z-]+:.*?## ' $(firstword $(MAKEFILE_LIST)) \
 	  | sed 's/:.*## /|/' | awk -F'|' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -40,14 +40,14 @@ help: ## Show this help
 quests-%:
 	@$(MAKE) --no-print-directory -f make/quests.mk $*
 
-zones-%:
-	@$(MAKE) --no-print-directory -f make/zones.mk $*
+places-%:
+	@$(MAKE) --no-print-directory -f make/places.mk $*
 
 web-%:
 	@$(MAKE) --no-print-directory -f make/web.mk $*
 
-books-%:
-	@$(MAKE) --no-print-directory -f make/books.mk $*
+readables-%:
+	@$(MAKE) --no-print-directory -f make/readables.mk $*
 
 test-player: ## Run the addons' Lua tests (needs luajit)
 	@[ -n "$(LUA)" ] || { echo "No luajit found: brew install luajit"; exit 1; }
@@ -90,11 +90,11 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/minimal_window_test.lua
 	@$(LUA) tests/minimal-classic/verify.lua
 	@$(LUA) tests/captions/verify.lua
-	@$(LUA) tests/lua/zones_source_test.lua
-	@$(LUA) tests/lua/zones_flight_test.lua
-	@$(LUA) tests/lua/zones_instance_test.lua
-	@$(LUA) tests/lua/zones_greeting_test.lua
-	@$(LUA) tests/lua/zones_pending_test.lua
+	@$(LUA) tests/lua/places_source_test.lua
+	@$(LUA) tests/lua/places_flight_test.lua
+	@$(LUA) tests/lua/places_instance_test.lua
+	@$(LUA) tests/lua/places_greeting_test.lua
+	@$(LUA) tests/lua/places_pending_test.lua
 	@$(LUA) tests/lua/quests_source_test.lua
 	@$(LUA) tests/lua/quest_npc_silence_test.lua
 	@$(LUA) tests/lua/quest_greeting_first_test.lua
@@ -104,14 +104,14 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/quest_wording_test.lua
 	@$(LUA) tests/lua/quests_no_packs_test.lua
 	@$(LUA) tests/lua/duplicate_player_test.lua
-	@$(LUA) tests/lua/zones_options_test.lua
-	@$(LUA) tests/lua/zones_test_line_test.lua
-	@$(LUA) tests/lua/zones_lore_ui_test.lua
-	@$(LUA) tests/lua/zones_lands_test.lua
-	@$(LUA) tests/lua/zones_map_click_test.lua
-	@$(LUA) tests/lua/zones_map_highlight_test.lua
-	@$(LUA) tests/lua/zones_area_at_test.lua
-	@$(LUA) tests/lua/zones_discovery_test.lua
+	@$(LUA) tests/lua/places_options_test.lua
+	@$(LUA) tests/lua/places_test_line_test.lua
+	@$(LUA) tests/lua/places_lore_ui_test.lua
+	@$(LUA) tests/lua/places_lands_test.lua
+	@$(LUA) tests/lua/places_map_click_test.lua
+	@$(LUA) tests/lua/places_map_highlight_test.lua
+	@$(LUA) tests/lua/places_area_at_test.lua
+	@$(LUA) tests/lua/places_discovery_test.lua
 	@$(LUA) tests/lua/subtitle_pages_test.lua
 	@$(LUA) tests/lua/defaults_test.lua
 	@$(LUA) tests/lua/scroll_mode_upgrade_test.lua
@@ -120,32 +120,32 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/packs_test.lua
 	@$(LUA) tests/lua/quests_options_test.lua
 	@$(LUA) tests/lua/quests_dialogueui_test.lua
-	@$(LUA) tests/lua/books_source_test.lua
-	@$(LUA) tests/lua/books_options_test.lua
+	@$(LUA) tests/lua/readables_source_test.lua
+	@$(LUA) tests/lua/readables_options_test.lua
 	@$(LUA) tests/lua/module_settings_test.lua
 	@$(LUA) tests/lua/module_profiles_test.lua
 	@$(LUA) tests/lua/locale_parity_test.lua
-	@$(LUA) tests/lua/books_reader_test.lua
-	@$(LUA) tests/lua/books_playlist_test.lua
-	@$(LUA) tests/lua/books_dialogueui_test.lua
-	@$(LUA) tests/lua/books_events_test.lua
-	@$(LUA) tests/lua/books_close_test.lua
-	@$(LUA) tests/lua/books_contribute_test.lua
-	@$(LUA) tests/lua/books_readables_test.lua
+	@$(LUA) tests/lua/readables_reader_test.lua
+	@$(LUA) tests/lua/readables_playlist_test.lua
+	@$(LUA) tests/lua/readables_dialogueui_test.lua
+	@$(LUA) tests/lua/readables_events_test.lua
+	@$(LUA) tests/lua/readables_close_test.lua
+	@$(LUA) tests/lua/readables_contribute_test.lua
+	@$(LUA) tests/lua/readables_compendium_test.lua
 	@$(LUA) tests/lua/quests_compendium_test.lua
 	@$(LUA) tests/lua/quests_shift_queue_test.lua
 	@$(LUA) tests/lua/quests_compendium_races_test.lua
-	@$(LUA) tests/lua/books_language_test.lua
+	@$(LUA) tests/lua/readables_language_test.lua
 	@$(LUA) tests/lua/gather_test.lua
-	@$(LUA) tests/lua/zones_contribute_test.lua
-	@$(LUA) tests/lua/zones_language_test.lua
-	@$(LUA) tests/lua/zones_each_place_once_test.lua
-	@$(LUA) tests/lua/zones_city_test.lua
-	@$(LUA) tests/lua/zones_dungeons_test.lua
+	@$(LUA) tests/lua/places_contribute_test.lua
+	@$(LUA) tests/lua/places_language_test.lua
+	@$(LUA) tests/lua/places_each_place_once_test.lua
+	@$(LUA) tests/lua/places_city_test.lua
+	@$(LUA) tests/lua/places_dungeons_test.lua
 	@$(LUA) tests/lua/npcs_bosses_test.lua
-	@$(LUA) tests/lua/zones_story_place_test.lua
-	@$(LUA) tests/lua/zones_area_zones_test.lua
-	@$(LUA) tests/lua/zones_forever_places_test.lua
+	@$(LUA) tests/lua/places_story_place_test.lua
+	@$(LUA) tests/lua/places_area_zones_test.lua
+	@$(LUA) tests/lua/places_forever_places_test.lua
 	@$(LUA) tests/lua/minimap_compartment_test.lua
 	@$(LUA) tests/lua/bronze_rings_test.lua
 
@@ -157,8 +157,8 @@ contribute-fixtures:
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/contribute_envelope_test.lua
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/report_url_contract_test.lua
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/quests_contribute_test.lua
-	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/zones_contribute_test.lua
-	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/books_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/places_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/readables_contribute_test.lua
 
 # The Python half needs its own venv:
 #
@@ -180,10 +180,10 @@ lint: ## The checks CI gates on
 	@pnpm -r typecheck
 	@node scripts/check-addon-xml.mjs
 	@./scripts/spoken/check-changelog.sh
-	@node pipelines/zones/tools/validate.mjs
+	@node pipelines/places/tools/validate.mjs
 	@node scripts/descriptions.mjs --check
-	@node pipelines/zones/tools/locale/check-strings.mjs
-	@node pipelines/zones/tools/locale/build-languages.mjs --check
+	@node pipelines/places/tools/locale/check-strings.mjs
+	@node pipelines/places/tools/locale/build-languages.mjs --check
 
 # The store project pages, for every addon. One tool over publishers/*/ rather than one
 # per project: the pages are the same shape, and a second copy of this would be a second place
@@ -204,7 +204,7 @@ descriptions-published: ## Record the current descriptions as pasted into the si
 # Not a target that runs itself -- scripts/character-models.mjs takes the listfile on stdin
 # so this step never pulls 152 MB on its own. Run it by hand when a new race ships.
 
-# The dungeons the quests' and books' exporters file things under, and the one table the addon
+# The dungeons the quests' and readables' exporters file things under, and the one table the addon
 # reads (Spoken/Data/Dungeons.lua), both from pipelines/lib/dungeons.json. Run it after editing
 # that file, then the exporters that read it.
 dungeons: ## Rebuild addons/Spoken/Data/Dungeons.lua from pipelines/lib/dungeons.json and the client's Map table
@@ -235,7 +235,7 @@ define require_section_for_locale
 	fi
 endef
 
-audio-release-dry: ## Show which pack releases would be cut (SECTION=zones LOCALE=esMX to narrow)
+audio-release-dry: ## Show which pack releases would be cut (SECTION=places LOCALE=esMX to narrow)
 	$(require_section_for_locale)
 	@./scripts/audio-github-release.sh --dry-run $(SECTION) $(if $(SECTION),$(LOCALE))
 
@@ -258,10 +258,10 @@ manager-gc-dry: ## Show what manager-gc would delete
 manager-gc: ## Delete channel files no recent manifest needs
 	@node scripts/manager/cli.mjs gc
 
-package-all: ## Build every addon zip: Spoken with its modules, then quests and zones on their own
+package-all: ## Build every addon zip: Spoken with its modules, then quests and places on their own
 	@./scripts/spoken/package.sh
 	@$(MAKE) --no-print-directory -f make/quests.mk package
-	@$(MAKE) --no-print-directory -f make/zones.mk  package
+	@$(MAKE) --no-print-directory -f make/places.mk  package
 
 # Spoken's download: Spoken and its four modules in one zip, each module built by its own
 # packager. No sound packs; scripts/spoken/package.sh says why.
