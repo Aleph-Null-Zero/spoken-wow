@@ -135,10 +135,11 @@ pictures the Places addon ships.
 
 ## Credits
 
-Forever's quest text, quest data and BroadcastText rows that the world database lacks come from
-the data players' Forever clients recorded, published by Efficient Games
-(https://efficient.games) as [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf)
-under CC BY 4.0. The text itself is Blizzard's. `THIRD_PARTY.md` lists the rest.
+Most of Forever's text that the world database lacks comes from players, through `/contribute`.
+The text of a few Forever quests that nobody has sent yet, some BroadcastText rows, and the quest
+data behind the Compendium come from Efficient Games (https://efficient.games), published as
+[EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf) under CC BY 4.0. The text
+itself is Blizzard's. `THIRD_PARTY.md` lists the rest.
 
 Read `AGENTS.md` before changing anything, and the section READMEs under `docs/`
 for what each section does. They are detailed, and they are the reference to check

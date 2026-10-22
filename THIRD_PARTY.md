@@ -84,8 +84,8 @@ None of this is the project's to license, and the MIT grant does not reach it.
   Data from Efficient Games (https://efficient.games), licensed under CC BY 4.0.
   `pipelines/quests/tools/export_compendium.py` reads it from
   [EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf).
-- **Quest text for Forever quests the world DB does not have** comes from the same EG Link
-  output, entered as contributions sent by "Efficient Games (EG Link output)" and exported to
+- **The text of a few Forever quests** that neither the world DB nor a player's contribution has
+  comes from the same EG Link output, entered as contributions sent by "Efficient Games (EG Link output)" and exported to
   `corpus.json.gz` with the rest of `quest_line`. Data from Efficient Games
   (https://efficient.games), licensed under CC BY 4.0.
 - Text submitted through `/contribute` is game text as well: a player's client is showing it and
