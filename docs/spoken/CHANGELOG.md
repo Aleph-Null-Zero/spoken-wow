@@ -4,6 +4,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **117 more quest givers and enders show their own face.** Seven creatures, such as Malfurion Stormrage,
+  no longer ship an appearance the game cannot draw. *([Nucabe](https://github.com/Nucabe))*
 - **The Ruins of Lordaeron dungeon is listed in Tirisfal Glades**, where its entrance is, and its card
   is Tirisfal's Ruins of Lordaeron. It was listed in the Undercity. *([Nucabe](https://github.com/Nucabe))*
 - **Highlight Words is on by default, and Type Words Out and Show Progress Bar are off.** The words of a
