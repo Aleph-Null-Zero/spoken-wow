@@ -8,10 +8,10 @@ Players see this section as **Readables**: the module, its page and tab, its com
 and `/spb` still work), the sound packs' titles and the site's labels. Most of what they never
 see says readables too: the folders, the `make readables-*` targets, the database's `readables`
 source, the site's `/readables` routes, the `SPOKEN_READABLES_*` variables, and the addon's
-`readables` source and part key and its `SpokenReadables` namespace. Still saying books: the
-`SpokenBooksSettings` and `SpokenBooksCharacter` saved variables, the `Writings` table of Spoken's
-profile, the `SpokenBooksData`, `SpokenBooksPlaces` and `SpokenBooksAudioPacks` globals, frame names
-like `SpokenBooksDialogueUITooltip`, the `SpokenBooksAudio` pack folders with their `books-audio`
+`readables` source and part key, its `SpokenReadables` namespace, saved variables, frames and table
+in Spoken's profile (the old `SpokenBooksSettings` and `SpokenBooksCharacter` are read once and
+carried over). Still saying books: the `SpokenBooksData`, `SpokenBooksPlaces` and
+`SpokenBooksAudioPacks` globals, the `SpokenBooksAudio` pack folders with their `books-audio`
 tags, the `publishers/books/` pages and CurseForge slugs, and the `b:{pageTextID}` line ids.
 
 ## Where the words come from, and why not from anywhere else
@@ -200,9 +200,9 @@ whose cap drops the oldest waiting clip and here would drop what the player open
 **Settings and reading are kept apart, on purpose.** The settings (autoplay, whole book, one
 line, read once, stop when the book closes, close when read, the voice language and the
 Compendium's switches) live in Spoken's profile under `Writings`, bound by
-`Spoken:BindModuleSettings` and copied from `SpokenBooksSettings` the first time. That saved
+`Spoken:BindModuleSettings` and copied from `SpokenReadablesSettings` the first time. That saved
 variable keeps its name and stays the module's own table until Spoken binds it.
-`SpokenBooksCharacter` is per character and holds what that character has read and found,
+`SpokenReadablesCharacter` is per character and holds what that character has read and found,
 keyed by book id. Settings are how you like the addon to behave; having read something is a
 thing a character did, so an alt walking into the same library hears it fresh.
 
@@ -286,7 +286,7 @@ every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and pictur
 reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
 and to listen to wherever you are. Which readables exist and where they are comes from
 `Data/Places.lua` (`pipelines/readables/tools/places.mjs`); what this character has found, from
-`SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`. `make readables-places` reads
+`SpokenReadablesCharacter` (`Core.lua`); the words, from `Data/Books.lua`. `make readables-places` reads
 the repack's world DB (`PLACES_MYSQL_*`) and its map files (`PLACES_MAPS`, the repack's `data/maps`
 folder; it stops without them). A quest places a readable only when the quests corpus or the
 client's QuestV2 has it: the repack also carries Cataclysm's quest rows.

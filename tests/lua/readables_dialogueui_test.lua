@@ -31,7 +31,7 @@ local function LoadReadables()
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 
@@ -175,9 +175,9 @@ row.play.scripts.OnClick(row.play, "LeftButton")
 Expect("Stop stops it", QueuedPages(), "")
 Book:Draw()
 Expect("...and Stop turns back to Play", row.play.state, "play")
-local autoplay = SpokenBooksSettings.autoplay
+local autoplay = SpokenReadablesSettings.autoplay
 row.play.scripts.OnClick(row.play, "RightButton")
-Expect("right-click switches Read Automatically", SpokenBooksSettings.autoplay, not autoplay)
+Expect("right-click switches Read Automatically", SpokenReadablesSettings.autoplay, not autoplay)
 row.play.scripts.OnClick(row.play, "RightButton")
 
 ---------------------------------------------------------------- the words

@@ -1,7 +1,7 @@
 -- The client's book frame, wired to the playlist -- and the login that wires the addon up
 -- at all.
 --
--- ADDON_LOADED is where the saved variables become readable: SpokenBooksSettings is nil until the
+-- ADDON_LOADED is where the saved variables become readable: SpokenReadablesSettings is nil until the
 -- client has restored it, so Commands.lua indexing it before then is an error rather than a
 -- default. PLAYER_ENTERING_WORLD is where the source is claimed, late on purpose -- the
 -- player addon builds its API at its own load, and waiting for the world is what the places
@@ -48,7 +48,7 @@ function SpokenReadables:OnTextReady()
 	-- Found the moment it is open, whatever autoplay says.
 	self:MarkBookFound(self:PlaceOf(pageId))
 
-	if not SpokenBooksSettings or SpokenBooksSettings.autoplay == false then
+	if not SpokenReadablesSettings or SpokenReadablesSettings.autoplay == false then
 		-- The reader turned autoplay off, so nothing starts by itself -- but the page is
 		-- remembered, which is what lets `/spr read` play the one in front of them.
 		self:Explain("not read: Read Automatically is off (press Play to hear it)")
@@ -58,7 +58,7 @@ function SpokenReadables:OnTextReady()
 	-- Read once, and this character has read this one. Only autoplay is refused: `/spr read`
 	-- and the button on the frame go straight to SyncTo, because a reader who presses play
 	-- has asked for this book again in so many words.
-	if SpokenBooksSettings.readOnce then
+	if SpokenReadablesSettings.readOnce then
 		local book = self:PlaceOf(pageId)
 		if self:HasReadBook(book) and not self:IsNarrating(book) then
 			self:Explain("not read: Read Only Once is on and this character has heard it")
@@ -77,7 +77,7 @@ end
 
 --- A line in chat saying what was decided and why, while /spr debug has it on.
 function SpokenReadables:Explain(message, ...)
-	if SpokenBooksSettings and SpokenBooksSettings.debug and self.Print then
+	if SpokenReadablesSettings and SpokenReadablesSettings.debug and self.Print then
 		self:Print(message, ...)
 	end
 end
@@ -92,7 +92,7 @@ end
 function SpokenReadables:OnTextClosed()
 	local book = self:PlaceOf(self.lastPage)
 	self.lastPage = nil
-	if book and SpokenBooksSettings and SpokenBooksSettings.stopOnClose then
+	if book and SpokenReadablesSettings and SpokenReadablesSettings.stopOnClose then
 		self:StopReading(book)
 	end
 end
@@ -102,7 +102,7 @@ end
 --- it open: with Read Whole Book off, the reader is about to turn to it. CloseItemText reaches
 --- DialogueUI's book view too, through the ITEM_TEXT_CLOSED every book window listens to.
 function SpokenReadables:OnPageFinished(clip)
-	if not (SpokenBooksSettings and SpokenBooksSettings.closeWhenRead) then
+	if not (SpokenReadablesSettings and SpokenReadablesSettings.closeWhenRead) then
 		return
 	end
 	local book = self:PlaceOf(clip.pageId)
@@ -137,7 +137,7 @@ frame:SetScript("OnEvent", function(_, name, payload)
 	elseif name == "ITEM_TEXT_CLOSED" then
 		SpokenReadables:OnTextClosed()
 	elseif name == "ADDON_LOADED" then
-		-- Every addon's load fires this; only this addon's own restores SpokenBooksSettings.
+		-- Every addon's load fires this; only this addon's own restores SpokenReadablesSettings.
 		if payload == ADDON_NAME then
 			SpokenReadables:InitDB()
 			frame:UnregisterEvent("ADDON_LOADED")

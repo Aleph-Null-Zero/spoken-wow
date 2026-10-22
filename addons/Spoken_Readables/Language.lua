@@ -87,7 +87,7 @@ end
 function SpokenReadables:GetVoiceLanguage()
 	-- The one choice on Spoken's page for every module, once made; this addon's own until then.
 	local shared = Spoken and Spoken.GetLanguageChoice and Spoken:GetLanguageChoice()
-	local stored = shared or (SpokenBooksSettings and SpokenBooksSettings.voiceLanguage)
+	local stored = shared or (SpokenReadablesSettings and SpokenReadablesSettings.voiceLanguage)
 	if stored == nil or stored == self.AUTO_LANGUAGE or not byCode[stored] then
 		return self:GetClientLanguage()
 	end
@@ -103,7 +103,7 @@ function SpokenReadables:GetFallbackLanguage()
 		local _
 		_, shared = Spoken:GetLanguageChoice()
 	end
-	local stored = shared or (SpokenBooksSettings and SpokenBooksSettings.fallbackLanguage)
+	local stored = shared or (SpokenReadablesSettings and SpokenReadablesSettings.fallbackLanguage)
 	if stored == nil then
 		return self.BASE_LANGUAGE
 	end

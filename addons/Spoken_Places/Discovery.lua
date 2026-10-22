@@ -9,7 +9,7 @@
 --     explored before Spoken Places was installed.
 --   * the character has stood in it since. Small places and the cities' districts have no
 --     overlay and never count as explored, so every zone change records where the character is
---     (SpokenZonesCharacter.visited).
+--     (SpokenPlacesCharacter.visited).
 --
 -- A zone is found when it, or any of its areas, is; a city also when its name is explored on
 -- the zone around it (Orgrimmar on Durotar's map). A continent is found only through its zones
@@ -31,13 +31,13 @@ local explored = {}       -- [mapID] = { zone = bool, keys = { [areaKey] = true 
 local exploredNames = {}  -- every explored area's name seen in a scan, for the cities
 
 local function CharDB()
-	if type(SpokenZonesCharacter) ~= "table" then
-		SpokenZonesCharacter = {}
+	if type(SpokenPlacesCharacter) ~= "table" then
+		SpokenPlacesCharacter = {}
 	end
-	if type(SpokenZonesCharacter.visited) ~= "table" then
-		SpokenZonesCharacter.visited = {}
+	if type(SpokenPlacesCharacter.visited) ~= "table" then
+		SpokenPlacesCharacter.visited = {}
 	end
-	return SpokenZonesCharacter
+	return SpokenPlacesCharacter
 end
 
 local function VisitKey(mapID, areaKey)

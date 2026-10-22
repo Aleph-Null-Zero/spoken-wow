@@ -80,18 +80,18 @@ end
 
 -- Merge defaults into the saved table without clobbering stored values, so new
 -- options added in later versions appear for existing users. Runtime reads and
--- writes go straight to SpokenZonesSettings.
+-- writes go straight to SpokenPlacesSettings.
 local function MergeDefaults()
-	if type(SpokenZonesSettings) ~= "table" then
-		SpokenZonesSettings = {}
+	if type(SpokenPlacesSettings) ~= "table" then
+		SpokenPlacesSettings = {}
 	end
 	for key, value in pairs(defaults) do
-		if SpokenZonesSettings[key] == nil then
-			SpokenZonesSettings[key] = value
+		if SpokenPlacesSettings[key] == nil then
+			SpokenPlacesSettings[key] = value
 		end
 	end
 
-	SpokenPlaces.db = SpokenZonesSettings
+	SpokenPlaces.db = SpokenPlacesSettings
 end
 
 local function InitConfig()
@@ -118,10 +118,10 @@ function SpokenPlaces:Get(key)
 	if key == "fontSize" and Spoken then
 		return Spoken:CompendiumFontSize()
 	end
-	if SpokenZonesSettings == nil then
+	if SpokenPlacesSettings == nil then
 		return defaults[key]
 	end
-	local value = SpokenZonesSettings[key]
+	local value = SpokenPlacesSettings[key]
 	if value == nil then
 		return defaults[key]
 	end
@@ -129,7 +129,7 @@ function SpokenPlaces:Get(key)
 end
 
 function SpokenPlaces:Set(key, value)
-	SpokenZonesSettings[key] = value
+	SpokenPlacesSettings[key] = value
 end
 
 -- Switched on, by the setting or by /spp panel, the player means to see the panel, not the
@@ -142,12 +142,12 @@ end
 --- Every setting back to its default. The language chosen and the record of places already
 --- narrated are not settings in that sense, and stay.
 function SpokenPlaces:ResetOptions()
-	if SpokenZonesSettings == nil then return end
+	if SpokenPlacesSettings == nil then return end
 	-- Unlock Undiscovered Zones and Text Size are on Spoken's page where Spoken is installed, and
 	-- not this one's.
 	local elsewhere = Spoken and Spoken.ShowsCompendium and { showUndiscovered = true, fontSize = true } or {}
 	for key, value in pairs(defaults) do
-		if not elsewhere[key] then SpokenZonesSettings[key] = value end
+		if not elsewhere[key] then SpokenPlacesSettings[key] = value end
 	end
 	-- Applied as the checkboxes apply them, not only written: the play buttons follow the voice
 	-- being on again.
@@ -683,7 +683,7 @@ end)
 
 -- Recursively enumerate the map tree so tools/seed/zones.json can be built from
 -- the client itself rather than transcribed by hand. Results land in
--- SpokenZonesSettings.dump, which is only written to disk on logout or /reload.
+-- SpokenPlacesSettings.dump, which is only written to disk on logout or /reload.
 local MAP_TYPE_NAMES = { [0] = "Cosmic", [1] = "World", [2] = "Continent", [3] = "Zone", [4] = "Dungeon", [5] = "Micro", [6] = "Orphan" }
 
 local function DumpMapTree(rootID, out, seen, depth)
@@ -717,8 +717,8 @@ local function CmdDump()
 	DumpMapTree(947, out, seen, 0)   -- Azeroth (world)
 	DumpMapTree(1414, out, seen, 0)  -- Kalimdor
 	DumpMapTree(1415, out, seen, 0)  -- Eastern Kingdoms
-	SpokenZonesSettings.dump = out
-	SpokenPlaces:Print("dumped %d maps to SpokenZonesSettings.dump. Run /reload, then:", #out)
+	SpokenPlacesSettings.dump = out
+	SpokenPlaces:Print("dumped %d maps to SpokenPlacesSettings.dump. Run /reload, then:", #out)
 	SpokenPlaces:Print("  node pipelines/places/tools/seed-from-dump.mjs")
 end
 

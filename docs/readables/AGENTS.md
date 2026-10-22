@@ -7,10 +7,10 @@ is the detailed reference.
 
 The module is Readables wherever a player reads its name, and its folder is `Spoken_Readables`.
 The site, database, pipelines and folders say readables, and so do the addon's `readables` source
-and part key and its `SpokenReadables` namespace. Its saved variables, profile table, globals,
-pack folders, tags, store pages and line ids still say books (the README lists them). The ids,
-saved variables and pack folder among them are frozen: renaming one loses players' settings or
-re-ships a pack.
+and part key, its `SpokenReadables` namespace, saved variables and profile table. Its globals, pack
+folders, tags, store pages and line ids still say books (the README lists them). A renamed saved
+variable or pack folder has to read the old one too, or players lose their settings or packs; the
+line ids are frozen.
 
 ## The table is the corpus; the Lua is an export of it
 

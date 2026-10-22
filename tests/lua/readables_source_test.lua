@@ -21,7 +21,7 @@ end
 
 local function Boot()
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-    _G.SpokenBooksSettings = nil
+    _G.SpokenReadablesSettings = nil
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()
     local B = LoadReadables()
@@ -41,7 +41,7 @@ end
 -- sections need: Events.lua is what creates the frame the events arrive at, and without it
 -- firing them reaches nothing and the test passes for the wrong reason.
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 local bootEnv = stub.LoadSpoken(SPOKEN)
 bootEnv.Addon:Enable()
 local B0 = {}
@@ -50,10 +50,10 @@ for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader",
 end
 
 stub.FireEvent("ADDON_LOADED", "SomebodyElse")
-Expect("another addon's load leaves the saved variables alone", SpokenBooksSettings, nil)
+Expect("another addon's load leaves the saved variables alone", SpokenReadablesSettings, nil)
 
 stub.FireEvent("ADDON_LOADED", "Spoken_Readables")
-Expect("the addon's own ADDON_LOADED writes the defaults", SpokenBooksSettings.autoplay, true)
+Expect("the addon's own ADDON_LOADED writes the defaults", SpokenReadablesSettings.autoplay, true)
 Expect("...and claims no source yet, because the player may not have loaded", B0.source, nil)
 
 stub.FireEvent("PLAYER_ENTERING_WORLD")
@@ -90,12 +90,12 @@ Expect("...and reports itself compatible", B.compatible, true)
 
 ---------------------------------------------------------------- saved variables
 Expect("autoplay is on by default, because opening a book is already deliberate",
-    SpokenBooksSettings.autoplay, true)
-Expect("a whole book is read by default", SpokenBooksSettings.readWholeBook, true)
+    SpokenReadablesSettings.autoplay, true)
+Expect("a whole book is read by default", SpokenReadablesSettings.readWholeBook, true)
 
-SpokenBooksSettings.autoplay = false
+SpokenReadablesSettings.autoplay = false
 B:InitDB()
-Expect("InitDB does not overwrite a choice already made", SpokenBooksSettings.autoplay, false)
+Expect("InitDB does not overwrite a choice already made", SpokenReadablesSettings.autoplay, false)
 
 ---------------------------------------------------------------- the checksum
 -- The numbers below come from pipelines/readables/tools/lib/naming.mjs, which keys the

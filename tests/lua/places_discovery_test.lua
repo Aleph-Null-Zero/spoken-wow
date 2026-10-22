@@ -65,7 +65,7 @@ function Z:AreasIn(zone)
 end
 local onZone
 function Z:OnZoneChanged(fn) onZone = fn end
-_G.SpokenZonesCharacter = nil
+_G.SpokenPlacesCharacter = nil
 assert(loadfile(PLACES .. "Discovery.lua"))("Spoken_Places", Z)
 Z:SetupDiscovery()
 
@@ -76,7 +76,7 @@ Expect("...and its zone", Z:IsFound(1411), true)
 Expect("an area with no overlay is not found before it is stood in", Z:IsFound(1411, "razor hill barracks"), false)
 Z:MarkFound(1411, "razor hill barracks")
 Expect("...or clicked on the map, which resolves only an explored one", Z:IsFound(1411, "razor hill barracks"), true)
-SpokenZonesCharacter.visited["1411/razor hill barracks"] = nil
+SpokenPlacesCharacter.visited["1411/razor hill barracks"] = nil
 Expect("a zone with nothing explored is not found", Z:IsFound(1426), false)
 Expect("...read off its own map alone, not every zone's", read[1450] or read[1416] or false, false)
 Expect("...nor one whose map has an overlay always drawn, nothing under it explored", Z:IsFound(1450), false)
@@ -97,7 +97,7 @@ Expect("why a place is found is said", select(2, Z:IsFound(1411, "valley of tria
 where.subzone = "Razor Hill Barracks"
 onZone()
 Expect("standing in a place finds it", Z:IsFound(1411, "razor hill barracks"), true)
-Expect("...kept for the character", SpokenZonesCharacter.visited["1411/razor hill barracks"], true)
+Expect("...kept for the character", SpokenPlacesCharacter.visited["1411/razor hill barracks"], true)
 
 where.map, where.subzone = 1426, "Coldridge Valley"
 onZone()
@@ -108,18 +108,18 @@ Expect("...and the area stood in", Z:IsFound(1426, "coldridge valley"), true)
 C_Map.GetMapInfo = function(id) return { mapID = id, mapType = (id == 1415 and 2 or 3) } end
 where.map, where.subzone = 1415, ""
 onZone()
-Expect("being on a continent's map, between zones, records no visit", SpokenZonesCharacter.visited["1415"], nil)
+Expect("being on a continent's map, between zones, records no visit", SpokenPlacesCharacter.visited["1415"], nil)
 where.map = 1426
 onZone()
-Expect("...a zone's still does", SpokenZonesCharacter.visited["1426"], true)
+Expect("...a zone's still does", SpokenPlacesCharacter.visited["1426"], true)
 
 -- Razorfen Downs: its story kept under Thousand Needles, its entrance in The Barrens, where the
 -- game reports it (Spoken's Data/Dungeons.lua).
 function Z:FoundOn(mapID, key) if mapID == 1441 and key == "razorfen downs" then return { 1413 } end return {} end
 Expect("a dungeon whose story is under another zone is not found before it is", Z:IsFound(1441, "razorfen downs"), false)
-SpokenZonesCharacter.visited["1413/razorfen downs"] = true
+SpokenPlacesCharacter.visited["1413/razorfen downs"] = true
 Expect("...found stood in at its entrance", Z:IsFound(1441, "razorfen downs"), true)
-SpokenZonesCharacter.visited["1413/razorfen downs"] = nil
+SpokenPlacesCharacter.visited["1413/razorfen downs"] = nil
 OVERLAYS[1413], AREAS[5] = { { hitRect = { left = 0, right = 1000, top = 0, bottom = 500 }, area = 5 } }, "Razorfen Downs"
 Z:RefreshFound()
 Expect("...and explored on its entrance's map",

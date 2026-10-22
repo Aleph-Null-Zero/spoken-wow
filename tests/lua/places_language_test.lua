@@ -18,7 +18,7 @@ stub.LoadSpoken(SPOKEN)
 local function Legacy(settings)
     local db = _G.SpokenEnv.Addon.db
     db.profile.Modules, db.global.ModulesLegacy = nil, nil
-    _G.SpokenZonesSettings = settings
+    _G.SpokenPlacesSettings = settings
 end
 stub.SetAddOns({ { folder = "Spoken_Places", meta = { Version = "9.9.9" } } })
 

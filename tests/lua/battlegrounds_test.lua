@@ -171,7 +171,7 @@ stub.FireEvent("GOSSIP_CLOSED")
 -- A book: opening one reads it by itself; /spw read is the player asking.
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 instanceType = "none"
-_G.SpokenSettings, _G.SpokenBooksSettings = nil, nil
+_G.SpokenSettings, _G.SpokenReadablesSettings = nil, nil
 stub.LoadSpoken(SPOKEN).Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist", "Events" }) do

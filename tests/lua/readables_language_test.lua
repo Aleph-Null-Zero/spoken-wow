@@ -14,7 +14,7 @@ local PAGE, ONLY_ENGLISH = 15, 16
 local function Install(packs, locale)
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
     stub.SetLocale(locale or "enUS")
-    _G.SpokenBooksSettings = nil
+    _G.SpokenReadablesSettings = nil
     _G.SpokenBooksAudioPacks = {}
     for _, pack in ipairs(packs) do
         _G.SpokenBooksAudioPacks[pack.addon] = { version = 1, addon = pack.addon,
@@ -58,12 +58,12 @@ B = Install({ ENGLISH, GERMAN }, "deDE")
 Expect("B. a German client hears the German pack", B:ClipFor(PAGE).path,
     [[Interface\AddOns\SpokenBooksAudio_deDE\Sounds\15.mp3]])
 Expect("B. a page the German pack lacks falls back to English", B:ClipFor(ONLY_ENGLISH).language, "enUS")
-SpokenBooksSettings.fallbackLanguage = "none"
+SpokenReadablesSettings.fallbackLanguage = "none"
 Expect("B. ...and is silent with no fallback", B:ClipFor(ONLY_ENGLISH), nil)
 
 B = Install({ ENGLISH, GERMAN }, "enUS")
 Expect("B. an English client hears English", B:ClipFor(PAGE).language, "enUS")
-SpokenBooksSettings.voiceLanguage = "deDE"
+SpokenReadablesSettings.voiceLanguage = "deDE"
 Expect("B. ...unless it chose German", B:ClipFor(PAGE).language, "deDE")
 
 ---------------------------------------------------------------- C. the language the packs speak
@@ -91,7 +91,7 @@ Expect("D. older translated packs can caption the page opened in the client",
     B:ClipFor(PAGE).present.transcript, GERMAN_TEXT)
 Expect("D. a fallback page uses English captions rather than the open German page",
     B:ClipFor(ONLY_ENGLISH).present.transcript, "English second page.")
-SpokenBooksSettings.voiceLanguage = "enUS"
+SpokenReadablesSettings.voiceLanguage = "enUS"
 Expect("D. choosing an English voice uses the saved English words",
     B:ClipFor(PAGE).present.transcript, "English first page.")
 B = Install({ ENGLISH, INDEXED }, "enUS")
@@ -132,7 +132,7 @@ local ITALIAN = { addon = "SpokenBooksAudio_itIT", language = "itIT", pages = {
     [PAGE] = { file = "15", len = 2, text = "Prima pagina italiana." } } }
 B = Install({ ENGLISH, ITALIAN }, "enUS")
 Expect("F. on Auto an English client hears English", B:GetVoiceLanguage(), "enUS")
-SpokenBooksSettings.voiceLanguage = "itIT"
+SpokenReadablesSettings.voiceLanguage = "itIT"
 SpokenBooksData.index["Registry"][1][B:ChecksumOf("English first page.")] = PAGE
 stub.ShowPage({ title = "Registry", number = 1, text = "English first page." })
 Expect("F. the English index finds the page", B:PageOnScreen(), PAGE)

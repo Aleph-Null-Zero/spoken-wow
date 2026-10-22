@@ -37,8 +37,8 @@ local function Boot(opts)
     stub.world.inCombat = false
     stub.world.playerLevel = 30
     instance = opts.inside
-    SpokenSettings, SpokenZonesSettings = nil, nil
-    SpokenZonesCharacter = { greeted = true }
+    SpokenSettings, SpokenPlacesSettings = nil, nil
+    SpokenPlacesCharacter = { greeted = true }
     local subzones = { [1420] = { [RUINS] = { file = "1420\\ruins-of-lordaeron", len = 85 } } }
     if opts.noClip then subzones = {} end
     SpokenZonesAudioPacks = {
@@ -144,7 +144,7 @@ table.sort(maps)
 Expect("Data/Dungeons.lua has dungeons with a story", #maps > 0, true)
 for _, map in ipairs(maps) do
     local story = SpokenDungeons.dungeons[map].story
-    SpokenZonesCharacter = { greeted = true }
+    SpokenPlacesCharacter = { greeted = true }
     Z:RefreshFound()
     local before = Z:IsFound(story[1], story[2]) and true or false
     Enter(map, map == 249 and "raid" or "party")

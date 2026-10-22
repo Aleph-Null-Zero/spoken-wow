@@ -127,15 +127,15 @@ for i, source in ipairs(env.Sources.ordered) do
 end
 
 ---------------------------------------------------------------- the renamed parts
--- Places and Readables were keyed zones and books: a part switched off under the old key, in
--- any profile, is off under the new one, and the old key goes.
+-- Places and Readables were keyed zones and books, and their settings tables Zones and Writings:
+-- in any profile, what was saved under an old name is under the new one, and the old name goes.
 do
     local saved = env.Addon.db
     env.Addon.db = nil
     _G.SpokenSettings = { profiles = {
-        Default = { Parts = { zones = false, books = false } },
+        Default = { Parts = { zones = false, books = false }, Modules = { Zones = { language = "deDE" }, Writings = {} } },
         Other = { Parts = { zones = false, places = true } },
-    } }
+    }, global = { ModulesLegacy = { Writings = { autoplay = false } } } }
     env.Addon:InitDB()
     local default = _G.SpokenSettings.profiles.Default.Parts
     Expect("a part switched off as zones is off as places", default.places, false)
@@ -143,6 +143,10 @@ do
     Expect("...with the old keys gone", default.zones == nil and default.books == nil, true)
     local other = _G.SpokenSettings.profiles.Other.Parts
     Expect("a choice already made under the new key wins", other.places == true and other.zones == nil, true)
+    local modules = _G.SpokenSettings.profiles.Default.Modules
+    Expect("the Zones settings table is the Places one", modules.Places and modules.Places.language, "deDE")
+    Expect("...and Writings the Readables one", modules.Readables ~= nil and modules.Zones == nil and modules.Writings == nil, true)
+    Expect("...in the copy kept from before profiles too", _G.SpokenSettings.global.ModulesLegacy.Readables.autoplay, false)
     env.Addon.db = saved
 end
 

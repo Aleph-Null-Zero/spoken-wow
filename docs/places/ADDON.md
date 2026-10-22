@@ -48,13 +48,13 @@ Three settings have no row. `loreDiscoveredOnly` and `loreVoicedOnly` are the ta
 
 ### Where they are saved
 
-`SpokenZonesSettings` (saved variable) holds the settings. At load, `Spoken:BindModuleSettings`
+`SpokenPlacesSettings` (saved variable) holds the settings. At load, `Spoken:BindModuleSettings`
 swaps in the `Zones` table of Spoken's current profile (`Language.lua`, `Core.lua` `InitConfig`).
 The first time, the old table is kept in Spoken's `global.ModulesLegacy`, and a profile with no
 `Zones` table takes a copy of it at login, so every character has the values the account had.
 Choosing another profile in Spoken, copying one over or resetting it rebinds the table, and a
 profile made or reset then starts from the defaults. The `dump` key written by `/spp dump` is not
-copied, and sits in the profile's table, which is also what `SpokenZonesSettings` is saved as. `SpokenZonesCharacter` (per character) holds
+copied, and sits in the profile's table, which is also what `SpokenPlacesSettings` is saved as. `SpokenPlacesCharacter` (per character) holds
 `greeted`, `heard` and `visited`.
 
 `## LoadSavedVariablesFirst: true` is needed. The data files under `Data/` ask `Language.lua`
@@ -163,7 +163,7 @@ The game announces a discovery once per character, and Places reads that message
 - The login greeting. A new character's spawn area is announced before the map is settled, so
   two seconds after login a greeting reads it instead, up to eight tries, only for a level 1
   character standing in one of the six starting areas (`STARTING_AREAS`). `greeted` in
-  `SpokenZonesCharacter` makes it happen once, and `/spp forget` clears it.
+  `SpokenPlacesCharacter` makes it happen once, and `/spp forget` clears it.
 - Include Places Found Before also reads on zone change, once per place, for a character that
   explored before installing. `heard` records places when a clip starts, not when it is queued.
 - Entering a dungeon or raid reads its story, once per character (`heard`), with Read

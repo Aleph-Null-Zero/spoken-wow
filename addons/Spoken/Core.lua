@@ -127,6 +127,18 @@ Defaults = {
 }
 
 local RENAMED_PARTS = { zones = "places", books = "readables" }
+local RENAMED_MODULES = { Zones = "Places", Writings = "Readables" }
+
+-- Moves `saved[old]` to `saved[new]` for each pair, keeping what is already under `new`.
+local function MoveKeys(saved, renamed)
+    if type(saved) ~= "table" then return end
+    for old, new in pairs(renamed) do
+        if saved[old] ~= nil then
+            if saved[new] == nil then saved[new] = saved[old] end
+            saved[old] = nil
+        end
+    end
+end
 
 --- Idempotent, so the test harness and ADDON_LOADED can both call it.
 function Addon:InitDB()
@@ -156,17 +168,14 @@ function Addon:InitDB()
             frame.SubtitlePlayer, frame.HideFrame, frame.MinimalPlayer = nil, nil, nil
         end
         -- Places and Readables were keyed zones and books: a module switched off under its old
-        -- key stays off under the new one.
-        local parts = type(profile) == "table" and profile.Parts
-        if type(parts) == "table" then
-            for old, new in pairs(RENAMED_PARTS) do
-                if parts[old] ~= nil then
-                    if parts[new] == nil then parts[new] = parts[old] end
-                    parts[old] = nil
-                end
-            end
+        -- key stays off under the new one. Their settings tables were Zones and Writings, and are
+        -- bound under the new names.
+        if type(profile) == "table" then
+            MoveKeys(profile.Parts, RENAMED_PARTS)
+            MoveKeys(profile.Modules, RENAMED_MODULES)
         end
     end
+    MoveKeys(self.db.global.ModulesLegacy, RENAMED_MODULES)
     -- Another profile chosen, copied over this one or reset, from Spoken's page or anywhere
     -- else: its settings apply now rather than at the next reload.
     if self.db.RegisterCallback then

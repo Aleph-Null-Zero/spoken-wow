@@ -50,7 +50,7 @@ end
 _G.SPELLBOOK_FONT_COLOR = { GetRGB = function() return 0.2, 0.09, 0 end }
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
-_G.SpokenBooksSettings, _G.SpokenBooksCharacter = nil, nil
+_G.SpokenReadablesSettings, _G.SpokenReadablesCharacter = nil, nil
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Playlist",
     "UI/Readables", "Events", "Commands" }) do
@@ -96,7 +96,7 @@ end
 -- Kurdran Wildhammer and Alleria Windrunner stand in Stormwind; A Dusty Unsent Letter is carried
 -- from Westfall; An Exotic Cookbook is had across Azeroth.
 local KURDRAN, ALLERIA, LETTER, COOKBOOK = 287, 288, 16, 410
-SpokenBooksCharacter.found[KURDRAN] = true
+SpokenReadablesCharacter.found[KURDRAN] = true
 
 B:SetupReadables()
 stub.SetZone({ map = 1436 })
@@ -202,7 +202,7 @@ do
             end
         end
     end
-    SpokenBooksSettings.compendiumByZone = false
+    SpokenReadablesSettings.compendiumByZone = false
     Reopen(1436)
     Expect("By Type, the tab lands on the first kind holding a readable of the player's zone",
         panel.page.title.text, FirstKindIn(1436))
@@ -211,12 +211,12 @@ do
     Expect("...its page with the book badge by the title", panel.page.headFace.speaker.bullet == "book" and panel.page.shift > 0, true)
     Reopen(9003)
     Expect("...where their zone holds none, on the first kind", panel.page.title.text, L.TYPE_BOOK)
-    SpokenBooksSettings.compendiumByZone = nil
-    SpokenBooksSettings.compendiumFoundOnly = true
+    SpokenReadablesSettings.compendiumByZone = nil
+    SpokenReadablesSettings.compendiumFoundOnly = true
     Reopen(1426)
     Expect("Found Only, where the player's zone holds nothing found, the tab lands on their continent's banner",
         panel.page.title.text .. " " .. tostring(RowFor("Dun Morogh") == nil), "Eastern Kingdoms true")
-    SpokenBooksSettings.compendiumFoundOnly = nil
+    SpokenReadablesSettings.compendiumFoundOnly = nil
     Reopen(9003)
 end
 -- Left open by the landing inside Hollow Vault: closed, so the list starts folded.
@@ -278,10 +278,10 @@ Expect("...opening on its writings, the Winter Veil feast it once listed in the 
     Has(Shown(), "The Feast of Winter Veil") and Has(Shown(), "Metzen's Letters and Notes"), true)
 Expect("...its page named for the event, in Holidays and Events, with its count", panel.page.title.text .. "|"
     .. panel.page.sub.text.text, L.EVENT_WINTER_VEIL .. "|" .. L.GROUP_EVENTS .. " · 0 of 2 found")
-SpokenBooksSettings.unlockUnfound = true
+SpokenReadablesSettings.unlockUnfound = true
 B:RefreshReadables()
 Click("The Feast of Winter Veil")
-SpokenBooksSettings.unlockUnfound = false
+SpokenReadablesSettings.unlockUnfound = false
 Click(L.EVENT_WINTER_VEIL)
 OpenKinds("events")
 Expect("...one whose event the data does not name under its kind of writing, as before",
@@ -453,22 +453,22 @@ do
     Find("")
 
     -- Found Only and Voiced Only leave out a dungeon with nothing found or voiced, as a zone.
-    SpokenBooksCharacter.found[LEDGER] = true
-    SpokenBooksSettings.compendiumFoundOnly = true
+    SpokenReadablesCharacter.found[LEDGER] = true
+    SpokenReadablesSettings.compendiumFoundOnly = true
     B:RefreshReadables()
     list = Shown()
     Expect("Found Only keeps a dungeon with something found and leaves out one with nothing",
         Has(list, "Hollow Vault") and not Has(list, "Ember Halls"), true)
-    SpokenBooksSettings.compendiumFoundOnly = false
+    SpokenReadablesSettings.compendiumFoundOnly = false
     local hasAudio = B.HasAudio
     B.HasAudio = function(_, p) return p == RUNE end
-    SpokenBooksSettings.compendiumVoicedOnly = true
+    SpokenReadablesSettings.compendiumVoicedOnly = true
     B:RefreshReadables()
     list = Shown()
     Expect("...Voiced Only one with nothing voiced", Has(list, "Ember Halls") and not Has(list, "Hollow Vault"), true)
-    SpokenBooksSettings.compendiumVoicedOnly = false
+    SpokenReadablesSettings.compendiumVoicedOnly = false
     B.HasAudio = hasAudio
-    SpokenBooksCharacter.found[LEDGER] = nil
+    SpokenReadablesCharacter.found[LEDGER] = nil
     Click(L.GROUP_DUNGEONS)
     Click("Cragmoor")
     _G.Spoken.PlacePicture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end
@@ -552,25 +552,25 @@ Expect("opened on a writing, it is chosen, its row shown with what holds it open
     page.title.text .. "|" .. tostring(RowFor("Kurdran Wildhammer") and RowFor("Kurdran Wildhammer").selected), "Kurdran Wildhammer|true")
 Expect("the Compendium shows a found writing's page, not one not found",
     tostring(B:CompendiumHas(KURDRAN)) .. "|" .. tostring(B:CompendiumHas(ALLERIA)), "true|false")
-SpokenBooksSettings.unlockUnfound = true
+SpokenReadablesSettings.unlockUnfound = true
 Expect("...or any with Unlock Unfound Readables on", B:CompendiumHas(ALLERIA), true)
-SpokenBooksSettings.unlockUnfound = false
+SpokenReadablesSettings.unlockUnfound = false
 -- The line under the title is plain words, as on Quests and Places.
 Expect("a page's line under its title is not a link", page.sub.onClick, nil)
 Click("Kurdran Wildhammer")
 Click("Ranger Captain Alleria Windrunner")
 Expect("a readable not found does not open", page.title.text, "Kurdran Wildhammer")
 
-SpokenBooksSettings.unlockUnfound = true
+SpokenReadablesSettings.unlockUnfound = true
 B:RefreshReadables()
 Expect("Unlock Unfound Readables opens it", RowFor("Ranger Captain Alleria Windrunner").row.locked, false)
 -- Opening one is not finding it: the counts stay what the character has found.
 local before = RowFor("Stormwind City").count.text
 Click("Ranger Captain Alleria Windrunner")
 Expect("...and choosing it leaves the counts as they were", RowFor("Stormwind City").count.text, before)
-SpokenBooksSettings.unlockUnfound = false
+SpokenReadablesSettings.unlockUnfound = false
 
-SpokenBooksCharacter.found[LETTER] = true
+SpokenReadablesCharacter.found[LETTER] = true
 -- Stormwind City and Elwynn Forest closed, so the first Letters listed are Westfall's.
 Click("Stormwind City")
 Click("Elwynn Forest")
@@ -633,7 +633,7 @@ list = Search("dark keeper nameplate")
 Expect("readables sharing a title are numbered in id order, so no two rows read the same",
     Has(list, "Dark Keeper Nameplate (1)") and Has(list, "Dark Keeper Nameplate (6)")
     and not Has(list, "Dark Keeper Nameplate") and RowFor("Dark Keeper Nameplate (2)").row.book, 1432)
-SpokenBooksSettings.unlockUnfound = true
+SpokenReadablesSettings.unlockUnfound = true
 B:RefreshReadables()
 Click("Dark Keeper Nameplate (2)")
 Expect("...and so is its page's title", page.title.text, "Dark Keeper Nameplate (2)")
@@ -641,18 +641,18 @@ Search("civil war in the plaguelands")
 Click("Civil War in the Plaguelands")
 Expect("a readable in many zones: the line under its title names the first two and counts the rest",
     page.sub.text.text, L.READABLES_IN_FMT:format("Map 1420, Map 1423") .. L.READABLES_MORE_FMT:format(5))
-SpokenBooksSettings.unlockUnfound = false
+SpokenReadablesSettings.unlockUnfound = false
 Search("")
 
 -- Found Only: the readables not found, and what holds none found, left out.
-SpokenBooksSettings.compendiumFoundOnly = true
+SpokenReadablesSettings.compendiumFoundOnly = true
 B:RefreshReadables()
 list = Shown()
 Expect("Found Only leaves out what is not found", Has(list, "Ranger Captain Alleria Windrunner") or Has(list, L.GROUP_UNKNOWN), false)
 Expect("...Other Lands' and Battlegrounds' banners too, holding nothing found",
     Has(list, L.GROUP_LANDS) or Has(list, L.GROUP_BATTLEGROUNDS), false)
 Expect("...and keeps what is", Has(list, "Westfall") and Has(list, "Elwynn Forest"), true)
-SpokenBooksSettings.compendiumFoundOnly = false
+SpokenReadablesSettings.compendiumFoundOnly = false
 
 -- Opening one in the world finds it, and the tab open meanwhile says so at once.
 Click("Elwynn Forest")
@@ -711,7 +711,7 @@ Expect("Voiced Only leaves out what has no recording", Has(list, "Kurdran Wildha
 Expect("...and keeps what has one, with the zone that holds it", Has(list, "Ranger Captain Alleria Windrunner")
     and Has(list, "Elwynn Forest"), true)
 Expect("...counting only what it lists", RowFor("Elwynn Forest").count.text, "1/1")
-Expect("...and is remembered", SpokenBooksSettings.compendiumVoicedOnly, true)
+Expect("...and is remembered", SpokenReadablesSettings.compendiumVoicedOnly, true)
 _, choices = Menu()
 choices[2].func()
 Expect("...off, everything again", Has(Shown(), "Westfall"), true)
@@ -868,7 +868,7 @@ do
     B.following = {}
 
     -- Shift-click on a writing's row queues it behind what is playing, as on Quests, choosing nothing.
-    SpokenBooksSettings.unlockUnfound = true
+    SpokenReadablesSettings.unlockUnfound = true
     B:RefreshReadables()
     local chosenTitle = panel.page.title.text
     local shift = _G.IsShiftKeyDown
@@ -881,7 +881,7 @@ do
     Click("Ranger Captain Alleria Windrunner")
     Expect("...and a second does not queue it twice", Spoken:GetQueueSize(), 2)
     _G.IsShiftKeyDown = shift
-    SpokenBooksSettings.unlockUnfound = false
+    SpokenReadablesSettings.unlockUnfound = false
     Spoken:StopAll()
     B.following = {}
     B.ClipFor, B.HasAudio = clipFor, hasAudio
@@ -979,7 +979,7 @@ do
     B.source = { Enqueue = function() return true end, PlayNow = function() return true end, StopAll = function() end }
     B.ClipFor = function() return {} end
     B.IsQueued = function() return false end
-    SpokenBooksCharacter.read[KURDRAN] = nil
+    SpokenReadablesCharacter.read[KURDRAN] = nil
     B:SyncTo(SpokenBooksData.books[KURDRAN].pages[1], true)
     Expect("Play in the Compendium does not count for Read Only Once", B:HasReadBook(KURDRAN), false)
     B:SyncTo(SpokenBooksData.books[KURDRAN].pages[1])
@@ -989,10 +989,10 @@ end
 
 -- Listening is not finding: a book heard (Read Only Once's record) stays unfound until it is
 -- opened in the world. One heard before Found was kept still is.
-SpokenBooksCharacter.found[ALLERIA] = nil
+SpokenReadablesCharacter.found[ALLERIA] = nil
 B:MarkBookRead(ALLERIA)
 Expect("a book heard is not found by it", B:IsBookFound(ALLERIA), false)
-_G.SpokenBooksCharacter = { read = { [LETTER] = true } }
+_G.SpokenReadablesCharacter = { read = { [LETTER] = true } }
 B:InitDB()
 Expect("...one heard before Found was kept is found", B:IsBookFound(LETTER), true)
 

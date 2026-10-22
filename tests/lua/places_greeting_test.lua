@@ -17,8 +17,8 @@ local function Boot(where, level, record)
     stub.ResetSound(); stub.ResetTimers()
     stub.world.inCombat = false
     stub.world.playerLevel = level
-    SpokenZonesSettings = nil
-    SpokenZonesCharacter = record
+    SpokenPlacesSettings = nil
+    SpokenPlacesCharacter = record
     SpokenZonesAudioPacks = {
         SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
             zones = { [1411] = { file = "1411\\zone", len = 80 }, [1453] = { file = "1453\\zone", len = 80 } },
@@ -51,7 +51,7 @@ local VALLEY = { map = 1411, zone = "Durotar", subzone = "Valley of Trials" }
 Boot(VALLEY, 1, nil)
 stub.Advance(2)
 Expect("a new character in its starting area is greeted", Spoken:IsPlaying(), true)
-Expect("...and remembered", SpokenZonesCharacter.greeted, true)
+Expect("...and remembered", SpokenPlacesCharacter.greeted, true)
 
 Boot(VALLEY, 1, { greeted = true })
 stub.Advance(20)
@@ -61,7 +61,7 @@ Expect("a character greeted before is not greeted again", Spoken:GetQueueSize(),
 Boot({ map = 1453, zone = "Stormwind City", subzone = "Trade District" }, 1, nil)
 stub.Advance(20)
 Expect("a level 1 character parked in a city is not greeted", Spoken:GetQueueSize(), 0)
-Expect("...nor marked greeted", SpokenZonesCharacter.greeted, nil)
+Expect("...nor marked greeted", SpokenPlacesCharacter.greeted, nil)
 
 Boot({ map = 1411, zone = "Durotar", subzone = "Razor Hill" }, 1, nil)
 stub.Advance(20)
@@ -77,7 +77,7 @@ C_Map.GetMapInfo = function(id) return { mapType = continent and 2 or 3 } end
 Boot({ map = 1411, zone = "", subzone = "" }, 1, nil)
 stub.Advance(6)
 Expect("the greeting waits while the map is the continent", Spoken:GetQueueSize(), 0)
-Expect("...without spending its turn", SpokenZonesCharacter.greeted, nil)
+Expect("...without spending its turn", SpokenPlacesCharacter.greeted, nil)
 continent = false
 stub.SetZone(VALLEY)
 stub.Advance(2)

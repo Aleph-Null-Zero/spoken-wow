@@ -251,8 +251,8 @@ local function BootPlaces()
     stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
     world.inCombat = false
     world.playerLevel = 1
-    _G.SpokenZonesSettings = nil
-    _G.SpokenZonesCharacter = {}
+    _G.SpokenPlacesSettings = nil
+    _G.SpokenPlacesCharacter = {}
     _G.SpokenZonesAudioPacks = {
         SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
             zones = { [1411] = { file = "1411\\zone", len = 80 } },
@@ -285,14 +285,14 @@ Expect("a secret subzone raises no error in the login greeting", Quietly(functio
     stub.Advance(3)
 end), true)
 Expect("...which reads nothing", _G.Spoken:GetQueueSize(), 0)
-Expect("...and does not count as greeted", _G.SpokenZonesCharacter.greeted, nil)
+Expect("...and does not count as greeted", _G.SpokenPlacesCharacter.greeted, nil)
 stub.Secrets()
 stub.Advance(3)
 Expect("the subzone no longer secret, the greeting reads it", _G.Spoken:GetQueueSize(), 1)
 
 -- The discovery message, as #357 reported it from Shadowfang Keep.
 Z = BootPlaces()
-_G.SpokenZonesCharacter.greeted = true
+_G.SpokenPlacesCharacter.greeted = true
 assert(loadfile(PLACES .. "Autoplay.lua"))("Spoken_Places", Z)
 Z:SetupAutoplay()
 stub.Secrets("Discovered Durotar.")
@@ -305,7 +305,7 @@ Expect("not secret, it discovers the zone", _G.Spoken:GetQueueSize(), 1)
 
 ---------------------------------------------------------------- writings
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 stub.LoadSpoken(SPOKEN).Addon:Enable()
 local B = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do

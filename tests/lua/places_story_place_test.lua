@@ -19,8 +19,8 @@ local function Boot()
     stub.ResetSound(); stub.ResetTimers()
     stub.world.inCombat = false
     stub.world.playerLevel = 40
-    SpokenZonesSettings = nil
-    SpokenZonesCharacter = { greeted = true }
+    SpokenPlacesSettings = nil
+    SpokenPlacesCharacter = { greeted = true }
     SpokenZonesAudioPacks = {
         SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS", zones = {},
             subzones = { [NEEDLES] = { ["razorfen downs"] = { file = "1441\\razorfen-downs", len = 40 } } } },
@@ -65,7 +65,7 @@ Expect("...headed by The Barrens, where its entrance is", clip and clip.present.
 Expect("...and its report names the story's map", clip and Z:ReportURL(clip.mapID, clip.areaKey),
     "https://spoken.rusty.one/places/r/1441/razorfen-downs")
 Expect("...and the visit is recorded at its entrance, where it is found",
-    tostring(SpokenZonesCharacter.visited["1413/razorfen downs"]) .. "|" .. tostring(Z:IsFound(NEEDLES, "razorfen downs")),
+    tostring(SpokenPlacesCharacter.visited["1413/razorfen downs"]) .. "|" .. tostring(Z:IsFound(NEEDLES, "razorfen downs")),
     "true|true")
 
 Z = Boot()

@@ -12,8 +12,8 @@ end
 SpokenReadables.Print = function(self, message, ...) Print(message, ...) end
 
 local function Toggle(key, label)
-	SpokenBooksSettings[key] = not SpokenBooksSettings[key]
-	Print("%s %s", label, SpokenBooksSettings[key] and "enabled" or "disabled")
+	SpokenReadablesSettings[key] = not SpokenReadablesSettings[key]
+	Print("%s %s", label, SpokenReadablesSettings[key] and "enabled" or "disabled")
 end
 
 --- Read the page in front of the reader, or say why nothing happened.
@@ -58,13 +58,13 @@ local function Status()
 	Print("%d readables, %d pages known; %d narrated by %d pack%s", books, pages, clips,
 		#packs, #packs == 1 and "" or "s")
 	local read = 0
-	for _ in pairs(SpokenBooksCharacter and SpokenBooksCharacter.read or {}) do read = read + 1 end
+	for _ in pairs(SpokenReadablesCharacter and SpokenReadablesCharacter.read or {}) do read = read + 1 end
 
 	Print("autoplay %s, whole book %s, one line %s, read once %s",
-		SpokenBooksSettings.autoplay and "on" or "off",
-		SpokenBooksSettings.readWholeBook and "on" or "off",
+		SpokenReadablesSettings.autoplay and "on" or "off",
+		SpokenReadablesSettings.readWholeBook and "on" or "off",
 		SpokenReadables:OneLine() and "on" or "off",
-		SpokenBooksSettings.readOnce and "on" or "off")
+		SpokenReadablesSettings.readOnce and "on" or "off")
 	Print("gathering %s", SpokenReadables:GatherAvailable() and (Spoken.Gather:IsEnabled() and "on" or "off") or "unavailable")
 	-- Said whether or not read-once is on, because the count is what makes `/spr forget`
 	-- make sense, and because a reader turning the setting on wants to know what it will

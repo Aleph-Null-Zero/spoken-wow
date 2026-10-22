@@ -12,7 +12,7 @@ local Expect, Failures = H.Expecter(print)
 stub.SetClient("16001")
 stub.LoadSpoken(SPOKEN)
 local Z = H.LoadPlaces(PLACES)
-_G.SpokenZonesSettings = { voiceEnabled = true }
+_G.SpokenPlacesSettings = { voiceEnabled = true }
 local printed = {}
 Z.Print = function(_, fmt, ...)
     table.insert(printed, select("#", ...) > 0 and fmt:format(...) or fmt)
@@ -40,28 +40,28 @@ Expect("...without a word about the others", #printed, 0)
 -- The page's reset writes the defaults and applies them, as the checkboxes do.
 local notified = 0
 Z.NotifyAudioChanged = function() notified = notified + 1 end
-_G.SpokenZonesSettings.voiceEnabled = false
+_G.SpokenPlacesSettings.voiceEnabled = false
 Z:ResetOptions()
-Expect("a reset brings the voice back on", _G.SpokenZonesSettings.voiceEnabled, true)
+Expect("a reset brings the voice back on", _G.SpokenPlacesSettings.voiceEnabled, true)
 Expect("...and the play buttons hear the voice is on again", notified, 1)
 
 ---------------------------------------------------------------- Text Size
 -- Azeroth's Compendium's, on Spoken's page. Until it is set there, the size the Places page had.
 local Spoken = _G.Spoken
-_G.SpokenZonesSettings.fontSize = 15
+_G.SpokenPlacesSettings.fontSize = 15
 Expect("Text Size not yet set on Spoken's page is the one the Places page had, which Places reads",
     Spoken:CompendiumFontSize() .. "|" .. Z:Get("fontSize"), "15|15")
 local told = 0
 Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", function() told = told + 1 end)
 Spoken:SetCompendiumFontSize(18)
 Expect("...set there, it is Spoken's, and Places reads it", Spoken:CompendiumFontSize() .. "|" .. Z:Get("fontSize")
-    .. "|" .. _G.SpokenZonesSettings.fontSize, "18|18|15")
+    .. "|" .. _G.SpokenPlacesSettings.fontSize, "18|18|15")
 Expect("...the parts that draw it told once", told, 1)
 Z:ResetOptions()
-Expect("the Places page's Start Over leaves it, as it is on Spoken's page", _G.SpokenZonesSettings.fontSize .. "|"
+Expect("the Places page's Start Over leaves it, as it is on Spoken's page", _G.SpokenPlacesSettings.fontSize .. "|"
     .. Z:Get("fontSize"), "15|18")
 _G.SpokenEnv.Addon.db.profile.CompendiumFontSize = nil
-_G.SpokenZonesSettings.fontSize = nil
+_G.SpokenPlacesSettings.fontSize = nil
 Expect("with neither set, it is 12", Spoken:CompendiumFontSize(), 12)
 
 os.exit(Failures() == 0 and 0 or 1)

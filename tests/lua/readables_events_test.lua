@@ -34,7 +34,7 @@ local function LoadReadables()
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 local B = LoadReadables()
@@ -87,18 +87,18 @@ Expect("...but forgets the page, because there is no page on screen", B.lastPage
 -- Stopped by hand, which closing the frame above no longer does: this section is about what
 -- mail queues, not about the book still being read behind it.
 B:StopReading()
-SpokenBooksCharacter.found = {}
+SpokenReadablesCharacter.found = {}
 stub.ShowPage({ title = "A letter", number = 1, text = REGISTRY_1, creator = "Somebody" })
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("mail queues nothing", #QueuedPages(), 0)
 Expect("...and is not remembered as a page", B.lastPage, nil)
-Expect("...nor found", next(SpokenBooksCharacter.found), nil)
+Expect("...nor found", next(SpokenReadablesCharacter.found), nil)
 stub.ClosePage()
 stub.FireEvent("ITEM_TEXT_CLOSED")
 
 ---------------------------------------------------------------- autoplay off
-SpokenBooksSettings.autoplay = false
-SpokenBooksCharacter.found, SpokenBooksCharacter.read = {}, {}
+SpokenReadablesSettings.autoplay = false
+SpokenReadablesCharacter.found, SpokenReadablesCharacter.read = {}, {}
 stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1 })
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("with autoplay off nothing speaks by itself", #QueuedPages(), 0)
@@ -109,7 +109,7 @@ Expect("...without counting as read, which Read Only Once goes by", B:HasReadBoo
 B:ReadCurrent()
 Expect("asking for it reads it anyway", Reading(), 3)
 B:StopReading()
-SpokenBooksSettings.autoplay = true
+SpokenReadablesSettings.autoplay = true
 
 ---------------------------------------------------------------- the slash command
 Expect("the commands are /spokenreadables and /spr, and /spokenwritings, /spw, /spokenbooks and /spb still work",
@@ -117,12 +117,12 @@ Expect("the commands are /spokenreadables and /spr, and /spokenwritings, /spw, /
         SLASH_SPOKENREADABLES5, SLASH_SPOKENREADABLES6 }, " "),
     "/spokenreadables /spr /spokenwritings /spw /spokenbooks /spb")
 SlashCmdList["SPOKENREADABLES"]("autoplay")
-Expect("/spw autoplay toggles it", SpokenBooksSettings.autoplay, false)
+Expect("/spw autoplay toggles it", SpokenReadablesSettings.autoplay, false)
 SlashCmdList["SPOKENREADABLES"]("autoplay")
-Expect("...and back", SpokenBooksSettings.autoplay, true)
+Expect("...and back", SpokenReadablesSettings.autoplay, true)
 
 SlashCmdList["SPOKENREADABLES"]("whole")
-Expect("/spw whole toggles whole-book reading", SpokenBooksSettings.readWholeBook, false)
+Expect("/spw whole toggles whole-book reading", SpokenReadablesSettings.readWholeBook, false)
 SlashCmdList["SPOKENREADABLES"]("whole")
 
 stub.ClosePage()
@@ -155,15 +155,15 @@ end
 
 ---------------------------------------------------------------- reading each book only once
 B:StopReading()
-SpokenBooksCharacter.read = {}
-SpokenBooksSettings.readOnce = true
+SpokenReadablesCharacter.read = {}
+SpokenReadablesSettings.readOnce = true
 local REGISTRY = B:PlaceOf(261)
 
 -- Opened at page 2, so page 1 is a page of this book the queue does not cover.
 stub.ShowPage({ title = "Hillsbrad Town Registry", number = 2, text = REGISTRY_2, hasNext = true })
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("a book this character has not read is read", Reading(), 2)
-Expect("...and counts as read from the moment it starts", SpokenBooksCharacter.read[REGISTRY], true)
+Expect("...and counts as read from the moment it starts", SpokenReadablesCharacter.read[REGISTRY], true)
 
 stub.ShowPage({ title = "Hillsbrad Town Registry", number = 1, text = REGISTRY_1, hasNext = true })
 stub.FireEvent("ITEM_TEXT_READY")
@@ -184,7 +184,7 @@ B:StopReading()
 Expect("forgetting the record empties it", B:ForgetRead() >= 1, true)
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("...so the same book is read again", Reading(), 3)
-SpokenBooksSettings.readOnce = false
+SpokenReadablesSettings.readOnce = false
 
 ---------------------------------------------------------------- the button on the book frame
 B:StopReading()

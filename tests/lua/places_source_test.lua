@@ -306,7 +306,7 @@ local function BootGreeting(level)
     Z.GetLoreWithFallback = function() return nil, nil end
     Z:SetupAudio()
     Z:SetupAutoplay()
-    _G.SpokenZonesCharacter = nil
+    _G.SpokenPlacesCharacter = nil
     return counter
 end
 
@@ -323,7 +323,7 @@ cinematic = false
 stub.Advance(60)
 Expect("once it is over, the greeting gets all its attempts", counter.asked, 8)
 _G.InCinematic = nil
-_G.SpokenZonesCharacter = nil
+_G.SpokenPlacesCharacter = nil
 
 ---------------------------------------------------------------- the pack this repo ships
 -- The shipped Data/Sounds.lua, loaded for real. Everything above uses hand-built tables, so

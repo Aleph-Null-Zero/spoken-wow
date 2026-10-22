@@ -106,13 +106,13 @@ local SIDE_TAB_TOP = 30
 -- with it here. Once the client stops tainting a map with an addon's buttons in it (check on a
 -- newer build), Host can always answer the map.
 local function NewPanel()
-	local ok, frame = pcall(CreateFrame, "Frame", "SpokenZonesPanel", UIParent, "DefaultPanelFlatTemplate")
+	local ok, frame = pcall(CreateFrame, "Frame", "SpokenPlacesPanel", UIParent, "DefaultPanelFlatTemplate")
 	if ok and frame and frame.SetTitle then
 		frame:SetTitle(L.LORE_PANEL_TITLE)
 		frame.templated = true
 		return frame
 	end
-	frame = CreateFrame("Frame", "SpokenZonesPanel", UIParent, "BackdropTemplate")
+	frame = CreateFrame("Frame", "SpokenPlacesPanel", UIParent, "BackdropTemplate")
 	if frame.SetBackdrop then
 		frame:SetBackdrop({
 			bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]],
@@ -178,7 +178,7 @@ local function BuildToggle()
 	-- frame's, LargeSideTabButtonTemplate): its own tooltip, press and sound. The action slot's ring
 	-- where the client has not got it. Placed with the panel (Place): in the map, or beside it under
 	-- the gamepad UI.
-	local ok, tab = pcall(CreateFrame, "Frame", "SpokenZonesPanelToggle", UIParent, "LargeSideTabButtonTemplate")
+	local ok, tab = pcall(CreateFrame, "Frame", "SpokenPlacesPanelToggle", UIParent, "LargeSideTabButtonTemplate")
 	if ok and tab and type(tab.Icon) == "table" and tab.Icon.SetTexture and tab.SetCustomOnMouseUpHandler then
 		toggle = tab
 		toggle.fillToInterior = true
@@ -195,7 +195,7 @@ local function BuildToggle()
 		toggle:Hide()
 		return
 	end
-	toggle = CreateFrame("Button", "SpokenZonesPanelToggle", UIParent)
+	toggle = CreateFrame("Button", "SpokenPlacesPanelToggle", UIParent)
 	toggle:SetSize(ICON_SIZE, ICON_SIZE)
 	local icon = toggle:CreateTexture(nil, "ARTWORK")
 	icon:SetAllPoints()

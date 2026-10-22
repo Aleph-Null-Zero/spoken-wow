@@ -192,7 +192,7 @@ function SpokenReadables:PlayFrom(pageId, browsing, asked, behind)
 	local oneLine = self:OneLine()
 	local queued, rest, first = 0, {}, nil
 	for _, id in ipairs(self:PagesFrom(pageId)) do
-		if SpokenBooksSettings and SpokenBooksSettings.readWholeBook == false and id ~= pageId then
+		if SpokenReadablesSettings and SpokenReadablesSettings.readWholeBook == false and id ~= pageId then
 			break
 		end
 		if queued == 0 or not oneLine then

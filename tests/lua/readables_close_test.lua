@@ -35,7 +35,7 @@ local function LoadReadables()
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 local B = LoadReadables()
@@ -80,7 +80,7 @@ local function Reset()
 end
 
 ---------------------------------------------------------------- off, as it ships
-Expect("off by default", SpokenBooksSettings.closeWhenRead, false)
+Expect("off by default", SpokenReadablesSettings.closeWhenRead, false)
 OpenLetter()
 Expect("a letter is read", Queued(), 1)
 stub.Advance(4)
@@ -89,7 +89,7 @@ Expect("...still on screen", B.lastPage, 15)
 Reset()
 
 ---------------------------------------------------------------- on
-SpokenBooksSettings.closeWhenRead = true
+SpokenReadablesSettings.closeWhenRead = true
 OpenLetter()
 stub.Advance(4)
 Expect("a one-page letter closes once it has been heard", closed, 1)
@@ -125,12 +125,12 @@ stub.Advance(6)
 Expect("its last page heard, it closes, though the reader stayed on page 1", closed, 1)
 Reset()
 
-SpokenBooksSettings.readWholeBook = false
+SpokenReadablesSettings.readWholeBook = false
 OpenRegistry()
 Expect("with Read Whole Book off, only page 1 is queued", Queued(), 1)
 stub.Advance(4)
 Expect("...and hearing it leaves the book open to turn", closed, 0)
-SpokenBooksSettings.readWholeBook = true
+SpokenReadablesSettings.readWholeBook = true
 Reset()
 
 -- Its last page silent: nothing is left to hear once page 2 has been read.
@@ -145,9 +145,9 @@ Reset()
 
 ---------------------------------------------------------------- the command
 SlashCmdList["SPOKENREADABLES"]("close")
-Expect("/spw close toggles it", SpokenBooksSettings.closeWhenRead, false)
+Expect("/spw close toggles it", SpokenReadablesSettings.closeWhenRead, false)
 SlashCmdList["SPOKENREADABLES"]("close")
-Expect("...and back", SpokenBooksSettings.closeWhenRead, true)
+Expect("...and back", SpokenReadablesSettings.closeWhenRead, true)
 
 print(Failures() == 0 and "All readables close tests passed" or (Failures() .. " failed"))
 os.exit(Failures() == 0 and 0 or 1)

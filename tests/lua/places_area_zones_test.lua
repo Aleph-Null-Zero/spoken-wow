@@ -69,8 +69,8 @@ local function Boot(where, client)
         if id == SHENDRALAS and client ~= "forever" then return nil end
         return getMapInfo(id)
     end
-    SpokenZonesSettings = nil
-    SpokenZonesCharacter = { greeted = true }
+    SpokenPlacesSettings = nil
+    SpokenPlacesCharacter = { greeted = true }
     SpokenZonesAudioPacks = {
         SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS", zones = {},
             subzones = { [HILLSBRAD] = { strahnbrad = { file = "1424\\strahnbrad", len = 40 } },
@@ -135,7 +135,7 @@ Expect("...with its picture", clip and clip.present.picture and clip.present.pic
 Expect("...and its report names the story's map", clip and Z:ReportURL(clip.mapID, clip.areaKey),
     "https://spoken.rusty.one/places/r/1424/strahnbrad")
 Expect("...the visit recorded in Alterac Mountains, where it is found",
-    tostring(SpokenZonesCharacter.visited["1416/strahnbrad"]) .. "|" .. tostring(Z:IsFound(HILLSBRAD, "strahnbrad")),
+    tostring(SpokenPlacesCharacter.visited["1416/strahnbrad"]) .. "|" .. tostring(Z:IsFound(HILLSBRAD, "strahnbrad")),
     "true|true")
 Expect("...which finds Alterac Mountains too", Z:IsFound(ALTERAC), true)
 
@@ -158,9 +158,9 @@ Expect("...headed by Thousand Needles, where it is listed", clip and clip.presen
 
 Z = Boot({ map = HILLSBRAD, zone = "Hillsbrad Foothills", subzone = "Southshore" })
 Expect("not found before it is stood in", Z:IsFound(HILLSBRAD, "strahnbrad"), false)
-SpokenZonesCharacter.visited["1424/strahnbrad"] = true
+SpokenPlacesCharacter.visited["1424/strahnbrad"] = true
 Expect("...a visit recorded under Hillsbrad Foothills still counts", Z:IsFound(HILLSBRAD, "strahnbrad"), true)
-SpokenZonesCharacter.visited["1424/strahnbrad"] = nil
+SpokenPlacesCharacter.visited["1424/strahnbrad"] = nil
 -- Alterac Mountains' map, with Strahnbrad's overlay explored.
 local before = { CreateVector2D, C_Map.GetMapArtLayers, C_Map.GetAreaInfo }
 _G.CreateVector2D = function(x, y) return { x = x, y = y } end

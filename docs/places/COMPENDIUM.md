@@ -68,7 +68,7 @@ Everything else the tab does is in `UI/LoreWindow.lua`.
   `C_MapExplorationInfo.GetExploredAreaIDsAtPosition` names the areas under each overlay. This
   covers everything explored before the addon was installed.
 - The character has stood in it since. Small places and a city's districts have no overlay, so
-  every zone change records where the character is (`SpokenZonesCharacter.visited`), and a click on
+  every zone change records where the character is (`SpokenPlacesCharacter.visited`), and a click on
   the map that resolves an area marks it. Entering a dungeon or raid marks its card, whatever the
   reading settings say: the client has no map for the player inside, so this is the only way most
   dungeon cards are found.

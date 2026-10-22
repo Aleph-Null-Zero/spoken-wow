@@ -502,7 +502,7 @@ end
 --- they set on the Places page, where it was before; 12 with neither.
 function Spoken:CompendiumFontSize()
     local size = Addon.db and Addon.db.profile.CompendiumFontSize
-    if size == nil and type(SpokenZonesSettings) == "table" then size = SpokenZonesSettings.fontSize end
+    if size == nil and type(SpokenPlacesSettings) == "table" then size = SpokenPlacesSettings.fontSize end
     return tonumber(size) or 12
 end
 

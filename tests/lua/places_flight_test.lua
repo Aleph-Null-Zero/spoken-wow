@@ -22,8 +22,8 @@ local function Boot(client, taxi, flight, greeting)
     stub.world.inCombat = false
     stub.world.playerLevel = 1
     onTaxi, flying = taxi, flight
-    SpokenZonesSettings = nil
-    SpokenZonesCharacter = greeting and {} or { greeted = true }
+    SpokenPlacesSettings = nil
+    SpokenPlacesCharacter = greeting and {} or { greeted = true }
     SpokenZonesAudioPacks = {
         SpokenZonesAudio = { version = 1, addon = "SpokenZonesAudio", language = "enUS",
             zones = { [1411] = { file = "1411\\zone", len = 80 } },
@@ -75,11 +75,11 @@ for _, state in ipairs({
         Z = Boot(client, state.taxi, state.flying, true)
         stub.Advance(2)
         Expect(label .. ": login greeting stays silent", Spoken:GetQueueSize(), 0)
-        Expect(label .. ": skipped greeting is not spent", SpokenZonesCharacter.greeted, nil)
+        Expect(label .. ": skipped greeting is not spent", SpokenPlacesCharacter.greeted, nil)
         onTaxi, flying = false, false
         stub.Advance(2)
         Expect(label .. ": greeting can retry on the ground", Spoken:IsPlaying(), true)
-        Expect(label .. ": greeting is recorded after queueing", SpokenZonesCharacter.greeted, true)
+        Expect(label .. ": greeting is recorded after queueing", SpokenPlacesCharacter.greeted, true)
 
         Z = Boot(client, state.taxi, state.flying)
         Expect(label .. ": manually requested lore still plays", Z:PlayLore(1411), true)

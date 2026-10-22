@@ -63,30 +63,36 @@ local defaults = {
 --- Every setting back to its default. What this character has heard is not a setting, and
 --- stays: Forget is the button for that.
 function SpokenReadables:ResetOptions()
-	if not SpokenBooksSettings then return end
+	if not SpokenReadablesSettings then return end
 	-- Unlock Unfound Readables is on Spoken's page where Spoken is installed, and not this one's.
 	local elsewhere = Spoken and Spoken.ShowsCompendium and { unlockUnfound = true } or {}
 	for key, value in pairs(defaults) do
-		if not elsewhere[key] then SpokenBooksSettings[key] = value end
+		if not elsewhere[key] then SpokenReadablesSettings[key] = value end
 	end
 end
 
 local function FillDefaults()
-	SpokenBooksSettings = SpokenBooksSettings or {}
+	SpokenReadablesSettings = SpokenReadablesSettings or {}
 	for key, value in pairs(defaults) do
-		if SpokenBooksSettings[key] == nil then
-			SpokenBooksSettings[key] = value
+		if SpokenReadablesSettings[key] == nil then
+			SpokenReadablesSettings[key] = value
 		end
 	end
 end
 
 function SpokenReadables:InitDB()
+	-- The saved variables were SpokenBooksSettings and SpokenBooksCharacter before the module was
+	-- Readables. The .toc lists the old names after the new, so they are loaded once more and
+	-- carried over here; left nil, they are not saved again.
+	if SpokenReadablesSettings == nil then SpokenReadablesSettings = SpokenBooksSettings end
+	if SpokenReadablesCharacter == nil then SpokenReadablesCharacter = SpokenBooksCharacter end
+	SpokenBooksSettings, SpokenBooksCharacter = nil, nil
 	FillDefaults()
 	-- The settings live in Spoken's profile, copied from SpokenBooksSettings the first time. The
 	-- table bound is the one read from now on, and again whenever another profile is chosen.
 	if Spoken and Spoken.BindModuleSettings then
-		Spoken:BindModuleSettings("Writings", SpokenBooksSettings, function(settings)
-			SpokenBooksSettings = settings
+		Spoken:BindModuleSettings("Readables", SpokenReadablesSettings, function(settings)
+			SpokenReadablesSettings = settings
 			FillDefaults()
 		end)
 	end
@@ -94,36 +100,36 @@ function SpokenReadables:InitDB()
 	-- What has been heard is the character's, not the account's: the settings above are how
 	-- you like the addon to behave and belong to you, while "I have read this" is something
 	-- a particular character did. An alt walking into the same library hears it fresh.
-	SpokenBooksCharacter = SpokenBooksCharacter or {}
-	SpokenBooksCharacter.read = SpokenBooksCharacter.read or {}
+	SpokenReadablesCharacter = SpokenReadablesCharacter or {}
+	SpokenReadablesCharacter.read = SpokenReadablesCharacter.read or {}
 	-- Opened, heard or not: what Azeroth's Compendium counts as found. Kept apart from `read`,
 	-- which Read Only Once goes by, so opening a book with autoplay off does not stop it being
 	-- read the next time, and Play in the Compendium does not find one. A character from before
 	-- `found` was kept had only `read` to say what it opened, so that is carried over once.
-	if not SpokenBooksCharacter.found then
-		SpokenBooksCharacter.found = {}
-		for book in pairs(SpokenBooksCharacter.read) do SpokenBooksCharacter.found[book] = true end
+	if not SpokenReadablesCharacter.found then
+		SpokenReadablesCharacter.found = {}
+		for book in pairs(SpokenReadablesCharacter.read) do SpokenReadablesCharacter.found[book] = true end
 	end
 
-	return SpokenBooksSettings
+	return SpokenReadablesSettings
 end
 
 --- A setting by name.
 function SpokenReadables:Get(key)
-	return SpokenBooksSettings and SpokenBooksSettings[key]
+	return SpokenReadablesSettings and SpokenReadablesSettings[key]
 end
 
 function SpokenReadables:Set(key, value)
-	if SpokenBooksSettings then SpokenBooksSettings[key] = value end
+	if SpokenReadablesSettings then SpokenReadablesSettings[key] = value end
 end
 
 --- Whether this character has already been read `book` -- the book key from PlaceOf, not a
 --- page. Answers false for a nil book so the caller does not have to check twice.
 function SpokenReadables:HasReadBook(book)
-	if not book or not SpokenBooksCharacter then
+	if not book or not SpokenReadablesCharacter then
 		return false
 	end
-	return SpokenBooksCharacter.read[book] == true
+	return SpokenReadablesCharacter.read[book] == true
 end
 
 --- Remember that this character has heard `book`.
@@ -133,20 +139,20 @@ end
 --- queue that a zone change or `/spr stop` can empty early, and a book abandoned halfway
 --- would count as read anyway. Starting is the moment this addon actually observes.
 function SpokenReadables:MarkBookRead(book)
-	if not book or not SpokenBooksCharacter then
+	if not book or not SpokenReadablesCharacter then
 		return
 	end
-	SpokenBooksCharacter.read[book] = true
+	SpokenReadablesCharacter.read[book] = true
 end
 
 --- Remember that this character has opened `book`, whether or not it was read aloud.
 function SpokenReadables:MarkBookFound(book)
-	if not book or not SpokenBooksCharacter then
+	if not book or not SpokenReadablesCharacter then
 		return
 	end
-	SpokenBooksCharacter.found = SpokenBooksCharacter.found or {}
-	if SpokenBooksCharacter.found[book] then return end
-	SpokenBooksCharacter.found[book] = true
+	SpokenReadablesCharacter.found = SpokenReadablesCharacter.found or {}
+	if SpokenReadablesCharacter.found[book] then return end
+	SpokenReadablesCharacter.found[book] = true
 	-- The Readables tab open meanwhile ticks it and counts it now, not when it is next opened.
 	if self.readables and self.readables:IsVisible() and self.RefreshReadables then self:RefreshReadables() end
 end
@@ -154,10 +160,10 @@ end
 --- Whether this character has found `book`: opened it in the world. Hearing it from the
 --- Compendium does not count.
 function SpokenReadables:IsBookFound(book)
-	if not book or not SpokenBooksCharacter then
+	if not book or not SpokenReadablesCharacter then
 		return false
 	end
-	return (SpokenBooksCharacter.found and SpokenBooksCharacter.found[book]) == true
+	return (SpokenReadablesCharacter.found and SpokenReadablesCharacter.found[book]) == true
 end
 
 --- Forget everything this character has heard, and say how much that was. What `/spr forget`
@@ -165,13 +171,13 @@ end
 --- library back, has no other way to undo it.
 function SpokenReadables:ForgetRead()
 	local count = 0
-	if not SpokenBooksCharacter then
+	if not SpokenReadablesCharacter then
 		return count
 	end
-	for _ in pairs(SpokenBooksCharacter.read) do
+	for _ in pairs(SpokenReadablesCharacter.read) do
 		count = count + 1
 	end
-	SpokenBooksCharacter.read = {}
+	SpokenReadablesCharacter.read = {}
 	return count
 end
 

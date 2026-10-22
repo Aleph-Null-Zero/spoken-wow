@@ -38,12 +38,16 @@ for _, addon in ipairs(ADDON_TITLES) do
 end
 
 ---------------------------------------------------------------- settings under new names
--- A name an older release used would bring its settings back. Every addon starts fresh.
+-- A name an older release used would bring its settings back. Every addon starts fresh, but for
+-- Places' and Readables' names before they were Places and Readables: listed after the new ones,
+-- read once and carried over (see their Language.lua and Core.lua).
 local SAVED = {
     { toc = "Spoken/Spoken.toc", vars = "SpokenSettings" },
     { toc = "Spoken_Quests/Spoken_Quests.toc", vars = "SpokenQuestsSettings" },
-    { toc = "Spoken_Readables/Spoken_Readables.toc", vars = "SpokenBooksSettings", char = "SpokenBooksCharacter" },
-    { toc = "Spoken_Places/Spoken_Places.toc", vars = "SpokenZonesSettings", char = "SpokenZonesCharacter" },
+    { toc = "Spoken_Readables/Spoken_Readables.toc", vars = "SpokenReadablesSettings, SpokenBooksSettings",
+        char = "SpokenReadablesCharacter, SpokenBooksCharacter" },
+    { toc = "Spoken_Places/Spoken_Places.toc", vars = "SpokenPlacesSettings, SpokenZonesSettings",
+        char = "SpokenPlacesCharacter, SpokenZonesCharacter" },
 }
 for _, addon in ipairs(SAVED) do
     Expect(addon.toc .. " saves " .. addon.vars, Field(ADDONS .. addon.toc, "SavedVariables"), addon.vars)

@@ -7,7 +7,7 @@
 // Without --write it only reports differences against the current seed, which is
 // the useful mode: it tells you whether any hand-entered uiMapID is wrong.
 //
-// Reads SpokenZonesSettings.dump out of the SavedVariables file the game names after the
+// Reads SpokenPlacesSettings.dump out of the SavedVariables file the game names after the
 // addon's folder, Spoken_Places.lua. That file is Lua, but the dump has a fixed shape, so it is
 // scanned rather than interpreted. The WTF/Account folder is --wtf, else SPOKEN_PLACES_WTF, else
 // the first of the clients' usual folders that exists, Forever's first.

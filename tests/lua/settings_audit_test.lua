@@ -67,7 +67,7 @@ for _, method in ipairs({ "StopLore", "NotifyAudioChanged", "ShowCopyLink", "Ref
     "ForgetAutoplayHistory" }) do
     if not Z[method] then Z[method] = function() called[method] = (called[method] or 0) + 1 end end
 end
--- Stored as the real one stores it (SpokenZonesSettings.language), and read back the same way.
+-- Stored as the real one stores it (SpokenPlacesSettings.language), and read back the same way.
 local zonesLanguage
 Z.SetLanguage = function(_, code) zonesLanguage = code; return true end
 Z.GetLanguagePreference = function() return zonesLanguage end
@@ -270,12 +270,12 @@ Expect("...and the Places page has none", table.concat(onPlaces, "|"), "")
 -- Kept with each part's settings, so Spoken's profile reset would not reach them.
 unlocked.places, unlocked.readables, unlocked.quests, unlocked.bosses = true, true, true, true
 -- The Text Size the Places page had, which Spoken's reads until it is set there.
-_G.SpokenZonesSettings = { fontSize = 15 }
+_G.SpokenPlacesSettings = { fontSize = 15 }
 local reset = _G.SpokenOptionsPanel.layout.defaults
 reset.scripts.OnClick(reset)
 stub.popups[#stub.popups].dialog.OnAccept()
 Expect("Reset All turns every Unlock switch off", (unlocked.places or unlocked.readables or unlocked.quests or unlocked.bosses) and true or false, false)
 Expect("...and puts the Compendium's Text Size back to 12, not to the Places page's", _G.Spoken:CompendiumFontSize(), 12)
-_G.SpokenZonesSettings = nil
+_G.SpokenPlacesSettings = nil
 
 os.exit(Failures() == 0 and 0 or 1)

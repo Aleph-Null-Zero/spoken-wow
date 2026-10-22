@@ -52,7 +52,7 @@ function Book:Tooltip()
 	local view = View()
 	local tooltip = self.tooltip
 	if not tooltip then
-		tooltip = CreateFrame("GameTooltip", "SpokenBooksDialogueUITooltip", view, "GameTooltipTemplate")
+		tooltip = CreateFrame("GameTooltip", "SpokenReadablesDialogueUITooltip", view, "GameTooltipTemplate")
 		tooltip:SetFrameStrata("TOOLTIP")
 		self.tooltip = tooltip
 	end
@@ -65,7 +65,7 @@ local function PlayTip(tooltip)
 	local key = OpenBook()
 	local reading = key and SpokenReadables:IsNarrating(key)
 	tooltip:SetText(reading and L.STOP_TIP or L.PLAY_TIP)
-	local on = SpokenBooksSettings and SpokenBooksSettings.autoplay
+	local on = SpokenReadablesSettings and SpokenReadablesSettings.autoplay
 	tooltip:AddDoubleLine(L.OPT_AUTOPLAY, on and L.DUI_ON or L.DUI_OFF, 1, 1, 1,
 		on and 0.1 or 1, on and 1 or 0.125, on and 0.1 or 0.125)
 	tooltip:AddLine(L.DUI_PLAY_RIGHT_CLICK, 1, 0.82, 0, true)
@@ -81,8 +81,8 @@ function Book:Row()
 	row:SetTip(play, PlayTip)
 	play:SetScript("OnClick", function(_, mouse)
 		if mouse == "RightButton" then
-			if SpokenBooksSettings then
-				SpokenBooksSettings.autoplay = not SpokenBooksSettings.autoplay
+			if SpokenReadablesSettings then
+				SpokenReadablesSettings.autoplay = not SpokenReadablesSettings.autoplay
 			end
 		else
 			local key, first = OpenBook()

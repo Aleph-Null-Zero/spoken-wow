@@ -10,8 +10,8 @@ local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
-_G.SpokenBooksSettings = nil
-_G.SpokenBooksCharacter = nil
+_G.SpokenReadablesSettings = nil
+_G.SpokenReadablesCharacter = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 
@@ -74,17 +74,17 @@ Expect("...reading the default off", once.checked, false)
 -- What the client does on a click: flip the box, then run the handler.
 once:SetChecked(true)
 once.scripts.OnClick(once)
-Expect("ticking it turns the setting on", SpokenBooksSettings.readOnce, true)
+Expect("ticking it turns the setting on", SpokenReadablesSettings.readOnce, true)
 
 once:SetChecked(false)
 once.scripts.OnClick(once)
-Expect("...and clearing it turns the setting off", SpokenBooksSettings.readOnce, false)
+Expect("...and clearing it turns the setting off", SpokenReadablesSettings.readOnce, false)
 
 local autoplay = Labelled("Read Automatically")
 Expect("autoplay is on the panel too, defaulting on", autoplay and autoplay.checked, true)
 autoplay:SetChecked(false)
 autoplay.scripts.OnClick(autoplay)
-Expect("...and unticking it is the same as /spw autoplay", SpokenBooksSettings.autoplay, false)
+Expect("...and unticking it is the same as /spw autoplay", SpokenReadablesSettings.autoplay, false)
 -- Only automatic reading skips a book already heard (Events.lua): the switch sits under
 -- autoplay and greys out without it.
 Expect("...greying out Read Only Once, which only automatic reading heeds", once.enabled, false)
@@ -98,7 +98,7 @@ Expect("Read Book as One Line is on the panel, defaulting on", oneLine ~= nil an
 if oneLine then
     oneLine:SetChecked(false)
     oneLine.scripts.OnClick(oneLine)
-    Expect("...and unticking it is the same as /spw oneline", SpokenBooksSettings.bookAsOneLine, false)
+    Expect("...and unticking it is the same as /spw oneline", SpokenReadablesSettings.bookAsOneLine, false)
     oneLine:SetChecked(true)
     oneLine.scripts.OnClick(oneLine)
     -- One line for the whole book is a choice only where the whole book is read.
@@ -115,7 +115,7 @@ local close = Labelled("Close Book When Done Reading")
 Expect("Close Book When Done Reading is on the panel, defaulting off", close and close.checked, false)
 close:SetChecked(true)
 close.scripts.OnClick(close)
-Expect("...and ticking it is the same as /spw close", SpokenBooksSettings.closeWhenRead, true)
+Expect("...and ticking it is the same as /spw close", SpokenReadablesSettings.closeWhenRead, true)
 close:SetChecked(false)
 close.scripts.OnClick(close)
 
@@ -128,20 +128,20 @@ SlashCmdList["SPOKENREADABLES"]("gather")
 Expect("/spw gather leaves the player's switch alone", _G.Spoken.Gather:IsEnabled(), gathering)
 
 ---------------------------------------------------------------- forgetting what was read
-SpokenBooksCharacter.read = { ["Hillsbrad Town Registry"] = true, ["Jitters' Journal"] = true }
+SpokenReadablesCharacter.read = { ["Hillsbrad Town Registry"] = true, ["Jitters' Journal"] = true }
 local forget = Button("Forget Readables Heard")
 Expect("the button says what it does", forget ~= nil, true)
 -- It only matters while a writing is read once.
 B.optionsPage.layout:Refresh()
 Expect("...greyed while Read Only Once is off, saying why", forget.layoutReason, B.L.REASON_READ_ONCE)
-SpokenBooksSettings.readOnce = true
+SpokenReadablesSettings.readOnce = true
 B.optionsPage.layout:Refresh()
 Expect("...and live with it on", forget.layoutReason, nil)
 forget.scripts.OnClick(forget)
-SpokenBooksSettings.readOnce = false
+SpokenReadablesSettings.readOnce = false
 
 local left = 0
-for _ in pairs(SpokenBooksCharacter.read) do left = left + 1 end
+for _ in pairs(SpokenReadablesCharacter.read) do left = left + 1 end
 Expect("pressing it clears this character's record", left, 0)
 
 -- Derived from the layout rather than written down, so adding a row cannot leave a section
@@ -154,17 +154,17 @@ do
     local stopReading, placeOf = B.StopReading, B.PlaceOf
     B.StopReading = function(_, book) stopped = book end
     B.PlaceOf = function(_, pageId) return pageId and 261 end
-    SpokenBooksSettings.stopOnClose = false
+    SpokenReadablesSettings.stopOnClose = false
     B.lastPage = 262
     B:OnTextClosed()
     Expect("a closed book reads on by default", stopped, false)
-    SpokenBooksSettings.stopOnClose = true
+    SpokenReadablesSettings.stopOnClose = true
     B.lastPage = 262
     B:OnTextClosed()
     Expect("...and with Stop When Book Closes on, that book stops, not the readables waiting after it",
         stopped, 261)
     B.StopReading, B.PlaceOf = stopReading, placeOf
-    SpokenBooksSettings.stopOnClose = false
+    SpokenReadablesSettings.stopOnClose = false
 
     local said = {}
     local print_ = B.Print
@@ -172,13 +172,13 @@ do
     local onScreen = B.PageOnScreen
     B.PageOnScreen = function() return nil end
     B.source = B.source or {}
-    SpokenBooksSettings.debug = false
+    SpokenReadablesSettings.debug = false
     B:OnTextReady()
     Expect("nothing is said in chat unasked", #said, 0)
-    SpokenBooksSettings.debug = true
+    SpokenReadablesSettings.debug = true
     B:OnTextReady()
     Expect("...and with /spb debug on, why a page was not read", said[1] ~= nil and said[1]:find("not read", 1, true) ~= nil, true)
-    SpokenBooksSettings.debug = false
+    SpokenReadablesSettings.debug = false
     B.PageOnScreen, B.Print = onScreen, print_
 end
 
@@ -187,13 +187,13 @@ end
 do
     local redrawn = 0
     B.RefreshReadables = function() redrawn = redrawn + 1 end
-    SpokenBooksSettings.compendiumFoundOnly = true
+    SpokenReadablesSettings.compendiumFoundOnly = true
     -- The page's Defaults button, in its header as on the game's own pages.
     local reset = B.optionsPage.layout.defaults
     reset.scripts.OnClick(reset)
     stub.popups[#stub.popups].dialog.OnAccept()
     Expect("resetting the page puts Found Only back and draws the Readables tab again",
-        tostring(SpokenBooksSettings.compendiumFoundOnly) .. " " .. redrawn, "false 1")
+        tostring(SpokenReadablesSettings.compendiumFoundOnly) .. " " .. redrawn, "false 1")
     B.RefreshReadables = nil
 end
 

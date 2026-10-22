@@ -12,7 +12,7 @@
 -- in too many zones to list under each and for those whose origin is not known, with a line for
 -- each kind inside. With By Zone off, the list is a banner for each kind alone, every readable
 -- under its own. Where each is comes from Data/Places.lua; what this character has found, from
--- SpokenBooksCharacter (Core.lua). A readable not found yet is listed greyed, with a padlock, and
+-- SpokenReadablesCharacter (Core.lua). A readable not found yet is listed greyed, with a padlock, and
 -- does not open, unless Unlock Unfound Readables is on. On the right its pages, on parchment, with
 -- where it comes from and Play.
 
@@ -210,18 +210,18 @@ local function Found(id)
 end
 
 local function Unlocked()
-	return SpokenBooksSettings and SpokenBooksSettings.unlockUnfound == true
+	return SpokenReadablesSettings and SpokenReadablesSettings.unlockUnfound == true
 end
 
 local function OnlyFound()
-	return SpokenBooksSettings and SpokenBooksSettings.compendiumFoundOnly == true
+	return SpokenReadablesSettings and SpokenReadablesSettings.compendiumFoundOnly == true
 end
 
 -- Voiced Only, after Found Only in the filter menu: what no installed voice pack reads is left out,
 -- and with it any zone, type or group left with nothing. A writing is voiced as Play finds it: a
 -- page of it has a recording.
 local function OnlyVoiced()
-	return SpokenBooksSettings ~= nil and SpokenBooksSettings.compendiumVoicedOnly == true
+	return SpokenReadablesSettings ~= nil and SpokenReadablesSettings.compendiumVoicedOnly == true
 end
 
 -- A readable's first page with a recording, where Play starts it, or nil.
@@ -250,7 +250,7 @@ end
 
 -- By Zone, in the filter menu: on, zones then types; off, the types alone.
 local function ByZone()
-	return not (SpokenBooksSettings and SpokenBooksSettings.compendiumByZone == false)
+	return not (SpokenReadablesSettings and SpokenReadablesSettings.compendiumByZone == false)
 end
 
 local function Matches(text)
@@ -1120,15 +1120,15 @@ local function Build(panel)
 		none = L.READABLES_NONE,
 		only = L.READABLES_FOUND_ONLY,
 		onlyGet = OnlyFound,
-		onlySet = function(on) if SpokenBooksSettings then SpokenBooksSettings.compendiumFoundOnly = on end end,
+		onlySet = function(on) if SpokenReadablesSettings then SpokenReadablesSettings.compendiumFoundOnly = on end end,
 		checks = { { label = L.READABLES_VOICED_ONLY, get = OnlyVoiced,
-			set = function(on) if SpokenBooksSettings then SpokenBooksSettings.compendiumVoicedOnly = on end end } },
+			set = function(on) if SpokenReadablesSettings then SpokenReadablesSettings.compendiumVoicedOnly = on end end } },
 		-- By zone, then type; or by type alone.
 		arrange = {
 			values = { "zone", "type" },
 			describe = function(value) return value == "type" and L.READABLES_BY_TYPE or L.READABLES_BY_ZONE end,
 			get = function() return ByZone() and "zone" or "type" end,
-			set = function(value) if SpokenBooksSettings then SpokenBooksSettings.compendiumByZone = value == "zone" end end,
+			set = function(value) if SpokenReadablesSettings then SpokenReadablesSettings.compendiumByZone = value == "zone" end end,
 		},
 		build = BuildRows,
 		isSelected = IsSelected,
@@ -1215,9 +1215,9 @@ function SpokenReadables:SetupReadables()
 		enabled = function() return SpokenReadables:IsPartOn() end,
 		-- Unlock Unfound Readables, on Spoken's page.
 		unlock = {
-			get = function() return SpokenBooksSettings ~= nil and SpokenBooksSettings.unlockUnfound == true end,
+			get = function() return SpokenReadablesSettings ~= nil and SpokenReadablesSettings.unlockUnfound == true end,
 			set = function(value)
-				if SpokenBooksSettings then SpokenBooksSettings.unlockUnfound = value end
+				if SpokenReadablesSettings then SpokenReadablesSettings.unlockUnfound = value end
 				SpokenReadables:RefreshReadables()
 			end,
 		},

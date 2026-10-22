@@ -23,19 +23,26 @@
 -- This file loads before Core.lua and before anything under Data/, because the
 -- generated data files ask ShouldLoadLanguage whether to build their tables at
 -- all. That question can only be answered this early because Spoken_Places.toc sets
--- LoadSavedVariablesFirst -- SpokenZonesSettings is already populated when these files
+-- LoadSavedVariablesFirst -- SpokenPlacesSettings is already populated when these files
 -- run. Removing that .toc line does not error; it silently pins every player to
 -- English.
 
 local ADDON_NAME, SpokenPlaces = ...
+
+-- The saved variables were SpokenZonesSettings and SpokenZonesCharacter before the module was
+-- Places. The .toc lists the old names after the new, so they are loaded once more and carried
+-- over here; left nil, they are not saved again.
+if SpokenPlacesSettings == nil then SpokenPlacesSettings = SpokenZonesSettings end
+if SpokenPlacesCharacter == nil then SpokenPlacesCharacter = SpokenZonesCharacter end
+SpokenZonesSettings, SpokenZonesCharacter = nil, nil
 
 -- The settings live in Spoken's profile (Spoken:BindModuleSettings), copied from
 -- SpokenZonesSettings the first time. `dump` is a developer's scratch table, not a setting.
 -- Bound here, before anything reads the language, and again in Core.lua's InitConfig.
 function SpokenPlaces:BindSettings()
 	if not (Spoken and Spoken.BindModuleSettings) then return end
-	Spoken:BindModuleSettings("Zones", SpokenZonesSettings, function(settings)
-		SpokenZonesSettings = settings
+	Spoken:BindModuleSettings("Places", SpokenPlacesSettings, function(settings)
+		SpokenPlacesSettings = settings
 		if SpokenPlaces.OnSettingsBound then SpokenPlaces:OnSettingsBound() end
 	end, { dump = true })
 end
@@ -236,12 +243,12 @@ end
 -- same: a player who never chose should start reading German the day German
 -- ships, while one who explicitly picked English must keep English.
 function SpokenPlaces:GetLanguagePreference()
-	local pref = SpokenZonesSettings and SpokenZonesSettings.language
+	local pref = SpokenPlacesSettings and SpokenPlacesSettings.language
 	return type(pref) == "string" and byCode[pref] and pref or nil
 end
 
 function SpokenPlaces:IsPreviewingLanguage()
-	return (SpokenZonesSettings and SpokenZonesSettings.languagePreview) and true or false
+	return (SpokenPlacesSettings and SpokenPlacesSettings.languagePreview) and true or false
 end
 
 -- Whether a language may be selected at all. Preview mode relaxes readiness so
@@ -331,12 +338,12 @@ function SpokenPlaces:SetLanguage(code)
 	if code ~= nil and not self:IsLanguageSelectable(code) then
 		return false
 	end
-	SpokenZonesSettings.language = code
+	SpokenPlacesSettings.language = code
 	return true
 end
 
 function SpokenPlaces:SetLanguagePreview(enabled)
-	SpokenZonesSettings.languagePreview = enabled and true or false
+	SpokenPlacesSettings.languagePreview = enabled and true or false
 end
 
 --------------------------------------------------------------------------------

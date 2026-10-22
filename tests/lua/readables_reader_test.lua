@@ -20,7 +20,7 @@ local function LoadReadables()
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 local B = LoadReadables()

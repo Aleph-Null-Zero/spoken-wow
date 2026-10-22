@@ -239,10 +239,10 @@ end
 -- of a place passed through weeks ago narrating late.
 
 local function CharDB()
-	if type(SpokenZonesCharacter) ~= "table" then
-		SpokenZonesCharacter = {}
+	if type(SpokenPlacesCharacter) ~= "table" then
+		SpokenPlacesCharacter = {}
 	end
-	return SpokenZonesCharacter
+	return SpokenPlacesCharacter
 end
 
 -- String keys throughout, including for zones, so the two kinds cannot collide and

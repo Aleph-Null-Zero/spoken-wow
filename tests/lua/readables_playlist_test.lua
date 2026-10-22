@@ -39,7 +39,7 @@ local function LoadReadables()
 end
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers()
-_G.SpokenBooksSettings = nil
+_G.SpokenReadablesSettings = nil
 local env = stub.LoadSpoken(SPOKEN)
 env.Addon:Enable()
 local B = LoadReadables()
@@ -198,11 +198,11 @@ B:StopReading()
 Expect("stopping with no book named drops every readable", #QueuedPages(), 0)
 
 ---------------------------------------------------------------- reading one page only
-SpokenBooksSettings.readWholeBook = false
+SpokenReadablesSettings.readWholeBook = false
 B:PlayFrom(261)
 Expect("with whole-book reading off, only the page on screen is queued",
     Same(QueuedPages(), { 261 }) and #Coming() == 0, true)
-SpokenBooksSettings.readWholeBook = true
+SpokenReadablesSettings.readWholeBook = true
 B:StopReading()
 
 ---------------------------------------------------------------- played while the player is stopped
@@ -263,7 +263,7 @@ B:StopReading()
 Expect("...and nothing of the book left behind", next(B.following or {}), nil)
 
 ---------------------------------------------------------------- a line per page
-SpokenBooksSettings.bookAsOneLine = false
+SpokenReadablesSettings.bookAsOneLine = false
 Expect("Read Book as One Line off: every page queued now, each a line of its own",
     B:PlayFrom(261) .. " " .. table.concat(QueuedPages(), ","), "3 261,262,265")
 local page = Spoken:GetQueue()[1]
@@ -271,7 +271,7 @@ Expect("...the book over its page count", page.present.header .. " / " .. tostri
     "Hillsbrad Town Registry / Page 1 of 4")
 Expect("...one item, so no pause or cue between its pages", page.group, "book:261")
 Expect("...and nothing to follow it", tostring(page.continues) .. " " .. #Coming(), "nil 0")
-SpokenBooksSettings.bookAsOneLine = true
+SpokenReadablesSettings.bookAsOneLine = true
 B:StopReading()
 
 ---------------------------------------------------------------- with no pack at all
