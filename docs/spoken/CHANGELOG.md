@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The AddOns list says what each part reads.** Hovering Spoken now says it reads quests, gossip,
+  places and readables, with one queue, one narrator and one minimap button. The Places and
+  Readables sound packs say what they hold and that they load with the game, and the Vanilla
+  quest packs say they are narrated.
+  *([Nucabe](https://github.com/Nucabe))*
 - **Show Spoken Over DialogueUI is gone.** While DialogueUI's window is open, Spoken's window and
   subtitles step aside, and DialogueUI's own window shows the words and the queue. *([Nucabe](https://github.com/Nucabe))*
 - **Read Greetings is Once for Quest Givers by default.** A quest giver's greeting is read once, and other
