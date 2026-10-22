@@ -14,6 +14,7 @@ local world = {
     rewardText = "",
     npcName = "Innkeeper Test",
     npcGUID = "Creature-0-0-0-0-1234-0",
+    npcFriendly = false,  -- UnitCanAttack: false for townsfolk the player cannot fight
     modelFileID = nil,    -- what a loaded PlayerModel answers for the unit on screen
     -- True between SetUnit and the model actually finishing loading: makes GetModelFileID
     -- answer nil even though the probe is shown, the way a real model does for however long
@@ -411,6 +412,7 @@ function _G.GetRealmName() return "Realm" end
 function _G.UnitGUID() return world.npcGUID end
 function _G.UnitExists() return true end
 function _G.UnitIsPlayer() return false end
+function _G.UnitCanAttack() return not world.npcFriendly end
 function _G.UnitSex() return world.unitSex end
 function _G.UnitCreatureType() return world.creatureType end
 -- The mouse UI unless a test turns the gamepad's on: read as "1", every popup an addon raises
