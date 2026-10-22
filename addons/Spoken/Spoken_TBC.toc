@@ -1,5 +1,5 @@
 ## Interface: 20506
-## Title: Spoken
+## Title: |cffb48cffSpoken|r
 ## Notes: Reads the game aloud: quests, gossip, places and readables. One queue, one narrator, one minimap button, and the settings for all of it.
 ## Notes-deDE: Liest das Spiel vor: Quests, Gespräche, Orte und Lesestoff. Eine Warteschlange, ein Erzähler, ein Minimap-Button und die Einstellungen für alles.
 ## Notes-esES: Lee el juego en voz alta: Misiones, Charlas, Lugares y Lecturas. Una cola, un narrador, un botón del minimapa y los ajustes de todo.
