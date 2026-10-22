@@ -425,7 +425,8 @@ NPCs:SetupStories()
 local storySource = Spoken:GetSource("bosses")
 Expect("the bosses' stories are a part of Spoken's, as words with no voice", storySource ~= nil and storySource.textOnly, true)
 _G.SpokenBossStories[36]["edwin vancleef"] = "He led the Brotherhood."
-_G.SpokenBossCreatures = { [36] = { ["edwin vancleef"] = { creature = 639, display = 1305, spells = {} } } }
+_G.SpokenBossCreatures = { [36] = { ["edwin vancleef"] = { creature = 639, display = 1305, spells = {} } },
+    [2789] = { ["lord kazzak"] = { creature = 12397, display = 12449, spells = {} } } }
 local clip = NPCs:StoryClip(36, "edwin vancleef")
 Expect("a boss's story is a line with no recording", clip.path, nil)
 Expect("...headed by its dungeon, named for the boss", clip.present.header .. "|" .. clip.present.label, "Deadmines|Edwin VanCleef")
@@ -558,7 +559,12 @@ Expect("...and in Blackwing Lair shows Nefarian's story", Showing(), "boss:469:n
 Expect("...without meeting Nefarian", NPCs:IsBossFound(469, "nefarian"), false)
 Clear()
 _G.GetInstanceInfo, _G.UnitName = instanceInfo, unitName
-Expect("a world boss is met on target as at its pull", tostring(NPCs:FoundTarget(2789, "lord kazzak")) .. "|"
+_G.GetInstanceInfo = function() return "Eastern Kingdoms", "none", 0, "", 0, 0, false, 0 end
+world.npcGUID = "Creature-0-1-2-3-12397-0000ABCDEF"
+NPCs:TargetChanged()
+Clear()
+_G.GetInstanceInfo = instanceInfo
+Expect("a world boss is met when targeted in the open world, as at its pull", tostring(NPCs:IsBossFound(2789, "lord kazzak")) .. "|"
     .. tostring(NPCs:FoundEncounter(Listed(2789, "lord kazzak").ids[1])), "true|false")
 
 if Failures() > 0 then os.exit(1) end
