@@ -7,6 +7,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Show only the lines you play.** Under Show Narrator, **Only Lines I Play** keeps the window or subtitles for
   lines you start with a Play button, the quest log or the Compendium. Lines Spoken reads on its own are only
   heard, so it sits well beside Immersion and other quest windows. *([Aleph-Null-Zero](https://github.com/Aleph-Null-Zero))*
+- **The 1.12, 2.4.3 and 3.3.5 clients are no longer supported.** Spoken runs on WoW: Forever, Classic Era
+  and TBC Anniversary.
+  *([rusty-key](https://github.com/rusty-key))*
 - **More bosses in the Bosses tab show their face.** The bosses of the Ruins of Lordaeron, the Hall of Thanes,
   the City of Dalaran and the Excavation Site: Wetlands, and two of the Marylas in the Karazhan Crypts, have their
   portrait. Sneed, Grubbis, Darkmaster Gandling, Sapphiron and Dalaran's Arcane Anomaly show the right one, a boss
@@ -21,6 +24,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
   face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
   shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's minimise arrow sits in the middle of its button.** It was drawn off to one side of the
+  frame the template gives it. *([Nucabe](https://github.com/Nucabe))*
+- **The AddOns list shows Spoken and each module's name in colour, with new icons.** Spoken, Quests,
+  Places, Readables, Contributions and Developer each have a new icon, the voice packs show Spoken in
+  colour too, and the minimap button shows the mark at its size, centred. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
   manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
   so you no longer upload the file yourself. Collected lines now also say which version of your

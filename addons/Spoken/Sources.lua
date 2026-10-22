@@ -109,10 +109,9 @@ function Sources:Iterate()
     end
 end
 
---- The channel the player chose for Spoken's voices. Always Master on the legacy clients, whose
---- playback ignores the channel, so a choice saved elsewhere does not change what they mute.
+--- The channel the player chose for Spoken's voices.
 function Sources:PlayerChannel()
-    return Version.IsAnyLegacy and "Master" or Addon.db.profile.Audio.SoundChannel
+    return Addon.db.profile.Audio.SoundChannel
 end
 
 --- The channel a clip from this source plays on: its own if it names one, else the player's.

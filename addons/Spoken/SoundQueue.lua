@@ -30,7 +30,6 @@ setfenv(1, SpokenEnv)
 ---@field key string          Caller-unique. The dedup key.
 ---@field path string         Full path handed to PlaySoundFile.
 ---@field length number       Seconds. The client cannot report this; the caller must know.
----@field delay? number       Silence before the clip. Only the 2.4.3/3.3.5 path sets it.
 ---@field priority? string    "normal" (default) or "low".
 ---@field group? string       Clips of one item, e.g. a book's pages. No pause or cue between them.
 ---@field continues? boolean  Its next part is put in as it ends (source:Continue). No pause or cue after it.
@@ -167,8 +166,7 @@ local function StopRetryTicker()
     end
 end
 
--- Leaving combat fires no event worth binding a handler to, so this is a poll. AceTimer
--- rather than C_Timer, which 1.12 does not have.
+-- A gate is any source's own callback, and nothing tells the queue when one opens, so this is a poll.
 local function StartRetryTicker()
     if retryTicker then
         return
@@ -341,20 +339,11 @@ end
 --- Silence the client's own NPC dialogue while we speak, and let it back when the queue
 --- drains. `speakingOn` is the channel being spoken on, or nil when nothing is.
 ---
---- Never the channel we are speaking on: muting that would mute the line. On 1.12 there is
---- no Dialog channel to mute, and what the client can do is cut a bark already playing, so
---- the effects channel is toggled off and straight back on as the line starts.
+--- Never the channel we are speaking on: muting that would mute the line.
 ---@param speakingOn string|nil
 ---@param cut boolean? switch it off at once rather than fade it out
 function SoundQueue:MuteGameDialogue(speakingOn, cut)
     if not Addon.db.profile.Audio.AutoToggleDialog then
-        return
-    end
-    if Version.IsLegacyVanilla then
-        if speakingOn then
-            SetCVar("MasterSoundEffects", 0)
-            SetCVar("MasterSoundEffects", 1)
-        end
         return
     end
     -- Faded, so the NPC is not cut off mid-word; cut where it should not be heard at all.
@@ -386,10 +375,6 @@ end
 function SoundQueue:MuteGameDialogueAhead(speakingOn)
     -- Paused, the line will only queue: nothing of ours is going to speak over the greeting.
     if self:IsPaused() then
-        return
-    end
-    -- On 1.12 muting is cutting every sound, which would cut a line already speaking.
-    if Version.IsLegacyVanilla and not self:IsEmpty() then
         return
     end
     -- Cut, not faded: in the frame the window opens the greeting has barely started, and a fade
@@ -530,10 +515,10 @@ function SoundQueue:PlaySound(clip)
 
     -- The client fires no event when a sound finishes, so the recorded duration is the
     -- only signal that the clip is over.
-    clip.spokenAt = GetTime() + (clip.delay or 0) + clip.length
+    clip.spokenAt = GetTime() + clip.length
     clip.nextSoundTimer = Addon:ScheduleTimer(function()
         AfterSpoken(clip)
-    end, (clip.delay or 0) + clip.length)
+    end, clip.length)
     WatchForCut(clip)
 end
 

@@ -24,10 +24,8 @@ end
 local function CVar(channel) return "Sound_" .. channel .. "Volume" end
 local function Read(channel) return tonumber(GetCVar(CVar(channel))) or 1 end
 
---- Not on the legacy clients: 2.4.3 and 3.3.5 speak through the music channel itself, and
---- 1.12 names its volumes differently.
 function OtherSounds:IsAvailable()
-    return not Version.IsAnyLegacy and Config() ~= nil
+    return Config() ~= nil
 end
 
 -- What each lowered channel goes back to, and what this file last set it to. A channel whose
@@ -197,7 +195,6 @@ local events = CreateFrame("Frame")
 events:RegisterEvent("PLAYER_LOGIN")
 events:RegisterEvent("PLAYER_LOGOUT")
 events:SetScript("OnEvent", function(_, event)
-    event = event or _G.event
     if event == "PLAYER_LOGOUT" then
         OtherSounds:Restore(true)
     elseif Addon.db and OtherSounds:IsAvailable() then
