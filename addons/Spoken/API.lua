@@ -4,8 +4,7 @@ setfenv(1, SpokenEnv)
 -- nothing else on `Spoken` is a contract, and nothing here writes anywhere but `Spoken`.
 --
 -- API_VERSION moves only on a breaking change. A feature addon's entire hard requirement
--- is `_G.Spoken and Spoken:IsCompatible(1)`. A copy bundled into a legacy-client zip may
--- lag the one an addon manager installs, so this is what lets the two disagree safely.
+-- is `_G.Spoken and Spoken:IsCompatible(1)`.
 Spoken.API_VERSION = 1
 Spoken.ADDON_VERSION = AddonVersion
 
@@ -74,7 +73,6 @@ end
 --     path     = [[Interface\AddOns\...\x.ogg]],
 --     length   = 3.4,                         -- seconds; the client cannot report this
 --     textOnly = true,                        -- optional, as every line of a textOnly source; no path: shown in the narrator for `length`
---     delay    = nil,                         -- silence before; only 2.4.3/3.3.5 set it
 --     priority = "normal" | "low",            -- low yields at the door; gossip is low
 --     group    = "book:123",                  -- optional; clips of one item, no pause or cue between
 --     continues = true,                       -- optional; its next part follows (source:Continue), no pause or cue
@@ -121,9 +119,7 @@ function Spoken:GetBullet(id)
 end
 
 --- A portrait renderer: { Acquire(portrait, parent) -> frame, Update(frame, clip) -> bool,
---- Release(frame) }. Acquire/Release exist because 1.12 and 2.4.3 pool DressUpModel
---- frames, and the pooling has to live somewhere. "texture", "model" and "none" ship with
---- the player.
+--- Release(frame) }. "texture", "model" and "none" ship with the player.
 function Spoken:RegisterPortraitRenderer(kind, renderer)
     Renderers[kind] = renderer
 end
@@ -184,9 +180,8 @@ end
 --------------------------------------------------------------------------------
 --
 -- Additive, so API_VERSION does not move. A feature addon guards on the field rather than the
--- version: `if Spoken.Contribute and Spoken.ShowContribution then`. A legacy-client zip may
--- bundle a player older than the addon beside it, and that player should mean no contribute
--- button, not an error.
+-- version: `if Spoken.Contribute and Spoken.ShowContribution then`. A player older than the
+-- addon beside it should mean no contribute button, not an error.
 --
 -- The same goes for the setting that hides those buttons: guard on the method, and an older
 -- player without it simply means the buttons are shown.
@@ -519,12 +514,6 @@ function Spoken:SetCompendiumFontSize(size)
     Callbacks:Fire("COMPENDIUM_FONT_CHANGED")
 end
 
---- A button on the player's panel that opens a feature addon's own settings, for the
---- addons whose panel cannot be nested.
-function Spoken:AddSettingsLink(text, onClick)
-    Options:AddLink(text, onClick)
-end
-
 --- Menu entries for the one minimap button. entry = { id, text, icon, order, onClick,
 --- tooltip, visible }.
 Spoken.Minimap = {}
@@ -655,8 +644,7 @@ end
 -- Captions, for an addon that shows the line being read somewhere else
 --------------------------------------------------------------------------------
 --
--- Additive, so guard on the field: `if Spoken.GetCaption then`. Both answer nil on 1.12,
--- which has no captions. The timing is the captions' own: the clip's present.timings when it
+-- Additive, so guard on the field: `if Spoken.GetCaption then`. The timing is the captions' own: the clip's present.timings when it
 -- brings them, an estimate otherwise, so another view marks the same word they would.
 
 local caption = {}
@@ -670,7 +658,7 @@ local caption = {}
 --- highlight and typewriter are the player's Highlight Words and Type Words Out (false with
 --- Show Words off). Read-only, and the same table on every call. nil without a clip.
 function Spoken:GetCaption()
-    if Transcript.unavailable or not Transcript.clip or not Transcript.words then return nil end
+    if not Transcript.clip or not Transcript.words then return nil end
     -- Not read from what the captions last drew: they update only while shown, and
     -- DialogueUI hides them with UIParent.
     local progress = Transcript:GetProgress()
@@ -684,32 +672,32 @@ function Spoken:GetCaption()
 end
 
 --- Highlight Words and Type Words Out as GetCaption gives them, with or without a clip, for a
---- view that prepares a line before it plays. Both false on 1.12 and with Show Words off.
+--- view that prepares a line before it plays. Both false with Show Words off.
 function Spoken:GetCaptionOptions()
     local cfg = Addon:Profile("Transcript")
-    if Transcript.unavailable or not cfg.Enabled then return false, false end
+    if not cfg.Enabled then return false, false end
     return cfg.HighlightWord and true or false, cfg.Typewriter and true or false
 end
 
 --- Finding the line being read in another window's text and marking it there, as the captions
 --- do: Align a caption's words to the window's paragraphs, Pick the pair to light, Cut how far
---- to type, Want what a paragraph shows. Nil on the 1.12 client, which has no captions.
+--- to type, Want what a paragraph shows.
 function Spoken:WordMarks()
-    return rawget(SpokenEnv, "WordMarks")
+    return WordMarks
 end
 
 --- Split text into words as the captions do (a Chinese character is a word), each with its
 --- bytes in text as first/last, so the caller can find GetCaption's word in its own copy of
 --- the line. Escape sequences are not removed.
 function Spoken:SplitCaption(text)
-    if Transcript.unavailable or type(text) ~= "string" then return nil end
+    if type(text) ~= "string" then return nil end
     return Transcript:Split(text)
 end
 
 --- The words the captions show for `transcript`, escape sequences removed: what
 --- present.timings lists, one time per word.
 function Spoken:CaptionWords(transcript)
-    if Transcript.unavailable or type(transcript) ~= "string" then return nil end
+    if type(transcript) ~= "string" then return nil end
     return Transcript:Split(Transcript:CleanText(transcript))
 end
 

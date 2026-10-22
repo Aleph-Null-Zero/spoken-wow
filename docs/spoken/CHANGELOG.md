@@ -4,6 +4,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The 1.12, 2.4.3 and 3.3.5 clients are no longer supported.** Spoken runs on WoW: Forever, Classic Era
+  and TBC Anniversary.
+  *([rusty-key](https://github.com/rusty-key))*
 - **More bosses in the Bosses tab show their face.** The bosses of the Ruins of Lordaeron, the Hall of Thanes,
   the City of Dalaran and the Excavation Site: Wetlands, and two of the Marylas in the Karazhan Crypts, have their
   portrait. Sneed, Grubbis, Darkmaster Gandling, Sapphiron and Dalaran's Arcane Anomaly show the right one, a boss

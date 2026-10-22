@@ -7,11 +7,9 @@ setfenv(1, SpokenEnv)
 StaticPortrait = { cache = {}, count = 0, age = 0 }
 local ART = [[Interface\AddOns\Spoken\Textures\]]
 local UNITS = { "npc", "target", "mouseover", "focus" }
--- An object's or an item's GUID, in the modern form or the hex one of 2.4.3 to 5.4.8 (0xF11...
--- objects, 0x4... items). Anything else, a creature's hex GUID included, may have a face.
+-- An object's or an item's GUID. Anything else may have a face.
 local function Faceless(guid)
     return string.find(guid, "^GameObject%-") or string.find(guid, "^Item%-")
-        or string.find(guid, "^0x[Ff]11") or string.find(guid, "^0x4")
 end
 local function Identity(clip)
     local spec = clip and clip.present and clip.present.portrait
@@ -300,19 +298,17 @@ function StaticPortrait:Configure(viewport, clip)
     return true
 end
 
-if not Version.IsAnyLegacy then
-    Callbacks:Register("CLIP_QUEUED", function(clip) StaticPortrait:Capture(clip) end)
-    local watcher = CreateFrame("Frame")
-    for _, event in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "GOSSIP_SHOW",
-        "QUEST_DETAIL", "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED" }) do watcher:RegisterEvent(event) end
-    watcher:SetScript("OnEvent", function(_, event, unit)
-        unit = NotSecret(unit)
-        local refreshGUID = (event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED") and unit
-            and NotSecret(UnitGUID(unit))
-        for _, clip in ipairs(SoundQueue.sounds) do StaticPortrait:Capture(clip, refreshGUID) end
-        local skin = PlayerFrame.Skin and PlayerFrame:Skin()
-        if skin and skin:HasClip() then skin:ConfigurePortrait() end
-        if Subtitle and Subtitle.wanted and Subtitle.clip then Subtitle:ConfigurePicture(Subtitle.clip) end
-    end)
-    StaticPortrait.watcher = watcher
-end
+Callbacks:Register("CLIP_QUEUED", function(clip) StaticPortrait:Capture(clip) end)
+local watcher = CreateFrame("Frame")
+for _, event in ipairs({ "PLAYER_TARGET_CHANGED", "UPDATE_MOUSEOVER_UNIT", "GOSSIP_SHOW",
+    "QUEST_DETAIL", "UNIT_PORTRAIT_UPDATE", "UNIT_MODEL_CHANGED" }) do watcher:RegisterEvent(event) end
+watcher:SetScript("OnEvent", function(_, event, unit)
+    unit = NotSecret(unit)
+    local refreshGUID = (event == "UNIT_PORTRAIT_UPDATE" or event == "UNIT_MODEL_CHANGED") and unit
+        and NotSecret(UnitGUID(unit))
+    for _, clip in ipairs(SoundQueue.sounds) do StaticPortrait:Capture(clip, refreshGUID) end
+    local skin = PlayerFrame.Skin and PlayerFrame:Skin()
+    if skin and skin:HasClip() then skin:ConfigurePortrait() end
+    if Subtitle and Subtitle.wanted and Subtitle.clip then Subtitle:ConfigurePicture(Subtitle.clip) end
+end)
+StaticPortrait.watcher = watcher

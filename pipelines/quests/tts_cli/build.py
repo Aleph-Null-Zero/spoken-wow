@@ -80,8 +80,7 @@ VoiceOver.DataModules:Register("{module}", {module})
 # only once no supported release still looks for it.
 #
 # The Interface line names every client the packs ship for - Era, Anniversary, Forever - as
-# the zones and books packs do, after 100007: the 1.12/2.4.3/3.3.5 clients read the first
-# number alone and refuse one below 20000. DataModules turns checkAddonVersion off around LoadAddOn, which
+# the zones and books packs do. DataModules turns checkAddonVersion off around LoadAddOn, which
 # loads a pack a client calls out of date, but Forever build 70170 calls an Interface it does
 # not list incompatible instead, and nothing turns that off: the pack has to name the client.
 DEFAULT_TITLE = "Spoken Audio: Quests"
@@ -109,7 +108,7 @@ def icon_source(language: str = None) -> str:
         raise FileNotFoundError(f"no icon for {language}: {path} (make quests-icon)")
     return path
 
-TOC_HEADER = """## Interface: 100007, 11509, 20506, 16001
+TOC_HEADER = """## Interface: 11509, 20506, 16001
 ## Title: {title}
 ## Notes: Contains voiceovers for content released during the Vanilla era.|n|nIt's OK for this addon to appear "disabled" or "out of date", it's compatible with any client and Spoken Quests will load it even if it's disabled or out of date.
 ## Version: {version}

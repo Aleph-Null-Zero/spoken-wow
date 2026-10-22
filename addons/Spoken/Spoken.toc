@@ -1,4 +1,4 @@
-## Interface: 100007, 16001
+## Interface: 16001
 ## Title: Spoken
 ## Notes: The voice player every Spoken addon speaks through: one queue, one window, one minimap button.
 ## Notes-deDE: Der Voice-Player, über den jedes Spoken-AddOn spricht, eine Warteschlange, ein Fenster, eine Minikartenschaltfläche.
