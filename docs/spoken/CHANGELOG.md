@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Readables that name you are recognised.** The class letters every new character gets, and other
+  letters that greet you by name, class or as brother or sister, now count as found, and the Compendium
+  shows them with your name in them. A page sent from the Contribute button no longer carries your
+  character's name. *([Nucabe](https://github.com/Nucabe))*
 - **117 more quest givers and enders show their own face.** Seven creatures, such as Malfurion Stormrage,
   no longer ship an appearance the game cannot draw. *([Nucabe](https://github.com/Nucabe))*
 - **The Ruins of Lordaeron dungeon is listed in Tirisfal Glades**, where its entrance is, and its card
