@@ -1486,19 +1486,19 @@ function C.PlayerContinent(listed)
 end
 
 --- The picture of a place's story (Spoken Places'), for Page:Show's `picture` on another tab's page of
---- the place: { file, mask }, or nil where Zones is not there, has none or has pictures off.
+--- the place: { file, mask }, or nil where Places is not there, has none or has pictures off.
 --- `place` is { mapID = a zone, a city or a continent } or { mapID = the zone of a dungeon's entrance,
 --- dungeon = its instance map }.
 function C.PlacePicture(place)
-	local zones = _G.SpokenZones
-	if not (zones and zones.Picture) then return nil end
+	local spoken = _G.Spoken
+	if not (spoken and spoken.PlacePicture) then return nil end
 	local mapID, key = place.mapID, nil
 	if place.dungeon then
 		local dungeon = C.Dungeon(place.dungeon)
 		if not (dungeon and dungeon.story) then return nil end
 		mapID, key = dungeon.story[1], dungeon.story[2]
 	end
-	local file, mask = zones:Picture(mapID, key)
+	local file, mask = spoken:PlacePicture(mapID, key)
 	return file and { file = file, mask = mask } or nil
 end
 

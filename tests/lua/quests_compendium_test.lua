@@ -1212,10 +1212,10 @@ do
     Click("Searing Gorge")
     -- Zones' picture of the place above its page, where Zones has one.
     Expect("a place's page has no picture while Zones has none", page.body.picture:IsShown(), false)
-    _G.SpokenZones = { Picture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end }
+    _G.Spoken.PlacePicture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end
     Tab:Refresh()
     Expect("...and Zones' picture of the place when it has", page.body.picture:IsShown() and page.body.picture:GetTexture(), "pic1427")
-    _G.SpokenZones = nil
+    _G.Spoken.PlacePicture = nil
     list = Shown()
     Click("Searing Gorge")
     list = Shown()

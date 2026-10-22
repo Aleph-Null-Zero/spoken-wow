@@ -471,11 +471,11 @@ do
     SpokenBooksCharacter.found[LEDGER] = nil
     Click(L.GROUP_DUNGEONS)
     Click("Cragmoor")
-    _G.SpokenZones = { Picture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end }
+    _G.Spoken.PlacePicture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end
     B:RefreshReadables()
     Expect("a zone's page has Zones' picture of the place above it", panel.page.body.picture:IsShown()
         and panel.page.body.picture:GetTexture(), "pic9004")
-    _G.SpokenZones = nil
+    _G.Spoken.PlacePicture = nil
     list = Shown()
 end
 

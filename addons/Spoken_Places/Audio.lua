@@ -114,6 +114,12 @@ function SpokenZones:SetupAudio()
 		return
 	end
 
+	-- The Compendium's other tabs show a place's picture above its page too, and reach it through
+	-- Spoken: this namespace is the addon's own.
+	Spoken.PlacePicture = function(_, mapID, key)
+		if self.Picture then return self:Picture(mapID, key) end
+	end
+
 	self.source = Spoken:RegisterSource("places", {
 		title = L.OPT_PAGE_TITLE,
 		addon = ADDON_NAME,
