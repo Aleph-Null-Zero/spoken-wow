@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The Compendium's quest list follows live Forever more closely.** Skyborne and other races
+  see the class quests Forever gives them, and human priests no longer see Desperate Prayer.
+  Quests whose only givers are one side's are listed for that side alone, three quests moved to
+  the zone Forever's quest log uses, Westfall's Toxic Soil quests and 30 follow-ups are linked into
+  their chains, and Dark Sacrifice has its new name. *([Nucabe](https://github.com/Nucabe))*
 - **The Places tab sorts names without a leading "The".** The Barrens is listed under B and
   The Crossroads under C, among the zones, areas and dungeons, as you would look for them. The
   names still read in full. *([rusty-key](https://github.com/rusty-key))*

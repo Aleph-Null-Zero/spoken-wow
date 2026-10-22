@@ -1536,8 +1536,14 @@ Two generated files feed it, both committed so the addon never needs a database:
   Most quests one side's giver hands out are open to every race in the DB (`AllowableRaces` 0 or
   all), so where the DB says anyone, the quest takes the side `corpus/factions.json` gives it,
   and failing that the side of the quest before it in its chain: a follow-up is reached only
-  through that quest (`quest_races`). The export prints how many quests are still not on the
-  side of the quest before them (`side_leaks`, the audit's leak check).
+  through that quest (`quest_races`). Failing both, it takes the side of the NPCs that start it in
+  the repack (`creature_queststarter`, `gameobject_queststarter`, else the corpus's speaker of its
+  accept line), or for a quest nothing starts (an item does) of those it is handed in to
+  (`giver_sides`): an NPC whose client `FactionTemplate` is hostile to one side only is the
+  other's (`npc_side`, the rule `tools/export_factions.py` has), and one hostile to neither, as
+  Ruul Snowhoof, leaves the quest to both. An NPC the repack lacks says nothing. The export
+  prints how many quests are still not on the side of the quest before them (`side_leaks`, the
+  audit's leak check).
   A quest filed under a class's QuestSort that the DB names no class for is that class's
   (`quest_classes`): Forever's class quests are not in the DB, and without it every class would
   see them under the class.
@@ -1546,7 +1552,11 @@ Two generated files feed it, both committed so the addon never needs a database:
   `NextQuestID` names it (an `ExclusiveGroup` of several leaves that one); else the breadcrumb
   whose `BreadcrumbForQuestId` names it, where the DB has that column. A negative `PrevQuestID`
   (the other quest only has to be in the log) is no link. Quests the corpus lacks are passed
-  through, and a link closing a loop is dropped. `--no-db` keeps the links already written.
+  through, and a link closing a loop is dropped. Last, after the client's links below, a quest
+  follows the one whose `RewardNextQuest` offers it on hand-in, where that is the only quest of
+  the corpus offering it (5 Jitters' Growling Gut after 163 Raven Hill): an offer is no
+  prerequisite, so one offered after several (Summon Felsteed) or after a quest the corpus lacks
+  follows none. `--no-db` keeps the links already written.
   Each quest handed in to another than its giver has `ender`, the creature it is handed in to
   (`enderObject` for an object), from the same DB's `creature_questender` and
   `gameobject_questender` (`quest_enders`): of several, the one the corpus has saying its progress
@@ -1558,10 +1568,15 @@ Two generated files feed it, both committed so the addon never needs a database:
   CC BY 4.0, credited in `THIRD_PARTY.md`), `quests.enUS.json` and `npcs.json` of every
   `wow_classic_beta` build, the latest build's record of a quest winning. Its `zoneAreaId` (a zone
   through Forever's tables) or `categoryId` (a QuestSort) places a quest the DB does not, before
-  the giver's spawn; a `zoneAreaId` of a Forever area no map shows is placed where players saw
-  its giver (`npcs.json` `offers`, else `takes`, by `positions[].uiMap`). Its `raceMask` limits a
-  quest the DB opens to everyone, before `factions.json`, and its `nextQuestId` links a quest no
-  DB link reaches. It adds and never changes what the DB says. The files are read at one commit
+  the giver's spawn, and its `zoneAreaId` wins where the DB's QuestSortID is in another zone,
+  neither being a battleground's (Forever moved 540, 545 and 952); a `zoneAreaId` of a Forever
+  area no map shows is placed where players saw its giver (`npcs.json` `offers`, else `takes`, by
+  `positions[].uiMap`). Its `raceMask` limits a
+  quest the DB opens to everyone, before `factions.json`, and wins over the DB's mask where both
+  limit (`race_mask`): it gives Skyborne druids their class quests and takes Desperate Prayer from
+  human priests, while a `raceMask` of anyone changes nothing. Its `nextQuestId` links a quest no
+  DB link reaches, and the client's quest lines (`QuestLineXQuest`, by `OrderIndex`,
+  `quest_line_links`) link a quest neither reaches, as Toxic Soil in Westfall. Otherwise it adds to what the DB says. The files are read at one commit
   of their repository (`EG_COMMIT`), since it grows every day and an export run twice must give
   the same file; they are fetched once into `tools/cache/efficient-games/<commit>/` and read from
   there after, offline too. Moving the commit is a deliberate change whose diff is reviewed.
@@ -1570,7 +1585,8 @@ Two generated files feed it, both committed so the addon never needs a database:
   Forever serves quests the corpus has no lines for yet. Each one players were seen being offered
   or handing in (`npcs.json` `offers`, `takes`) or working on (`objectives.json`), and that the
   client data has a title for, is listed with `notext = true` (`served_quests`, `without_text`):
-  placed, limited and linked by its client record as above, so the tab lists it with no words
+  placed, limited and linked by its client record as above (a dungeon's under its dungeon, by its
+  `zoneAreaId`, as a quest with words is), so the tab lists it with no words
   until its lines reach the corpus and an export drops the flag. The tab does not read the flag:
   a quest with no lines in `SpokenQuestsText` is one with no words, and its page says so
   (the shared "Nothing has been written for this yet." with Contribute). `--no-db` makes these again on
