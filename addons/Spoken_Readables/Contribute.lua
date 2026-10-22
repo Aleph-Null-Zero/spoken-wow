@@ -130,7 +130,7 @@ function SpokenBooks:CaptureContribution()
 
 	-- The second value is what Gather keys the page on: its checksum, the same id the site
 	-- files it under, so reading a page twice keeps it once.
-	return Spoken.Contribute:Envelope("books", fields, text), format("b:%d", sum)
+	return Spoken.Contribute:Envelope("readables", fields, text), format("b:%d", sum)
 end
 
 --- What a report carries beside its address: this client, and the page as the player read it.
@@ -153,7 +153,7 @@ function SpokenBooks:ReportContext(pageId)
 		local kept = self.pageText and self.pageText[self:GetClientLanguage()]
 		text = kept and kept[pageId]
 	end
-	return Spoken.Contribute:Envelope("books", fields, type(text) == "string" and self:Detemplate(text) or text)
+	return Spoken.Contribute:Envelope("readables", fields, type(text) == "string" and self:Detemplate(text) or text)
 end
 
 --- The report address for a page, with its context in the fragment. The bare address in the

@@ -78,7 +78,7 @@ Expect("the modules are listed Quests, Gossip, Places, Readables", table.concat(
 Expect("...which says why it cannot be turned on", readablesCard and readablesCard.layoutReason, env.L.REASON_NOT_INSTALLED)
 -- The modules register on entering the world, after the page is built: the row is drawn again
 -- at once, not left saying "Not installed" until something else redraws it.
-local lateBooks = _G.Spoken:RegisterSource("books", { title = "Spoken Writings", order = 4 })
+local lateBooks = _G.Spoken:RegisterSource("readables", { title = "Spoken Writings", order = 4 })
 Expect("a module registering after the page is built is installed on its row at once",
     readablesCard and readablesCard.layoutReason, nil)
 env.Sources.byKey.books = nil
@@ -91,7 +91,7 @@ Expect("an installed part says how many of its voice packs it has", labels[env.L
 Expect("...as a number, not out of how many there are", select(3, env.Options:PartVoice("quests")), "0")
 -- A part switched off is off everywhere: its entries leave the minimap menu, and it is told,
 -- so it can take its buttons off the game's frames.
-env.Minimap:AddEntry("zones", { id = "lore", text = "Lore" })
+env.Minimap:AddEntry("places", { id = "lore", text = "Lore" })
 local told
 _G.Spoken:RegisterCallback("PART_SWITCHED", function(key, on) told = key .. ":" .. tostring(on) end)
 local function InMenu(id)
@@ -99,11 +99,11 @@ local function InMenu(id)
     return false
 end
 Expect("a part's entry is in the minimap menu while it is on", InMenu("lore"), true)
-_G.Spoken:SetPartOn("zones", false)
+_G.Spoken:SetPartOn("places", false)
 Expect("...and gone once it is switched off", InMenu("lore"), false)
-Expect("...the part told it was switched off", told, "zones:false")
-_G.Spoken:SetPartOn("zones", true)
-Expect("...and back, and told, when it is on again", InMenu("lore") and told, "zones:true")
+Expect("...the part told it was switched off", told, "places:false")
+_G.Spoken:SetPartOn("places", true)
+Expect("...and back, and told, when it is on again", InMenu("lore") and told, "places:true")
 -- Quests says how many packs it found (none, here); off, its card still says so.
 _G.Spoken:SetPartOn("quests", false); env.Options:UpdateRows()
 Expect("...while still saying whether it has its voices", env.Options:PartVoice("quests"), "muted")
@@ -116,7 +116,7 @@ local bosses = _G.Spoken:RegisterSource("bosses", { title = "Bosses", about = "W
 local keys = {}
 for _, part in ipairs(env.Options:Parts()) do table.insert(keys, part.key) end
 Expect("a registered source is listed among the parts, in its order", table.concat(keys, ","),
-    "quests,gossip,bosses,zones,books")
+    "quests,gossip,bosses,places,readables")
 Expect("...with the line it gave", env.Options:Parts()[3].text, "What a boss says.")
 Expect("...and it can be switched off like the others", _G.Spoken:IsPartOn("bosses"), true)
 Expect("a part with no page of its own has no button to one", env.Options:HasPage(2.5), false)
@@ -124,6 +124,26 @@ Expect("...where a part with a page has", env.Options:HasPage(1), true)
 env.Sources.byKey.bosses = nil
 for i, source in ipairs(env.Sources.ordered) do
     if source == bosses then table.remove(env.Sources.ordered, i) break end
+end
+
+---------------------------------------------------------------- the renamed parts
+-- Places and Readables were keyed zones and books: a part switched off under the old key, in
+-- any profile, is off under the new one, and the old key goes.
+do
+    local saved = env.Addon.db
+    env.Addon.db = nil
+    _G.SpokenSettings = { profiles = {
+        Default = { Parts = { zones = false, books = false } },
+        Other = { Parts = { zones = false, places = true } },
+    } }
+    env.Addon:InitDB()
+    local default = _G.SpokenSettings.profiles.Default.Parts
+    Expect("a part switched off as zones is off as places", default.places, false)
+    Expect("...and as books, off as readables", default.readables, false)
+    Expect("...with the old keys gone", default.zones == nil and default.books == nil, true)
+    local other = _G.SpokenSettings.profiles.Other.Parts
+    Expect("a choice already made under the new key wins", other.places == true and other.zones == nil, true)
+    env.Addon.db = saved
 end
 
 os.exit(Failures() == 0 and 0 or 1)

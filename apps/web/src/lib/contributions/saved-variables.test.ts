@@ -32,7 +32,7 @@ function file(literals: string[]): string {
 describe("envelopesFromSavedVariables", () => {
   const quests = fixture("quests-accept.txt");
   const fenced = fixture("quests-fenced.txt");
-  const readables = fixture("books-page.txt");
+  const readables = fixture("readables-page.txt");
 
   it("gives back every envelope byte for byte, as the game escapes them", () => {
     const found = envelopesFromSavedVariables(file([escaped(quests), escaped(fenced), escaped(readables)]));

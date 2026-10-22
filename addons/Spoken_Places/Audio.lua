@@ -114,7 +114,7 @@ function SpokenZones:SetupAudio()
 		return
 	end
 
-	self.source = Spoken:RegisterSource("zones", {
+	self.source = Spoken:RegisterSource("places", {
 		title = L.OPT_PAGE_TITLE,
 		addon = ADDON_NAME,
 		order = 3,
@@ -151,7 +151,7 @@ function SpokenZones:SetupAudio()
 	-- Zones tab.
 	if Spoken.RegisterCallback then
 		Spoken:RegisterCallback("PART_SWITCHED", function(key)
-			if key ~= "zones" then return end
+			if key ~= "places" then return end
 			if SpokenZones.RefreshPanel then SpokenZones:RefreshPanel() end
 			if SpokenCompendium and SpokenCompendium.Relayout then SpokenCompendium:Relayout() end
 		end)
@@ -159,10 +159,10 @@ function SpokenZones:SetupAudio()
 
 	-- The Compendium is in Spoken's own part of the menu where Spoken has one.
 	if not Spoken.ShowsCompendium then
-		Spoken.Minimap:AddEntry("zones", { id = "lore", text = L.MENU_LORE_WINDOW, order = 1,
+		Spoken.Minimap:AddEntry("places", { id = "lore", text = L.MENU_LORE_WINDOW, order = 1,
 			onClick = function() SpokenZones:ToggleLoreWindow() end })
 	end
-	Spoken.Minimap:AddEntry("zones", { id = "settings", text = L.MENU_ZONE_SETTINGS, order = 2,
+	Spoken.Minimap:AddEntry("places", { id = "settings", text = L.MENU_ZONE_SETTINGS, order = 2,
 		onClick = function() SpokenZones:OpenOptions() end })
 end
 

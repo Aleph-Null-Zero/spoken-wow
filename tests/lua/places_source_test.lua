@@ -41,7 +41,7 @@ end
 ---------------------------------------------------------------- registration and the clip shape
 local env, Z = Boot()
 local Spoken = _G.Spoken
-Expect("the zones addon registers a source with the player", Spoken:GetSource("zones"), Z.source)
+Expect("the zones addon registers a source with the player", Spoken:GetSource("places"), Z.source)
 Expect("...headed in the minimap menu by its page's name, in the player's language", Z.source.title, Z.L.OPT_PAGE_TITLE)
 -- No channel of its own: the channel is one setting, on the player.
 Expect("...on the player's channel", Z.source:GetChannel(), "Master")

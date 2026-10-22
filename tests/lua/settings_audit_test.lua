@@ -24,9 +24,9 @@ _G.C_AddOns = { IsAddOnLoaded = function() return true end }
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local env = _G.SpokenEnv
-env.Sources:Register("books", { title = "Spoken Writings", addon = "Spoken_Readables", order = 2,
+env.Sources:Register("readables", { title = "Spoken Writings", addon = "Spoken_Readables", order = 2,
     packs = function() return { "SpokenBooksAudio" } end })
-env.Sources:Register("zones", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
+env.Sources:Register("places", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
     packs = function() return { "SpokenZonesAudio" } end })
 _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()
@@ -195,8 +195,8 @@ stub.print(string.format("settings_audit: %d checkboxes, %d sliders, %d menus, %
     worked.checkbox, worked.slider, worked.menu, worked.button))
 
 ---------------------------------------------------------------- a module switched off is off
-local PAGE_FOR = { quests = 2, gossip = 3, zones = 4, books = 5 }
-for _, key in ipairs({ "quests", "gossip", "zones", "books" }) do
+local PAGE_FOR = { quests = 2, gossip = 3, places = 4, readables = 5 }
+for _, key in ipairs({ "quests", "gossip", "places", "readables" }) do
     local page = pages[PAGE_FOR[key]]
     _G.Spoken:SetPartOn(key, false)
     env.Options:UpdateRows()

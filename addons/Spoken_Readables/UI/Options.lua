@@ -55,7 +55,7 @@ function SpokenBooks:SetupOptions()
 	local function PartOn() return SpokenBooks:IsPartOn() end
 	layout:Intro([[Interface\Icons\INV_Misc_Book_09]], L.OPT_PAGE_TITLE)
 	local switch = layout:Checkbox(W.MODULE_SWITCH, nil, PartOn,
-		function(value) Spoken:SetPartOn("books", value) end, refresh)
+		function(value) Spoken:SetPartOn("readables", value) end, refresh)
 
 	local function Get(key)
 		return function() return SpokenBooks:Get(key) end
@@ -90,8 +90,8 @@ function SpokenBooks:SetupOptions()
 	-- No pack in the voice language, and nothing to fall back on: said here, or the page goes
 	-- quiet with no word why.
 	local silent = layout:Note("", nil, 32)
-	layout:OnRefresh(function() silent:SetText(Spoken:SilentNote("books") or "") end)
-	layout:ShowWhen(silent, function() return Spoken:SilentNote("books") ~= nil end)
+	layout:OnRefresh(function() silent:SetText(Spoken:SilentNote("readables") or "") end)
+	layout:ShowWhen(silent, function() return Spoken:SilentNote("readables") ~= nil end)
 	-- The packs to get are the voice language's; any pack installed is listed too. Not the
 	-- fallback's to get: it buried the one that mattered. But a voice language with no pack of its
 	-- own (itIT) is heard in the fallback's, so that is the one to get there.
@@ -104,7 +104,7 @@ function SpokenBooks:SetupOptions()
 	local function Wanted(code, addon)
 		local voice = SpokenBooks:GetVoiceLanguage()
 		if code == voice or Installed(addon) then return true end
-		local own = voice == "enUS" or Spoken:VoicePack("books", voice)
+		local own = voice == "enUS" or Spoken:VoicePack("readables", voice)
 		return not own and code == SpokenBooks:GetFallbackLanguage()
 	end
 	-- Each language's row shown while it is wanted.
@@ -120,7 +120,7 @@ function SpokenBooks:SetupOptions()
 		end)
 	end
 	for _, locale in ipairs(SpokenBooks.LOCALES or {}) do
-		local folder, url = Spoken:VoicePack("books", locale.code)
+		local folder, url = Spoken:VoicePack("readables", locale.code)
 		if folder then
 			local code = locale.code
 			layout:ShowWhen(PackRow(folder, LanguageName(code), url), function() return Wanted(code, folder) end)
@@ -157,7 +157,7 @@ function SpokenBooks:SetupOptions()
 	layout:Refresh()
 	content:SetScript("OnShow", refresh)
 	-- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
-	Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "books" then refresh() end end)
+	Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "readables" then refresh() end end)
 
 	-- Derived rather than written as a number: a hardcoded height is a number nobody updates
 	-- when a row is added, and what that produces is a section you cannot scroll to.

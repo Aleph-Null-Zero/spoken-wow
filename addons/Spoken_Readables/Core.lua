@@ -183,7 +183,7 @@ end
 --- Whether the player has this part of Spoken switched on (Spoken's settings). Without the
 --- player there is no switch to read, and the part counts as on. Off, no play button shows.
 function SpokenBooks:IsPartOn()
-	return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("books")
+	return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("readables")
 end
 
 --- Whether the player offers background gathering this panel can switch: present with
@@ -210,7 +210,7 @@ function SpokenBooks:SetupSource()
 	end
 	self.compatible = true
 
-	self.source = Spoken:RegisterSource("books", {
+	self.source = Spoken:RegisterSource("readables", {
 		title = L.OPT_PAGE_TITLE,
 		addon = ADDON_NAME,
 		order = 4,
@@ -252,7 +252,7 @@ function SpokenBooks:SetupSource()
 	-- Compendium's Readables tab.
 	if Spoken.RegisterCallback then
 		Spoken:RegisterCallback("PART_SWITCHED", function(key)
-			if key ~= "books" then return end
+			if key ~= "readables" then return end
 			SpokenBooks:RefreshPlayButton()
 			if SpokenCompendium and SpokenCompendium.Relayout then SpokenCompendium:Relayout() end
 		end)
@@ -261,7 +261,7 @@ function SpokenBooks:SetupSource()
 	if Spoken.Minimap then
 		-- No "read this book" entry: it only did anything with a book already open, and an
 		-- open book has its own Play button.
-		Spoken.Minimap:AddEntry("books", { id = "Options", text = L.MENU_BOOK_SETTINGS,
+		Spoken.Minimap:AddEntry("readables", { id = "Options", text = L.MENU_BOOK_SETTINGS,
 			order = 2, onClick = function() SpokenBooks:OpenOptions() end })
 	end
 
@@ -293,5 +293,5 @@ function SpokenBooks:ReportURL(pageId, language)
 		return nil
 	end
 	-- Filed under the language of the clip being reported.
-	return _G.Spoken:ReportURL("books", key, language)
+	return _G.Spoken:ReportURL("readables", key, language)
 end

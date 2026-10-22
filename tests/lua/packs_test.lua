@@ -27,12 +27,10 @@ end
 local CODES = { "deDE", "esES", "esMX", "frFR", "itIT", "koKR", "ptBR", "ruRU", "zhCN", "zhTW" }
 local PAGES = {
     quests = function(code) return "quests/audio-" .. code:lower() .. ".md" end,
-    zones = function(code) return "zones/spoken-zones-audio-" .. code:lower() .. ".md" end,
-    books = function(code) return "books/spoken-books-audio-" .. code:lower() .. ".md" end,
+    places = function(code) return "zones/spoken-zones-audio-" .. code:lower() .. ".md" end,
+    readables = function(code) return "books/spoken-books-audio-" .. code:lower() .. ".md" end,
 }
-local FOLDERS = { quests = "SpokenQuestsAudio", zones = "SpokenZonesAudio", books = "SpokenBooksAudio" }
--- The publishers' section key for each of the addon's: the pages say places and readables.
-local SECTIONS = { quests = "quests", zones = "places", books = "readables" }
+local FOLDERS = { quests = "SpokenQuestsAudio", places = "SpokenZonesAudio", readables = "SpokenBooksAudio" }
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.LoadSpoken(SPOKEN)
@@ -40,7 +38,7 @@ for module, page in pairs(PAGES) do
     for _, code in ipairs(CODES) do
         local meta = Page(PUBLISHERS .. page(code))
         local folder, url = _G.Spoken:VoicePack(module, code)
-        if meta and meta.section == SECTIONS[module] then
+        if meta and meta.section == module then
             local want = meta.curseforge and ("https://www.curseforge.com/wow/addons/" .. meta.slug)
                 or ("https://github.com/rusty-key/spoken-wow/releases?q=" .. meta.release)
             Expect(module .. " in " .. code .. ": the page's address", url, want)

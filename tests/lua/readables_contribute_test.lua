@@ -32,8 +32,8 @@ env.Addon.db.profile.Contribute.HideButtons = true
 Expect("...but not when Contribute buttons are hidden in the player settings", B:HasContributionGap(), false)
 env.Addon.db.profile.Contribute.HideButtons = false
 local envelope = B:CaptureContribution()
-H.WriteCapturedFixture(here, "books-page", envelope)
-Expect("the source is books", envelope:match("^!SPOKEN1 books\n") ~= nil, true)
+H.WriteCapturedFixture(here, "readables-page", envelope)
+Expect("the source is readables", envelope:match("^!SPOKEN1 readables\n") ~= nil, true)
 Expect("the addon is named by its folder", envelope:match("\naddon=Spoken_Readables/") ~= nil, true)
 Expect("the key is the client-side checksum",
     envelope:match("\npage=" .. B:ChecksumOf(UNKNOWN) .. "\n") ~= nil, true)
@@ -101,7 +101,7 @@ env.Spoken.Contribute.Encode = realEncode
 env.Spoken.Contribute.Encode = nil
 B:ShowContribution()
 Expect("...falls back to the raw envelope when Encode is absent",
-    box.editBox:GetText():match("^!SPOKEN1 books\n") ~= nil, true)
+    box.editBox:GetText():match("^!SPOKEN1 readables\n") ~= nil, true)
 Expect("...with the old two-copy hint", box.hint:GetText(), "Press Ctrl+C, then paste it at:")
 Expect("...and the address shown again", box.address:GetText(), "https://spoken.rusty.one/contribute")
 env.Spoken.Contribute.Encode = realEncode

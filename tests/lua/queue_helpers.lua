@@ -11,7 +11,7 @@ function M.Fresh(stub, spokenDir)
     local env = stub.LoadSpoken(spokenDir)
     env.Addon.db.char.IsPaused = false
     local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
-    local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2,
+    local zones = env.Sources:Register("places", { title = "Zones", addon = "Spoken_Places", order = 2,
         queueLimit = 3, interClipGap = 0.25 })
     return env, quests, zones
 end
@@ -137,7 +137,7 @@ function M.NewZoneLore()
         cfg.showMapPanel = shown
         if shown then cfg.mapPanelCollapsed = false end
     end
-    function Z:IsPartOn() return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("zones") end
+    function Z:IsPartOn() return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("places") end
     function Z:GetMapName(id) return ({ [1411] = "Durotar", [1426] = "Dun Morogh" })[id] end
     function Z:GetLanguage() return "enUS" end
     function Z:Print(fmt, ...) table.insert(self.printed, select("#", ...) > 0 and string.format(fmt, ...) or fmt) end

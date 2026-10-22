@@ -58,9 +58,9 @@ _G.C_AddOns = { IsAddOnLoaded = function() return true end }
 local VO = stub.LoadQuests(QUESTS, SPOKEN)
 VO.Addon:OnInitialize()
 local env = _G.SpokenEnv
-env.Sources:Register("books", { title = "Spoken Readables", addon = "Spoken_Readables", order = 4,
+env.Sources:Register("readables", { title = "Spoken Readables", addon = "Spoken_Readables", order = 4,
     packs = function() return { "SpokenBooksAudio" } end })
-env.Sources:Register("zones", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
+env.Sources:Register("places", { title = "Spoken Zones", addon = "Spoken_Places", order = 3,
     packs = function() return { "SpokenZonesAudio" } end })
 _G.Spoken:RegisterOptionalAction("report", "Report")
 env.Addon:Enable()

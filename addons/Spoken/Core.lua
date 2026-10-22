@@ -126,6 +126,8 @@ Defaults = {
     },
 }
 
+local RENAMED_PARTS = { zones = "places", books = "readables" }
+
 --- Idempotent, so the test harness and ADDON_LOADED can both call it.
 function Addon:InitDB()
     if self.db then
@@ -152,6 +154,17 @@ function Addon:InitDB()
             elseif frame.MinimalPlayer == false then frame.Style = "classic"
             else frame.Style = "minimal" end
             frame.SubtitlePlayer, frame.HideFrame, frame.MinimalPlayer = nil, nil, nil
+        end
+        -- Places and Readables were keyed zones and books: a module switched off under its old
+        -- key stays off under the new one.
+        local parts = type(profile) == "table" and profile.Parts
+        if type(parts) == "table" then
+            for old, new in pairs(RENAMED_PARTS) do
+                if parts[old] ~= nil then
+                    if parts[new] == nil then parts[new] = parts[old] end
+                    parts[old] = nil
+                end
+            end
         end
     end
     -- Another profile chosen, copied over this one or reset, from Spoken's page or anywhere

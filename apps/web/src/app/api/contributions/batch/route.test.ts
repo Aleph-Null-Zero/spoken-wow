@@ -26,8 +26,8 @@ const ip = `203.0.113.${Math.floor(Math.random() * 200) + 20}`;
 const fixture = (name: string) =>
   readFileSync(new URL(`../../../../../../../tests/fixtures/contributions/${name}`, import.meta.url), "utf8");
 const quests = fixture("quests-accept.txt");
-const readables = fixture("books-page.txt");
-const places = fixture("zones-subzone.txt");
+const readables = fixture("readables-page.txt");
+const places = fixture("places-subzone.txt");
 
 function post(body: unknown): Request {
   return new Request("https://example.com/api/contributions/batch", {

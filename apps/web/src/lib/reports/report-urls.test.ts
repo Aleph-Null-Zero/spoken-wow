@@ -14,7 +14,6 @@ import { describe, expect, it } from "vitest";
 
 import { BASE_LANG, isLang } from "@/lib/lang";
 import { localeRedirects, localeRewrites } from "@/lib/locale-routes";
-import { sectionRedirects } from "@/lib/section-routes";
 
 import { parseTarget } from "./target";
 
@@ -66,10 +65,7 @@ describe("the report addresses the addon builds", () => {
     const kinds = new Set<string>();
     const languages = new Set<string>();
     for (const url of urls) {
-      // Until the addons say places and readables, their addresses take the section redirect
-      // first (lib/section-routes.ts).
-      const filed = new URL(url).pathname;
-      const path = route(sectionRedirects, filed) ?? filed;
+      const path = new URL(url).pathname;
       // English goes bare; an /enUS/ prefix would be redirected first.
       expect(route(localeRedirects, path), url).toBeNull();
       const served = route(localeRewrites, path) ?? path;

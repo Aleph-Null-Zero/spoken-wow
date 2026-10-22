@@ -158,7 +158,7 @@ end
 --- player there is no switch to read, and the part counts as on. Off, the map's panel and its
 --- play buttons stay hidden.
 function SpokenZones:IsPartOn()
-	return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("zones")
+	return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("places")
 end
 
 --------------------------------------------------------------------------------
@@ -326,7 +326,7 @@ end
 --
 -- The game cannot open a URL or send anything anywhere, so the only way a player
 -- can report a bad line is to copy an address and open it themselves. The site
--- resolves /{lang}/zones/r/{mapID}/{slug} back to a line by matching that path
+-- resolves /{lang}/places/r/{mapID}/{slug} back to a line by matching that path
 -- against the audio file paths it already assigns, which is why the slug is built
 -- the same way here as slugFor does in tools/voice/naming.mjs -- and why "zone",
 -- the file name a zone's own line gets, doubles as the slug for it.
@@ -361,7 +361,7 @@ function SpokenZones:ReportURL(mapID, areaKey, language)
 			slug = "zone"
 		end
 	end
-	return _G.Spoken:ReportURL("zones", ("%d/%s"):format(mapID, slug), language or self:GetLanguage())
+	return _G.Spoken:ReportURL("places", ("%d/%s"):format(mapID, slug), language or self:GetLanguage())
 end
 
 --------------------------------------------------------------------------------

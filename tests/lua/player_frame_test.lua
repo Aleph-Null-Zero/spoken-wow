@@ -24,7 +24,7 @@ local function Boot(client)
     local env = stub.LoadSpoken(SPOKEN)
     env.Addon:Enable()   -- what PLAYER_LOGIN does: builds the frame, the button, the panel
     local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
-    local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2 })
+    local zones = env.Sources:Register("places", { title = "Zones", addon = "Spoken_Places", order = 2 })
     return env, quests, zones
 end
 
@@ -369,14 +369,14 @@ Expect("...registered against the player's saved position", stub.dbIcons.Spoken.
 -- The frame the lib keeps for the addon; the lib's clicks pass it, and it is the anchor
 -- the addon holds for the compartment's clicks too.
 local mmButton = stub.dbIcons.Spoken.button
-env.Minimap:AddEntry("zones", { id = "lore", text = "Open lore window", order = 1, onClick = function() end })
+env.Minimap:AddEntry("places", { id = "lore", text = "Open lore window", order = 1, onClick = function() end })
 env.Minimap:AddEntry("quests", { id = "opts", text = "Quest settings", order = 1, onClick = function() end })
 local menu = env.Minimap:BuildMenu()
 local labels = {}
 for _, entry in ipairs(menu) do table.insert(labels, entry.text) end
 Expect("the menu is the player's entries then each source's in order", table.concat(labels, "|"),
     "Stop or Replay|Skip Line|Stop All|Settings|Quest settings|Open lore window")
-env.Minimap:RemoveEntry("zones", "lore")
+env.Minimap:RemoveEntry("places", "lore")
 Expect("RemoveEntry", getn(env.Minimap:BuildMenu()), 5)
 
 -- A click on the icon opens the settings at once; the menu is a right-click away.

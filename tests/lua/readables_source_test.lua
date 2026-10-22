@@ -57,7 +57,7 @@ Expect("the addon's own ADDON_LOADED writes the defaults", SpokenBooksSettings.a
 Expect("...and claims no source yet, because the player may not have loaded", B0.source, nil)
 
 stub.FireEvent("PLAYER_ENTERING_WORLD")
-Expect("entering the world claims the source", _G.Spoken:GetSource("books"), B0.source)
+Expect("entering the world claims the source", _G.Spoken:GetSource("readables"), B0.source)
 local claimed = B0.source
 stub.FireEvent("PLAYER_ENTERING_WORLD")
 Expect("...and a second loading screen does not replace it", B0.source, claimed)
@@ -80,7 +80,7 @@ local env, B = Boot()
 local Spoken = _G.Spoken
 
 ---------------------------------------------------------------- registration
-Expect("the books addon registers a source with the player", Spoken:GetSource("books"), B.source)
+Expect("the books addon registers a source with the player", Spoken:GetSource("readables"), B.source)
 Expect("...headed in the minimap menu by its page's name, in the player's language", B.source.title, B.L.OPT_PAGE_TITLE)
 -- No cap: a book is a bounded sequence somebody opened, not a burst of discoveries. Capped,
 -- the player trims the oldest waiting clip and a four-page book loses its middle.

@@ -766,7 +766,7 @@ local showReport = B.ShowReport
 B.ShowReport = function(_, pageId, language) copied = B:ReportURL(pageId, language) end
 page.report.scripts.OnClick(page.report)
 Expect("...a click giving the address to report its first voiced page", copied ~= nil
-    and copied:find("/books/r/" .. alleriaPage, 1, true) ~= nil, true)
+    and copied:find("/readables/r/" .. alleriaPage, 1, true) ~= nil, true)
 -- A letter of two pages whose first has no recording: Play and Report are there for the second,
 -- and Play starts it there.
 do
@@ -782,14 +782,14 @@ do
     B.SyncTo = syncTo
     Expect("...Play starting at its first voiced page", synced, second)
     page.report.scripts.OnClick(page.report)
-    Expect("...Report filing that page", copied:find("/books/r/" .. second, 1, true) ~= nil, true)
+    Expect("...Report filing that page", copied:find("/readables/r/" .. second, 1, true) ~= nil, true)
     voiced[first] = true
     B.following[LETTER] = { clip = { pageId = second }, pages = {} }
     page.report.scripts.OnClick(page.report)
-    Expect("...and while it is read, the page being read", copied:find("/books/r/" .. second, 1, true) ~= nil, true)
+    Expect("...and while it is read, the page being read", copied:find("/readables/r/" .. second, 1, true) ~= nil, true)
     B.following[LETTER] = nil
     page.report.scripts.OnClick(page.report)
-    Expect("...else its first voiced page", copied:find("/books/r/" .. first, 1, true) ~= nil, true)
+    Expect("...else its first voiced page", copied:find("/readables/r/" .. first, 1, true) ~= nil, true)
     -- Nothing recorded: Play greyed, and Report all the same, filing its first page.
     voiced[first], voiced[second] = nil, nil
     page:Show({ title = "A Dusty Unsent Letter", target = LETTER })
@@ -797,7 +797,7 @@ do
         page.report:IsShown() and page.play:IsShown() and not page.play:IsEnabled(), true)
     copied = nil
     page.report.scripts.OnClick(page.report)
-    Expect("...Report filing its first page", copied ~= nil and copied:find("/books/r/" .. first, 1, true) ~= nil, true)
+    Expect("...Report filing its first page", copied ~= nil and copied:find("/readables/r/" .. first, 1, true) ~= nil, true)
 end
 B.HasAudio = function(_, p) return p == alleriaPage end
 B.ShowReport = showReport

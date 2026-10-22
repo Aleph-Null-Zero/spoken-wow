@@ -69,7 +69,7 @@ function SpokenZones:SetupOptions()
 	local function PartOn() return SpokenZones:IsPartOn() end
 	layout:Intro([[Interface\Icons\INV_Misc_Map02]], L.OPT_PAGE_TITLE)
 	local switch = layout:Checkbox(W.MODULE_SWITCH, nil, PartOn,
-		function(value) Spoken:SetPartOn("zones", value) end, refresh)
+		function(value) Spoken:SetPartOn("places", value) end, refresh)
 
 	-- Every row's position, and the spacing between them, comes from Spoken's UI/Layout.lua, so
 	-- the pages read alike.
@@ -182,8 +182,8 @@ function SpokenZones:SetupOptions()
 	-- No pack in the voice language, and nothing to fall back on: said here, or the page goes
 	-- quiet with no word why.
 	local silent = layout:Note("", nil, 32)
-	layout:OnRefresh(function() silent:SetText(Spoken:SilentNote("zones") or "") end)
-	layout:ShowWhen(silent, function() return Spoken:SilentNote("zones") ~= nil end)
+	layout:OnRefresh(function() silent:SetText(Spoken:SilentNote("places") or "") end)
+	layout:ShowWhen(silent, function() return Spoken:SilentNote("places") ~= nil end)
 	-- The packs to get are the voice language's; any pack installed is listed too. Not the
 	-- fallback's to get, unless the voice language has no pack of its own (itIT).
 	local function Installed(addon)
@@ -195,7 +195,7 @@ function SpokenZones:SetupOptions()
 	local function Wanted(code, addon)
 		local voice = SpokenZones:GetVoiceLanguage()
 		if code == voice or Installed(addon) then return true end
-		local own = voice == "enUS" or Spoken:VoicePack("zones", voice)
+		local own = voice == "enUS" or Spoken:VoicePack("places", voice)
 		return not own and code == SpokenZones:GetFallbackLanguage()
 	end
 	-- The packs for what the player will hear, each language's shown while that language is wanted.
@@ -211,7 +211,7 @@ function SpokenZones:SetupOptions()
 		end)
 	end
 	for _, locale in ipairs(SpokenZones.LOCALES or {}) do
-		local folder, url = Spoken:VoicePack("zones", locale.code)
+		local folder, url = Spoken:VoicePack("places", locale.code)
 		if folder then
 			local code = locale.code
 			layout:ShowWhen(PackRow(folder, LanguageName(code), url), function() return Wanted(code, folder) end)
@@ -246,7 +246,7 @@ function SpokenZones:SetupOptions()
 	layout:Refresh()
 	content:SetScript("OnShow", refresh)
 	-- Switched on or off from Spoken's page while this one was hidden: drawn again for it.
-	Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "zones" then refresh() end end)
+	Spoken:RegisterCallback("PART_SWITCHED", function(part) if part == "places" then refresh() end end)
 
 	-- Derived rather than written as a number: a hardcoded height is a number nobody
 	-- updates when a row is added, and the failure it produces is the one this scroller

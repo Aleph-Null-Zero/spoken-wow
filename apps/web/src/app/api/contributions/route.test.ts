@@ -38,7 +38,7 @@ const envelope = readFileSync(
   "utf8",
 );
 const placesEnvelope = readFileSync(
-  new URL("../../../../../../tests/fixtures/contributions/zones-subzone.txt", import.meta.url),
+  new URL("../../../../../../tests/fixtures/contributions/places-subzone.txt", import.meta.url),
   "utf8",
 );
 const observedEnvelope = readFileSync(

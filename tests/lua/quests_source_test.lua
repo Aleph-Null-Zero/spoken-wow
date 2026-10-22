@@ -167,7 +167,7 @@ Expect("...and logging out mid-line restores it", world.cvars.Sound_EnableDialog
 -- the mute covers a quest line speaking, not the quests source having a backlog.
 VO, env, Spoken = Boot()
 VO.Addon.db.profile.Audio.AutoToggleDialog = true
-local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Places", channel = function() return "Dialog" end })
+local zones = Spoken:RegisterSource("places", { title = "Zones", addon = "Spoken_Places", channel = function() return "Dialog" end })
 world.questID = 101
 VO.Addon:QUEST_DETAIL()
 stub.Advance(0.6)

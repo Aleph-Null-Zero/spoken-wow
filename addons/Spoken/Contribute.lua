@@ -13,7 +13,7 @@ setfenv(1, SpokenEnv)
 -- corpus that simply has nothing.
 
 local VERSION = 1
-local SOURCES = { quests = true, zones = true, books = true }
+local SOURCES = { quests = true, places = true, readables = true }
 
 local MODULUS = 2147483647
 local FACTOR = 31
@@ -166,7 +166,7 @@ local function Fence(text)
     return table.concat(lines, "\n")
 end
 
----@param source string  "quests" | "zones" | "books"
+---@param source string  "quests" | "places" | "readables"
 ---@param fields table   array of { key, value }, in the order they are written
 ---@param text string|nil the one multi-line field, or nil where the source has none
 ---@return string|nil     the envelope, or nil for a source this format does not carry

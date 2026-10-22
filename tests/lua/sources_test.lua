@@ -14,16 +14,16 @@ local rec = H.Recorder(env)
 
 ---------------------------------------------------------------- registration
 Expect("a registered source is retrievable", env.Sources:Get("quests"), quests)
-Expect("an unknown key is nil", env.Sources:Get("books"), nil)
+Expect("an unknown key is nil", env.Sources:Get("readables"), nil)
 local ok = pcall(function() env.Sources:Register("quests", { title = "Again" }) end)
 Expect("registering a key twice is an error", ok, false)
 local order = {}
 for key in env.Sources:Iterate() do table.insert(order, key) end
-Expect("Iterate follows `order`", table.concat(order, ","), "quests,zones")
+Expect("Iterate follows `order`", table.concat(order, ","), "quests,places")
 
 ---------------------------------------------------------------- admit
 local vetoed = nil
-local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Readables", order = 3,
+local books = env.Sources:Register("readables", { title = "Books", addon = "Spoken_Readables", order = 3,
     admit = function(clip, queue) if vetoed then return false, vetoed end return true end })
 vetoed = "no page open"
 local bc = H.Clip()

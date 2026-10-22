@@ -69,7 +69,7 @@ function SpokenZones:CaptureContribution(mapID, subzone)
         fields[#fields + 1] = { "subzone", subzone }
     end
 
-    return Spoken.Contribute:Envelope("zones", fields, nil)
+    return Spoken.Contribute:Envelope("places", fields, nil)
 end
 
 -- Compression belongs here, not in CaptureContribution: this runs once, on the click.
@@ -101,7 +101,7 @@ function SpokenZones:ReportContext(mapID, areaKey)
     if areaKey then
         fields[#fields + 1] = { "key", areaKey }
     end
-    return Spoken.Contribute:Envelope("zones", fields, nil)
+    return Spoken.Contribute:Envelope("places", fields, nil)
 end
 
 --- The report address for a place, with its context in the fragment. The bare address in the

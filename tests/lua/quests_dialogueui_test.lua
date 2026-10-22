@@ -326,7 +326,7 @@ world.npcGUID, world.gossipText, DUI.handler = questGiver, nil, nil
 -- A zone clip whose transcript is the quest text word for word.
 Spoken:StopAll()
 DUI:HandleQuestDetail()
-local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Places" })
+local zones = Spoken:RegisterSource("places", { title = "Zones", addon = "Spoken_Places" })
 zones:Enqueue({ key = "z:12", path = "z12.ogg", length = 12,
     present = { header = "Elwynn Forest", transcript = QUEST_TEXT, bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
