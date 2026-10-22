@@ -1,4 +1,4 @@
-## Interface: 100007, 16001
+## Interface: 16001
 ## Title: Spoken Quests
 ## Notes: Quest and gossip dialogue read aloud through Spoken. Restores quest and gossip voiceovers on supported clients.
 ## Notes-deDE: Quest- und Gesprächsdialoge, vorgelesen durch Spoken. Stellt die Quest- und Gesprächs-Vertonungen auf unterstützten Clients wieder her.
@@ -26,8 +26,8 @@ addon.xml
 Contribute.xml
 # Gossip text for the client's own locale only: each file is ~2 MB of Lua, and a guard inside
 # one returns only after the client has parsed it. AllowLoadTextLocale is a per-file directive
-# from 11.1.5. The classic and legacy .toc files load Gossip\Gossip.xml instead: every locale,
-# each guarded.
+# from 11.1.5. The classic .toc files load Gossip\Gossip.xml instead: every locale, each
+# guarded.
 Gossip\Aliases.lua
 Gossip\deDE.lua [AllowLoadTextLocale deDE]
 Gossip\esES.lua [AllowLoadTextLocale esES]

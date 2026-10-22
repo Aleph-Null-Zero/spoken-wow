@@ -9,9 +9,6 @@
 # player who does not want one switches it off on its card in Spoken's settings or deletes its
 # folder. The sound packs stay separate downloads: 280-452 MB each, one per language.
 #
-# There are no legacy-client zips of Spoken: those clients have no addon manager, so the quests
-# addon's 1.12/2.4.3/3.3.5 zips carry Spoken inside them (scripts/quests/package.sh).
-#
 # The modules' folders are Spoken_Quests, Spoken_Readables, Spoken_Places and Spoken_NPCs. Their old names,
 # SpokenQuests and the rest, belong to the retired CurseForge projects, so this zip never ships
 # a folder under them: two projects shipping one folder is what the rename exists to stop.
@@ -30,7 +27,6 @@ DIST="${DIST:-$REPO/dist}"
 # inside the player's own settings file. See its .toc.
 STORE="SpokenContributions"
 STORE_SRC="$REPO/addons/$STORE"
-LEGACY_CLIENTS=(1.12 2.4.3 3.3.5)
 
 [ -f "$TOC" ] || { echo "error: $TOC not found" >&2; exit 1; }
 version="$(sed -n 's/^## Version:[[:space:]]*//p' "$TOC" | head -1 | tr -d '\r')"
@@ -73,10 +69,6 @@ cp "$STORE_SRC/$STORE.toc" "$STORE_SRC/icon.tga" "$staging/$STORE/"
 store_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$STORE_SRC/$STORE.toc" | head -1 | tr -d '\r')"
 [ "$store_version" = "$version" ] || { echo "error: $STORE.toc says $store_version, $NAME.toc says $version" >&2; exit 1; }
 
-excludes=()
-for client in "${LEGACY_CLIENTS[@]}"; do
-  excludes+=("$NAME/$client/*" "$NAME/${NAME}_$client.toc")
-done
 # The modules, each built by its own packager, so this zip carries nothing a module's own
 # checks would refuse. A case rather than an associative array: macOS still ships bash 3.2.
 module_packager() {
@@ -104,5 +96,5 @@ for module in Spoken_Quests Spoken_Readables Spoken_Places Spoken_NPCs; do
   unzip -q "$module_zip" -d "$staging"
 done
 
-(cd "$staging" && zip -r -q -X "$zip_path" "${folders[@]}" -x '*.DS_Store' '*/.git/*' '*.bak' '*.orig' "${excludes[@]}")
+(cd "$staging" && zip -r -q -X "$zip_path" "${folders[@]}" -x '*.DS_Store' '*/.git/*' '*.bak' '*.orig')
 echo "built $(basename "$zip_path")   folders: ${folders[*]}   files: $(unzip -Z1 "$zip_path" | grep -cv '/$')   size: $(du -h "$zip_path" | cut -f1)"

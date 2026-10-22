@@ -4,8 +4,6 @@
 -- every accessor is passed in, so the same file suits an addon that runs in a private
 -- environment and one that does not.
 --
--- Lua 5.0 rules, because this loads on 1.12: no `#`, no literal-string method calls.
---
 -- A page is a list of items -- its header, its sections, and the rows in them -- recorded as
 -- they are built and placed by Reflow, top to bottom. Placing them all in one pass is what lets
 -- a row be hidden (ShowWhen) and everything under it close up, rather than leaving a hole.
@@ -82,7 +80,7 @@ function Layout.Percent(value) return format("%d%%", value * 100) end
 function Layout.Seconds(value) return format("%.1fs", value) end
 function Layout.Number(value) return format("%d", math.floor(value + 0.5)) end
 
--- Where a font the game may not have falls back to one it does: 1.12 names fewer of them.
+-- Where a font the game may not have falls back to one it does.
 local function Font(name, fallback)
     if _G[name] then return name end
     return fallback
@@ -122,33 +120,16 @@ local function HideTip(frame)
     GameTooltip:Hide()
 end
 
--- 1.12 and 2.4.3 hand a script handler nothing: the frame is in `this` and its arguments in
--- `arg1` and `arg2`. This file has no environment, so its frames come from the client's own
--- CreateFrame and not a wrapper that would pass them on: every handler here is set through
--- Script or Hook, which do it themselves. Asked each time rather than once as the file loads,
--- so a test that switches clients after loading it gets the client it switched to. 1.12's
--- GetBuildInfo has no interface number at all.
-local function Legacy()
-    if WOW_PROJECT_ID ~= nil or not GetBuildInfo then return false end
-    local _, _, _, interface = GetBuildInfo()
-    return interface == nil or interface < 30000
-end
-
-local function Wrap(fn)
-    if not fn or not Legacy() then return fn end
-    return function() return fn(this, arg1, arg2) end
-end
-
 local function Script(frame, script, fn)
-    frame:SetScript(script, Wrap(fn))
+    frame:SetScript(script, fn)
 end
 
 local function Hook(frame, script, fn)
-    frame:HookScript(script, Wrap(fn))
+    frame:HookScript(script, fn)
 end
 
 -- Run `fn` after whatever `frame` already does on `script`, so a button's own hover face and a
--- row's tooltip can share one OnEnter. Two arguments, not `...`: 1.12 loads this file too.
+-- row's tooltip can share one OnEnter.
 local function Chain(frame, script, fn)
     local before = frame.GetScript and frame:GetScript(script)
     if before then
@@ -184,7 +165,7 @@ end
 --
 -- Every control is the game's own, as its settings draw them: the minimal checkbox, the slider
 -- with steppers, the dropdown with steppers, the red panel button. A client without one of them
--- -- the legacy clients this file also loads on -- gets the classic template in its place.
+-- gets the classic template in its place.
 
 local function HasAtlas(name)
     return C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(name) ~= nil or false
@@ -270,7 +251,7 @@ end
 --- Every control below indexes itself, so a page is searchable by being built.
 function Layout:Index(frame, label, tooltip)
     table.insert(self.entries, { frame = frame, label = label, tooltip = tooltip,
-        section = self.section, page = self.page })
+        section = self.section })
     return frame
 end
 
@@ -443,13 +424,6 @@ function Layout:Reflow()
             if item.body then y = item.body(y) end
             underDivider = self.intro.fixed and not item.body
             started = false
-        elseif item.kind == "header" then
-            if self.headerHidden then
-                for _, region in ipairs(item.regions or {}) do region:Hide() end
-            else
-                item.place(y)
-                y = y - item.height - HEADER_PAD
-            end
         elseif item.kind == "row" then
             -- Rows outside any section -- a page's search box, its status, its main switch --
             -- placed as one run, so they space like the rows in a box. Right under the divider,
@@ -547,63 +521,10 @@ function Layout:Reflow()
     return y
 end
 
---- Drop the page's title and description: a tab shows the page's name already.
-function Layout:HideHeader()
-    self.headerHidden = true
-    self.dirty = true
-end
-
 --- How tall the panel has grown. For a scrolling host that must size its content.
 function Layout:Height()
     self:Reflow()
     return self.top - self.y
-end
-
---- The top of a page: its icon, its name, and one sentence saying what the page is for.
---- Neither is a row: the panel tests measure rows and sections, and a title is neither.
-function Layout:Header(title, description, width, icon)
-    local parent, left = self.parent, self.left
-    local texture
-    if icon then
-        texture = parent:CreateTexture(nil, "ARTWORK")
-        texture:SetWidth(40)
-        texture:SetHeight(40)
-        texture:SetTexture(icon)
-        self.icon = texture
-    end
-    local textX = icon and 40 + 12 or 0
-    local fs = parent:CreateFontString(nil, "ARTWORK", Font("GameFontHighlightHuge", "GameFontHighlightLarge"))
-    fs:SetJustifyH("LEFT")
-    fs:SetText(title)
-    fs.layoutTitle = true
-    self.page = title
-    local line
-    if description then
-        -- Smaller and softer than the title, so the eye reads it as what the page is about
-        -- rather than as one more setting.
-        line = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-        line:SetJustifyH("LEFT")
-        line:SetJustifyV("TOP")
-        line:SetTextColor(0.78, 0.78, 0.78)
-        line:SetHeight(32)
-        line:SetText(description)
-    end
-    local height = 26 + (description and 32 or 0)
-    if icon and height < 40 then height = 40 end
-    local layout = self
-    local regions = { fs }
-    if texture then table.insert(regions, texture) end
-    if line then table.insert(regions, line) end
-    table.insert(self.items, { kind = "header", height = height, regions = regions, place = function(top)
-        if texture then Put(texture, parent, left, top) end
-        Put(fs, parent, left + textX, top - 2)
-        if line then
-            line:SetWidth(width or (layout:Width() - textX))
-            Put(line, parent, left + textX, top - 26)
-        end
-    end })
-    self.dirty = true
-    return fs
 end
 
 -- The game's own settings divider (SettingsListSectionHeader), faded at both ends, where the
@@ -845,9 +766,7 @@ end
 -- 85 short of the row's middle; small for an option under another.
 local function PlaceLabel(layout, caption, x, top)
     local start = x + LABEL_X
-    -- The font object itself: the legacy clients take no font by its name here.
-    local font = x > layout.left and "GameFontNormalSmall" or "GameFontNormal"
-    caption:SetFontObject(_G[font] or font)
+    caption:SetFontObject(x > layout.left and "GameFontNormalSmall" or "GameFontNormal")
     caption:SetWidth(math.max(40, layout:Middle() - LABEL_END - start))
     Put(caption, layout.parent, start, top)
 end
@@ -976,7 +895,7 @@ function Layout:Highlight(row)
         glow.texture:SetAllPoints()
         if glow.texture.SetColorTexture then glow.texture:SetColorTexture(1, 0.82, 0, 1) end
         Script(glow, "OnUpdate", function(frame, elapsed)
-            frame.left = frame.left - (elapsed or arg1 or 0)
+            frame.left = frame.left - elapsed
             if frame.left <= 0 then
                 frame:Hide()
                 return
@@ -1135,10 +1054,7 @@ function Layout:Slider(label, minValue, maxValue, step, read, write, apply, show
         frame = CreateFrame("Frame", nil, parent)
         frame:SetWidth(SLIDER_WIDTH)
         frame:SetHeight(20)
-        -- OptionsSliderTemplate is the legacy clients' name for it; WOW_PROJECT_ID exists on
-        -- every client that calls it UISliderTemplate.
-        local template = WOW_PROJECT_ID == nil and "OptionsSliderTemplate" or "UISliderTemplate"
-        slider = CreateFrame("Slider", nil, frame, template)
+        slider = CreateFrame("Slider", nil, frame, "UISliderTemplate")
         -- Both load-bearing: a slider given neither draws nothing at all.
         slider:SetHeight(16)
         slider:SetWidth(SLIDER_WIDTH - 50)
@@ -1157,9 +1073,8 @@ function Layout:Slider(label, minValue, maxValue, step, read, write, apply, show
             value:SetText(show(read()))
         end
         Script(frame, "OnShow", sync)
-        -- A slider has no SetEnabled on 2.4.3 and 3.3.5, and Refresh calls this for every slider
-        -- with a Requires: Enable and Disable where it has those, and where it has neither, it
-        -- at least stops taking the mouse.
+        -- Refresh calls this for every slider with a Requires: Enable and Disable where it has
+        -- no SetEnabled, and where it has neither, it at least stops taking the mouse.
         setEnabled = function(on)
             if slider.SetEnabled then
                 slider:SetEnabled(on)
@@ -1224,8 +1139,6 @@ function Layout:Cycle(label, tooltip, values, read, write, apply, describe)
                 break
             end
         end
-        -- Not math.mod: 1.12's Lua has it, LuaJIT does not, and the harness runs on
-        -- LuaJIT. Plain arithmetic is the same wrap on every one of them.
         local following = index + 1
         if following > count then
             following = 1

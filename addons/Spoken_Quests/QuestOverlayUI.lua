@@ -44,8 +44,7 @@ function QuestOverlayUI:CreatePlayButton(questID)
     self.questPlayButtons[questID] = self:MakePlayButton()
 end
 
---- Contribute.lua, or nil where it is not loaded: the legacy clients leave it out
---- (Contribute.xml), and this file runs on them too. rawget, so a global of the same name from
+--- Contribute.lua, or nil where it is not loaded. rawget, so a global of the same name from
 --- some other addon is never mistaken for it.
 local function ContributeModule()
     return rawget(VoiceOver, "Contribute")
@@ -245,8 +244,6 @@ function QuestOverlayUI:AddStopReplay(playButton, questID)
         Spoken:RegisterCallback("AUDIO_CHANGED", function() QuestOverlayUI:RefreshStates() end)
     end
     local bound = playButton:GetScript("OnClick")
-    -- Named arguments, not varargs: this file also loads on 1.12, whose Lua 5.0 cannot parse `...`
-    -- as an expression, and one parse error loses the whole file.
     playButton:SetScript("OnClick", function(button, mouse, down)
         -- Looked up each click, never the copy kept when the button was bound: a line that has since
         -- finished is no longer in the queue, and holding on to it left the button dead.

@@ -11,8 +11,7 @@ artwork of its own: one mark, two crops. LibDBIcon also trims a further 5% off e
 while the button is not pressed, so nothing that matters may touch the border.
 
 WHY BLP AND NOT TGA. The AddOns-list icon is read by the client's addon list, which takes
-either; a texture a frame loads is BLP on every client this ships to, and the 1.12/2.4.3
-clients are the reason not to experiment.
+either; a texture a frame loads is BLP on every client this ships to.
 
 WHY DXT5 AND NOT A PALETTE. A palettized BLP2 (colour encoding 1) is legal by the format's
 own rules and is what vanilla's interface art used, but the Classic beta client -- build

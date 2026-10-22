@@ -29,7 +29,6 @@ for _, player in ipairs(SUPERSEDED_PLAYERS) do
 end
 Addon = AceAddon:NewAddon("SpokenQuests", "AceEvent-3.0", "AceTimer-3.0")
 
-Addon.OnAddonLoad = {}
 local AUTO_POLL_INTERVAL = 0.1
 
 -- Store original function before EQL3 (Extended Quest Log 3) overrides it and starts prepending quest level
@@ -83,24 +82,9 @@ local QUEST_EVENTS = {
         text = function() return GetRewardText and NotSecret(GetRewardText()) or "" end },
 }
 
---- GetQuestID for the dialog `event` names. On a legacy client GetQuestID is
---- Compatibility.lua's substitute, which resolves the quest from the text of the dialog it
---- is told about; telling it here, just before asking, means no event order is relied on.
+--- GetQuestID for the dialog `event` names.
 local function QuestIDFor(event)
-    local quest = QUEST_EVENTS[event]
-    if quest and Addon.NoteLegacyQuestEvent then
-        Addon:NoteLegacyQuestEvent(quest.source, quest.text())
-    end
     return GetQuestID and NotSecret(GetQuestID()) or 0
-end
-
---- The quest on the open dialog `event` names, falling back on its title, NPC and text where
---- the client has no ID for it. For callers outside the dialog events, which have no snapshot:
---- Followup.lua's accept and turn-in hooks on the legacy clients.
-function Addon:DialogQuestID(event)
-    local quest = QUEST_EVENTS[event]
-    return ResolveQuestID(quest.source, QuestIDFor(event), QuestTitle(),
-        Utils:GetNPCName() or "", quest.text(), true) or 0
 end
 
 local function CaptureQuestSnapshot(event)
@@ -171,8 +155,8 @@ end
 -- opened it. Opened by an addon, that taints the gamepad's bindings: the next close is blocked,
 -- and the "blocked from an action" dialog it raises hangs the client (#165). What this addon
 -- would pop up unasked goes to chat there instead. A copy of Spoken's own (Core.lua), because
--- the player may be the addon that is missing. pcall, because 1.12 raises on a CVar it has never
--- heard of.
+-- the player may be the addon that is missing. pcall, because a client without gamepad support
+-- may raise on a CVar it has never heard of.
 local function IsGamepadUI()
     local ok, style = pcall(GetCVar, "InputDeviceInterfaceStyle")
     return ok and style == "1"
@@ -364,8 +348,7 @@ end
 ---@class VoiceOverConfig
 local defaults = {
     profile = {
-        -- The frame, the minimap button, the sound channel's legacy music-channel
-        -- workaround and the paused flag are the Spoken player's settings now.
+        -- The frame, the minimap button and the paused flag are the Spoken player's settings now.
         Audio = {
             -- Once per greeting rather than once per quest NPC, which upstream defaulted to:
             -- that setting only silences a repeat where the NPC has a quest, so every
@@ -415,7 +398,6 @@ local defaults = {
     },
     char = {
         hasSeenGossipForNPC = {},
-        RecentQuestTitleToID = Version:IsBelowLegacyVersion(30300) and {},
     }
 }
 
@@ -679,26 +661,17 @@ function Addon:OnInitialize()
         end
     end
 
-    -- The watcher cannot work on a legacy client and must not be installed there.
-    -- GetQuestID does not exist before 3.3.0, so Compatibility.lua substitutes one that
-    -- resolves a quest fuzzily from text captured by the QUEST_DETAIL/PROGRESS/COMPLETE
-    -- handlers - which the poll below is trying to decide whether to call. It would poll a
-    -- zero forever. Those clients dispatch from the events directly instead; see directEvents.
-    if Version.IsAnyLegacy then
-        Debug:Record("auto-watcher-skipped", "Legacy client: quest events dispatch directly")
-    else
-        local tickerInstalled, tickerOrError = pcall(self.ScheduleRepeatingTimer, self, function()
-            local succeeded, pollError = pcall(PollAutomaticQuest)
-            if not succeeded then
-                Debug:Record("auto-watcher-error", tostring(pollError))
-            end
-        end, AUTO_POLL_INTERVAL)
-        if tickerInstalled then
-            self.autoQuestTicker = tickerOrError
-            Debug:Record("auto-watcher-ready", "AceTimer GetQuestID polling is active")
-        else
-            Debug:Record("auto-watcher-install-failed", tostring(tickerOrError))
+    local tickerInstalled, tickerOrError = pcall(self.ScheduleRepeatingTimer, self, function()
+        local succeeded, pollError = pcall(PollAutomaticQuest)
+        if not succeeded then
+            Debug:Record("auto-watcher-error", tostring(pollError))
         end
+    end, AUTO_POLL_INTERVAL)
+    if tickerInstalled then
+        self.autoQuestTicker = tickerOrError
+        Debug:Record("auto-watcher-ready", "AceTimer GetQuestID polling is active")
+    else
+        Debug:Record("auto-watcher-install-failed", tostring(tickerOrError))
     end
 
     local slashInstalled, slashError = pcall(function()
@@ -712,33 +685,19 @@ function Addon:OnInitialize()
     end
 
     self.eventBridgeErrors = {}
-    local aceRegistered, aceError = pcall(self.RegisterEvent, self, "ADDON_LOADED")
-    if not aceRegistered then
-        table.insert(self.eventBridgeErrors, "AceEvent ADDON_LOADED: " .. tostring(aceError))
-    end
 
-    -- Quest detail/progress/completion are intentionally absent here on Blizzard's clients. On
-    -- Classic Era those synchronous events can fire before GetQuestID and the text globals
-    -- change, replaying the previous quest. The stabilized 10 Hz watcher above is their single
-    -- automatic dispatcher.
-    --
-    -- On a legacy client the race does not exist, the watcher does not run, and these
-    -- events are the only route to quest audio - they are also what sets the text
-    -- Compatibility.lua's GetQuestID substitute reads, so nothing resolves until one fires.
+    -- Quest detail/progress/completion are intentionally absent here. On Classic Era those
+    -- synchronous events can fire before GetQuestID and the text globals change, replaying the
+    -- previous quest. The stabilized 10 Hz watcher above is their single automatic dispatcher.
     local directEvents = {
         "QUEST_GREETING",
         "QUEST_FINISHED",
         "GOSSIP_SHOW",
         "GOSSIP_CLOSED",
     }
-    if Version.IsAnyLegacy then
-        table.insert(directEvents, "QUEST_DETAIL")
-        table.insert(directEvents, "QUEST_PROGRESS")
-        table.insert(directEvents, "QUEST_COMPLETE")
-    end
-    -- Recording a quest event is not the same as dispatching it: on Blizzard's clients an
-    -- event can fire before the quest globals change, which is why the watcher owns
-    -- dispatch, but the event name itself is trustworthy the moment it arrives.
+    -- Recording a quest event is not the same as dispatching it: an event can fire before the
+    -- quest globals change, which is why the watcher owns dispatch, but the event name itself is
+    -- trustworthy the moment it arrives.
     -- QUEST_FINISHED is here to clear the record, so that a quest ID the client keeps
     -- reporting after the dialog closed cannot be read as a fresh interaction.
     self.questEventRecorderFrame = CreateFrame("Frame")
@@ -856,13 +815,8 @@ function Addon:OnInitialize()
 
     -- Hook the exact Blizzard dispatcher that updates the visible quest
     -- panels. This runs after Blizzard has populated GetQuestID/GetTitleText.
-    --
-    -- Blizzard's own function is what is hooked here, so the frame overrides that normalize
-    -- handler arguments on the older clients do not apply: before 3.0.2 it takes no arguments
-    -- and reads the global `event` instead.
-    if QuestFrame_OnEvent and hooksecurefunc then
+    if QuestFrame_OnEvent then
         local hooked, hookError = pcall(hooksecurefunc, "QuestFrame_OnEvent", function(frame, event)
-                event = event or _G.event
                 if directEventLookup[event] then
                     SignalDirectEvent(event, "QuestFrame_OnEvent hook")
                 end
@@ -975,14 +929,6 @@ function Addon:RefreshConfig()
     if QuestOverlayUI.UpdateTrackerButtons then QuestOverlayUI.UpdateTrackerButtons() end
 end
 
-function Addon:ADDON_LOADED(event, addon)
-    addon = addon or arg1 -- Thanks, Ace3v...
-    local hook = self.OnAddonLoad[addon]
-    if hook then
-        hook()
-    end
-end
-
 local function GossipSoundDataAdded(soundData)
     -- Save current gossip sound data for dialog/frame sync option
     currentGossipSoundData = soundData
@@ -1047,10 +993,6 @@ function Addon:QUEST_DETAIL(_, manual)
         return
     end
 
-    if Addon.db.char.RecentQuestTitleToID and questID ~= 0 then
-        Addon.db.char.RecentQuestTitleToID[questTitle] = questID
-    end
-
     local type = guid and Utils:GetGUIDType(guid)
     if type == Enums.GUID.Item then
         -- Allow quests started from items to have VO, book icon will be displayed for them
@@ -1087,10 +1029,6 @@ function Addon:QUEST_PROGRESS(_, manual)
         return
     end
 
-    if Addon.db.char.RecentQuestTitleToID then
-        Addon.db.char.RecentQuestTitleToID[questTitle] = questID
-    end
-
     ---@type SoundData
     local soundData = {
         event = Enums.SoundEvent.QuestProgress,
@@ -1115,9 +1053,6 @@ function Addon:QUEST_COMPLETE(_, manual)
         return
     end
 
-    if Addon.db.char.RecentQuestTitleToID and questID ~= 0 then
-        Addon.db.char.RecentQuestTitleToID[questTitle] = questID
-    end
 
     -- print("QUEST_COMPLETE", questID, questTitle);
     ---@type SoundData

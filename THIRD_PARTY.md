@@ -8,9 +8,8 @@ and they are not interchangeable.
 
 Spoken and Spoken_Quests ship the libraries they load, because a WoW addon has
 no package manager: the client loads what is in the folder. They are unmodified copies, and are
-found under `addons/<Addon>/Libs/` — plus `addons/<Addon>/<client>/Libs/` for the 1.12, 2.4.3
-and 3.3.5 clients, which need their own build of Ace3. Spoken_Places, Spoken_Readables and
-Spoken_Developer ship none; they use Spoken's.
+found under `addons/<Addon>/Libs/`. Spoken_Places, Spoken_Readables and Spoken_Developer ship
+none; they use Spoken's.
 
 | Library | Used by | License |
 |---|---|---|
@@ -18,7 +17,6 @@ Spoken_Developer ship none; they use Spoken's.
 | CallbackHandler-1.0 | the same two | [Ace3 license](https://www.wowace.com/projects/ace3) — BSD-style, free use with attribution |
 | Ace3: AceAddon, AceConsole, AceDBOptions, AceEvent, AceGUI-3.0, AceConfig-3.0 | Spoken_Quests | [Ace3 license](https://www.wowace.com/projects/ace3) |
 | Ace3: AceDB, AceTimer | Spoken, Spoken_Quests | [Ace3 license](https://www.wowace.com/projects/ace3) |
-| Ace3: AceCore-3.0 | the 1.12 trees of Spoken and Spoken_Quests | [Ace3 license](https://www.wowace.com/projects/ace3) |
 | LibDataBroker-1.1 | Spoken | Public domain / CC0, per its project page; the copy carries a README and no license text |
 | LibDBIcon-1.0 | Spoken | Public domain, by Rabbit, per its project page; the file header states no license |
 | [LibDeflate](https://github.com/SafeteeWoW/LibDeflate) 1.0.2-release | Spoken | zlib License (`Libs/LibDeflate/LICENSE.txt`) |
@@ -96,7 +94,7 @@ None of this is the project's to license, and the MIT grant does not reach it.
   at 90%); in `Spoken_Quests/Textures/` `QuestLogPlayButton`,
   `QuestLogStopButton`, `StopGossip`, `StopGossipMore` and the four `SoundQueueBullet*` files.
   `git log --follow` takes each back to the AI VoiceOver import. The game art in them is
-  Blizzard's. The 1.12 tree's `UI-Minimap-Background.blp` comes with LibDBIcon.
+  Blizzard's.
 - **Addon-list icons** (`icon.tga` in Spoken, Spoken_Quests, Spoken_Developer and
   SpokenContributions, `Textures/AddonIcon.tga` in
   Spoken_Readables, Spoken_Places and the two sound packs, and the badged copies the language

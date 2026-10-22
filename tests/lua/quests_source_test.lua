@@ -81,18 +81,18 @@ local poster = Spoken:GetCurrent()
 Expect("a quest from an object shows a posted notice", poster and poster.present.portrait.kind .. ":"
     .. tostring(poster.present.portrait.texture), "texture:" .. [[Interface\Icons\INV_Misc_Note_01]])
 Expect("...not a face captured from the object", env.StaticPortrait:Capture(poster), nil)
--- 2.4.3 and 3.3.5 give hex GUIDs: a creature's still has its face, an object's still has none.
+-- A creature's GUID has its face, an object's has none.
 do
     local unitGUID, portrait, shown = _G.UnitGUID, _G.SetPortraitTexture, nil
     _G.SetPortraitTexture = function() end
     _G.UnitGUID = function(unit) return unit == "npc" and shown or nil end
     local function Model(guid) return { present = { portrait = { kind = "model", unitGUID = guid } } } end
-    shown = "0xF130000B8A000123"
-    Expect("a creature's hex GUID still captures its face", env.StaticPortrait:Capture(Model(shown)) ~= nil, true)
-    shown = "0xF110000B8A000123"
-    Expect("...an object's hex GUID does not", env.StaticPortrait:Capture(Model(shown)), nil)
+    shown = "Creature-0-1-2-3-3000-0000000123"
+    Expect("a creature's GUID captures its face", env.StaticPortrait:Capture(Model(shown)) ~= nil, true)
+    shown = "GameObject-0-1-2-3-3000-0000000123"
+    Expect("...an object's does not", env.StaticPortrait:Capture(Model(shown)), nil)
     -- The subtitle and the Small Window share one texture per face; each takes it back in turn.
-    shown = "0xF130000B8A000123"
+    shown = "Creature-0-1-2-3-3000-0000000123"
     local subtitle, small = _G.CreateFrame("Frame"), _G.CreateFrame("Frame")
     env.StaticPortrait:Configure(subtitle, Model(shown))
     env.StaticPortrait:Configure(small, Model(shown))
