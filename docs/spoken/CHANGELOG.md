@@ -49,8 +49,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **A boss's story shows in the narrator when you target the boss.** It shows once per character, as words
   with no voice. On the Bosses settings page, Show a Boss's Story picks targeting or killing it, and Forget
   Stories Shown shows each again. *([Nucabe](https://github.com/Nucabe))*
-- **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
-  They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
   face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
   shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
