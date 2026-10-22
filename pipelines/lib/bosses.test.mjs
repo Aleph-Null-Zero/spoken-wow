@@ -11,7 +11,7 @@ test("a key is the English name lowercased, without punctuation", () => {
   assert.equal(keyOf("Mr. Smite"), "mr smite");
 });
 
-test("a boss the client lists for each difficulty is one boss, in the order of the fullest difficulty", () => {
+test("a boss the client lists for each difficulty is one boss, named from the fullest difficulty", () => {
   const rows = [
     row(1, "Ghamoo-ra", "0", "-6000"),
     row(2, "Lady Sarevess", "0", "-5000"),
@@ -21,6 +21,23 @@ test("a boss the client lists for each difficulty is one boss, in the order of t
   ];
   assert.deepEqual(bossesOf(rows).map((boss) => boss.name), ["Ghamoo-ra", "Lady Sarevess", "Aku'mai"]);
   assert.equal(bossesOf(rows)[0].id, 3);
+});
+
+test("bosses stand in Forever's order (difficulties 0 and 1), a boss only other difficulties list after them", () => {
+  const rows = [
+    row(1, "Baron Aquanis", "198", "0"),
+    row(2, "Ghamoo-ra", "198", "1000"),
+    row(3, "Gelihast", "198", "2000"),
+    row(4, "Old Serra'kis", "201", "0"),
+    row(5, "Ghamoo-ra", "201", "1000"),
+    row(6, "Geilhast", "201", "2000"),
+    row(7, "Old Serra'kis", "1", "-2000"),
+    row(8, "Geilhast", "0", "-4000"),
+    row(9, "Ghamoo-ra", "0", "-6000"),
+  ];
+  const bosses = bossesOf(rows);
+  assert.deepEqual(bosses.map((boss) => boss.name), ["Ghamoo-ra", "Gelihast", "Old Serra'kis", "Baron Aquanis"]);
+  assert.deepEqual(bosses.map((boss) => boss.id), [2, 3, 4, 1]);
 });
 
 test("a combined row is left out where one of its bosses is listed on its own", () => {

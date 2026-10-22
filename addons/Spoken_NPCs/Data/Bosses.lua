@@ -60,14 +60,14 @@ SpokenBosses = {
 			{ id = 2778, ids = { 2778 }, key = "charlga razorflank", "Charlga Razorflank", deDE = "Charlga Klingenflanke", esES = "Charlga Filonavaja", esMX = "Charlga Filonavaja", frFR = "Charlga Trancheflanc", ptBR = "Charlga Talhaflanco", ruRU = "Чарлга Остробок", koKR = "서슬깃 차를가", zhCN = "卡尔加·刺肋", zhTW = "卡爾加‧刺肋" },
 		},
 		[48] = {
-			{ id = 2694, ids = { 2694 }, key = "baron aquanis", "Baron Aquanis", esES = "Barón Aquanis", esMX = "Barón Aquanis", ptBR = "Barão Aquanis", ruRU = "Барон Акванис", koKR = "군주 아쿠아니스", zhCN = "阿奎尼斯男爵", zhTW = "阿奎尼斯男爵" },
 			{ id = 2697, ids = { 2697, 2761, 2916 }, key = "ghamoo ra", "Ghamoo-ra", esES = "Ghamoo-Ra", frFR = "Ghamoo-Ra", ruRU = "Гхаму-ра", koKR = "가무라", zhCN = "加摩拉", zhTW = "加摩拉" },
 			{ id = 2699, ids = { 2699, 2762, 2915 }, key = "lady sarevess", "Lady Sarevess", frFR = "Dame Sarevess", ruRU = "Леди Саревесс", koKR = "여왕 사레베스", zhCN = "萨利维丝", zhTW = "薩利維絲女士" },
 			{ id = 2704, ids = { 2704, 2763, 2914 }, key = "gelihast", "Gelihast", ruRU = "Гелихаст", koKR = "겔리하스트", zhCN = "格里哈斯特", zhTW = "格里哈斯特" },
 			{ id = 2710, ids = { 2710, 2764, 2913 }, key = "lorgus jett", "Lorgus Jett", ruRU = "Лоргус Джетт", koKR = "로구스 제트", zhCN = "洛古斯·杰特", zhTW = "洛古斯·傑特" },
+			{ id = 2765, ids = { 2765, 2912 }, key = "old serrakis", "Old Serra'kis", deDE = "Alter Serra'kis", esES = "Viejo Serra'kis", esMX = "Viejo Serra'kis", frFR = "Vieux Serra’kis", ptBR = "Velho Serra'kis", ruRU = "Старина Серракис", koKR = "늙은 세라키스", zhCN = "瑟拉吉斯", zhTW = "老瑟拉吉斯" },
 			{ id = 2825, ids = { 2766, 2825, 2911 }, key = "twilight lord kelris", "Twilight Lord Kelris", deDE = "Twilight-Lord Kelris", esES = "Señor Crepuscular Kelris", esMX = "Señor Crepuscular Kelris", frFR = "Seigneur du Crépuscule Kelris", ptBR = "Senhor do Crepúsculo Kelris", ruRU = "Повелитель сумрака Келрис", koKR = "황혼의 군주 켈리스", zhCN = "暮光领主克尔里斯", zhTW = "暮光領主克爾里斯" },
 			{ id = 2891, ids = { 2767, 2891, 2910 }, key = "akumai", "Aku'mai", frFR = "Aku’mai", ruRU = "Аку'май", koKR = "아쿠마이", zhCN = "阿库麦尔", zhTW = "阿庫麥爾" },
-			{ id = 2765, ids = { 2765, 2912 }, key = "old serrakis", "Old Serra'kis", deDE = "Alter Serra'kis", esES = "Viejo Serra'kis", esMX = "Viejo Serra'kis", frFR = "Vieux Serra’kis", ptBR = "Velho Serra'kis", ruRU = "Старина Серракис", koKR = "늙은 세라키스", zhCN = "瑟拉吉斯", zhTW = "老瑟拉吉斯" },
+			{ id = 2694, ids = { 2694 }, key = "baron aquanis", "Baron Aquanis", esES = "Barón Aquanis", esMX = "Barón Aquanis", ptBR = "Barão Aquanis", ruRU = "Барон Акванис", koKR = "군주 아쿠아니스", zhCN = "阿奎尼斯男爵", zhTW = "阿奎尼斯男爵" },
 		},
 		[70] = {
 			{ id = 547, ids = { 547 }, key = "revelosh", "Revelosh", ruRU = "Ревелош", koKR = "레벨로쉬", zhCN = "鲁维罗什", zhTW = "魯維羅什" },
@@ -82,8 +82,8 @@ SpokenBosses = {
 		[90] = {
 			{ id = 2925, ids = { 2768, 2925 }, key = "grubbis", "Grubbis", ptBR = "Grúdio", ruRU = "Грязнюк", koKR = "그루비스", zhCN = "格鲁比斯", zhTW = "格魯比斯" },
 			{ id = 2928, ids = { 2769, 2928 }, key = "viscous fallout", "Viscous Fallout", deDE = "Verflüssigte Ablagerung", esES = "Radiactivo viscoso", esMX = "Radiactivo viscoso", frFR = "Retombée visqueuse", ptBR = "Precipitação Radioativa Viscosa", ruRU = "Липкая муть", koKR = "방사성 폐기물", zhCN = "粘性辐射尘", zhTW = "粘性輻射塵" },
-			{ id = 2899, ids = { 2771, 2899 }, key = "crowd pummeler 9 60", "Crowd Pummeler 9-60", deDE = "Meuteverprügler 9-60", esES = "Golpeamasa 9-60", esMX = "Golpeamasa 9-60", frFR = "Disperseur de foule 9-60", ptBR = "Espanca-gente 9-60", ruRU = "\"Толпогон 9-60\"", koKR = "고철 압축기 9-60", zhCN = "群体打击者9-60", zhTW = "群體打擊者9-60" },
 			{ id = 2927, ids = { 2770, 2927 }, key = "electrocutioner 6000", "Electrocutioner 6000", deDE = "Elektrokutor 6000", esES = "Electrocutor 6000", esMX = "Electrocutor 6000", frFR = "Électrocuteur 6000", ptBR = "Eletrocutor 6000", ruRU = "\"Электрошокер-6000\"", koKR = "기계화 문지기 6000", zhCN = "电刑器6000型", zhTW = "電刑器6000型" },
+			{ id = 2899, ids = { 2771, 2899 }, key = "crowd pummeler 9 60", "Crowd Pummeler 9-60", deDE = "Meuteverprügler 9-60", esES = "Golpeamasa 9-60", esMX = "Golpeamasa 9-60", frFR = "Disperseur de foule 9-60", ptBR = "Espanca-gente 9-60", ruRU = "\"Толпогон 9-60\"", koKR = "고철 압축기 9-60", zhCN = "群体打击者9-60", zhTW = "群體打擊者9-60" },
 			{ id = 2940, ids = { 2772, 2940 }, key = "mekgineer thermaplugg", "Mekgineer Thermaplugg", deDE = "Robogenieur Thermaplugg", esES = "Mekigeniero Termochufe", esMX = "Mekigeniero Termochufe", frFR = "Mekgénieur Thermojoncteur", ptBR = "Mecangenheiro Termaplugue", ruRU = "Анжинер Термоштепсель", koKR = "기계박사 텔마플러그", zhCN = "机械师瑟玛普拉格", zhTW = "機電師瑟瑪普拉格" },
 		},
 		[109] = {
