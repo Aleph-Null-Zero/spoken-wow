@@ -36,11 +36,15 @@ pack calls into it.
 3. `GetNPCGossipTextHash` finds the line from the speaker and the words. It looks in the
    tables written in the client's language first (`Gossip/<lang>.lua`, then the packs'), and only
    if no pack in that language knows the NPC does it try the others. The closest match by shared
-   words wins. In the client's language a line must also be close enough to the text
+   words wins. Chinese has no spaces between words, so Chinese and Korean text is compared by
+   pairs of neighbouring characters, and a curly apostrophe or a no-break space counts as the
+   plain one. In the client's language a line must also be close enough to the text
    (`GOSSIP_MATCH_FLOOR`, after the player's name, class, race and sex are filled into it), since
    an NPC whose text depends on who asks (a trainer's profession, a guard's faction) may have
    only some of its variants in the packs. A variant it lacks plays nothing and offers Contribute.
-   The other languages' tables have no such floor, as their words cannot match the screen's.
+   The other languages' words cannot match the screen's, so there an NPC with one line plays it,
+   and an NPC with several plays one only where it clears the floor; otherwise nothing plays and
+   the window offers Contribute.
 4. `PrepareSound` finds the file in the voice language, then the fallback language, trying the
    line's aliases and the player's `m-` or `f-` variant, and applies the Thrall recording if
    that setting is on.

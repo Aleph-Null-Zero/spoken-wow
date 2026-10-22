@@ -4,6 +4,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Gossip finds its line on Chinese, Korean and French clients.** A reworded line now matches in
+  Chinese and Korean, and French text with a curly apostrophe or a no-break space matches the line it is,
+  where before it played nothing. On a client in another language than English, an NPC with several
+  lines and none in that language no longer reads one of its English lines at random: it reads nothing
+  and offers Contribute. *([Nucabe](https://github.com/Nucabe))*
 - **Readables that name you are recognised.** The class letters every new character gets, and other
   letters that greet you by name, class or as brother or sister, now count as found, and the Compendium
   shows them with your name in them. A page sent from the Contribute button no longer carries your
