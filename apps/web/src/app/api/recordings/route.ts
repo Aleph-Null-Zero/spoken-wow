@@ -1,9 +1,9 @@
 /**
  * A file's voice-actor recordings: list them, upload one, remove one.
  *
- *   GET    /api/recordings?lang=deDE&source=zones&file=1411/razor-hill
+ *   GET    /api/recordings?lang=deDE&source=places&file=1411/razor-hill
  *   POST   /api/recordings?lang=deDE   multipart: source, file, audio
- *   DELETE /api/recordings?lang=deDE&source=zones&file=1411/razor-hill&version=2
+ *   DELETE /api/recordings?lang=deDE&source=places&file=1411/razor-hill&version=2
  *
  * All behind `record` in the language (0061): an actor hears every actor's takes there,
  * which is how they match each other. Removing is the author's, or a global admin's.
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     source: target.source,
     lang,
     file: target.file,
-    // The file's own line, from the whitelist, rather than anything the caller says: the zones
+    // The file's own line, from the whitelist, rather than anything the caller says: the places
     // overlay is keyed by it, and a line id that is not this file's would put the clip under
     // another place or fail the pack build.
     lineId: target.lineId,

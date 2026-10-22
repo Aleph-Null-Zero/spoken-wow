@@ -15,7 +15,7 @@ describe("contextFrom", () => {
   });
 
   it("drops another section's envelope, a broken one and anything not a string", () => {
-    expect(contextFrom(fixture("quests-observed.txt"), "books")).toBeNull();
+    expect(contextFrom(fixture("quests-observed.txt"), "readables")).toBeNull();
     expect(contextFrom(fixture("quests-observed.txt").replace("druid", "rogue"), "quests")).toBeNull();
     expect(contextFrom({ fields: {} }, "quests")).toBeNull();
   });

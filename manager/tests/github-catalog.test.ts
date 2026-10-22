@@ -172,13 +172,13 @@ describe('buildCatalog', () => {
         rel('spoken/v3.5.0', 'Spoken-3.5.0.zip', { digest: DIGEST, size: 4321 }),
         rel('quests-audio/v2', 'SpokenQuestsAudioAll-2.zip', { size: 1_400_000_000 }),
         rel('quests-audio-deDE/v1', 'SpokenQuestsAudio_deDE-1.zip'),
-        rel('zones-audio/v1.1', 'SpokenZonesAudio-1.1.zip'),
+        rel('places-audio/v1.1', 'SpokenPlacesAudio-1.1.zip'),
         rel('manager/v0.1.0', 'Spoken-Manager-Setup-0.1.0.exe'),
         rel('v9.9.9', 'Spoken-9.9.9.zip')
       ],
       meta
     )
-    expect(Object.keys(c.releases).sort()).toEqual(['quests-audio', 'quests-audio-deDE', 'spoken', 'zones-audio'])
+    expect(Object.keys(c.releases).sort()).toEqual(['places-audio', 'quests-audio', 'quests-audio-deDE', 'spoken'])
     const s = c.releases.spoken![0]!
     expect(s).toMatchObject({
       productId: 'spoken',
@@ -266,8 +266,8 @@ describe('latestFor', () => {
       rel('spoken/v3.5.0-beta.1', 'Spoken-3.5.0-beta.1.zip', { prerelease: true }),
       rel('spoken/v3.4.0', 'Spoken-3.4.0.zip'),
       rel('spoken/v3.3.0', 'Spoken-3.3.0.zip'),
-      rel('zones-audio/v2.0.0-alpha.1', 'SpokenZonesAudio-2.0.0-alpha.1.zip', { prerelease: true }),
-      rel('books-audio/v1.0.0', 'SpokenBooksAudio-1.0.0.zip', { prerelease: true })
+      rel('places-audio/v2.0.0-alpha.1', 'SpokenPlacesAudio-2.0.0-alpha.1.zip', { prerelease: true }),
+      rel('readables-audio/v1.0.0', 'SpokenReadablesAudio-1.0.0.zip', { prerelease: true })
     ],
     { fetchedAt: null }
   )
@@ -278,12 +278,12 @@ describe('latestFor', () => {
   })
 
   it('has nothing when only pre-releases exist and they are not allowed', () => {
-    expect(latestFor(catalog, 'zones-audio', false)).toBeUndefined()
-    expect(latestFor(catalog, 'zones-audio', true)!.version).toBe('2.0.0-alpha.1')
+    expect(latestFor(catalog, 'places-audio', false)).toBeUndefined()
+    expect(latestFor(catalog, 'places-audio', true)!.version).toBe('2.0.0-alpha.1')
   })
 
   it('treats a GitHub-flagged pre-release with a plain version as a pre-release, after a stable one of that version', () => {
-    expect(latestFor(catalog, 'books-audio', false)).toBeUndefined()
+    expect(latestFor(catalog, 'readables-audio', false)).toBeUndefined()
     const both = buildCatalog(
       [rel('spoken/v4.0.0', 'Spoken-4.0.0.zip', { prerelease: true }), rel('spoken/v4.0.0', 'Spoken-4.0.0.zip')],
       { fetchedAt: null }

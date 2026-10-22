@@ -465,18 +465,19 @@ Expect("search finds a setting by its name", found[1] and found[1].entry.label, 
 Expect("...on the page it is on", found[1] and found[1].page.name, L.OPT_HOME_TITLE)
 found = Search:Find("automatically")
 Expect("search reaches the pages under Spoken too", found[1] and found[1].page.name, "Quests")
-Expect("a word from a tooltip is enough", Search:Find("finish")[1] and Search:Find("finish")[1].entry.label,
-    "NPC Voice Before Reading")
-Expect("every word must match", #Search:Find("subtitle finish"), 0)
+-- A word that lives only in a tooltip still reaches the rows it explains: the links' "address".
+local viaTooltip = Labels(Search:Find("address"))
+Expect("a word from a tooltip is enough", viaTooltip["GitHub"] and viaTooltip["Wago"], true)
+Expect("every word must match", #Search:Find("subtitle address"), 0)
 Expect("case and spacing do not matter", Search:Find("  SUBTITLE   size ")[1].entry.label, "Subtitle Size")
 local function Hit(query)
     for _, result in ipairs(Search:Find(query)) do
         if result.entry.label == query then return result.entry.frame end
     end
 end
--- A module or a style is found on its own row of its list, not at the list's top: Books, after
+-- A module or a style is found on its own row of its list, not at the list's top: Readables, after
 -- Quests, and Voice Only, the last style.
-for _, query in ipairs({ L.OPT_PART_BOOKS, L.OPT_STYLE_NONE }) do
+for _, query in ipairs({ L.OPT_PART_READABLES, L.OPT_STYLE_NONE }) do
     local hit = Hit(query)
     local list = hit and hit.layoutRow and hit.layoutRow.control
     local index
@@ -545,13 +546,13 @@ do
     local cfg, shows = env.Addon.db.profile.Transcript, function(key) return env.Addon:ShowsNarrator({ source = { key = key } }) end
     local was = cfg.Enabled
     cfg.Enabled = true
-    Expect("every module shows its lines by default", shows("quests") and shows("gossip") and shows("zones") and shows("books"), true)
+    Expect("every module shows its lines by default", shows("quests") and shows("gossip") and shows("places") and shows("readables"), true)
     cfg.WordsOff.quests = true
     Expect("a module turned off shows none", shows("quests"), false)
-    Expect("...and the others keep showing", shows("zones"), true)
+    Expect("...and the others keep showing", shows("places"), true)
     cfg.WordsOff.quests = nil
     cfg.Enabled = false
-    Expect("with Show Narrator off none show", shows("zones"), false)
+    Expect("with Show Narrator off none show", shows("places"), false)
     cfg.Enabled = was
     -- The window stands for no line of a module turned off, while the line itself goes on playing.
     local head = { source = { key = "quests" } }

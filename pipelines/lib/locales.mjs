@@ -1,10 +1,10 @@
-// The languages this project knows about, for every half of it: the zones and books
+// The languages this project knows about, for every half of it: the places and readables
 // pipelines and the site (apps/web/src/lib/lang.ts). What a language IS lives here; what
-// one section does with it -- the folder a zones pack ships in, say -- lives with that
+// one section does with it -- the folder a places pack ships in, say -- lives with that
 // section.
 //
-// Must stay in step with the addons' own lists (SpokenZones.LOCALES in
-// addons/Spoken_Places/Language.lua); pipelines/zones/tools/validate.mjs fails the build if
+// Must stay in step with the addons' own lists (SpokenPlaces.LOCALES in
+// addons/Spoken_Places/Language.lua); pipelines/places/tools/validate.mjs fails the build if
 // they drift, and apps/web/src/lib/lang.test.ts does the same for the site.
 //
 // The clients the Classic-family addons run on, plus the languages a community translates
@@ -35,7 +35,7 @@ export const BASE_LOCALE = "enUS";
 //
 // `client: false` is a language no game client runs in. GetLocale() never returns it, so
 // everything keyed by what the client shows is never built for it -- area-name aliases,
-// gossip locale text, a books page index, giver names, interface strings -- and nothing
+// gossip locale text, a readables page index, giver names, interface strings -- and nothing
 // that follows the client ("auto", contributions) ever lands on it. Absent means true.
 export const LOCALES = [
   { code: "enUS", name: "English", script: "latin", elevenLabs: "en", bcp47: "en-US", vmangos: 0 },

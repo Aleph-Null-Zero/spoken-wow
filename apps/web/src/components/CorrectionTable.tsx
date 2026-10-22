@@ -77,7 +77,7 @@ type Accept = { lineId: string; variant: number } | { as: "wording" };
 /** Corrections are quest panels only, so gossip is not offered. */
 const QUEST_STAGE_OPTIONS = STAGE_CHIP_OPTIONS.filter((option) => option.value !== "gossip");
 
-export type CorrectionSource = "quests" | "books";
+export type CorrectionSource = "quests" | "readables";
 
 type Filters = { status: ContributionStatus; client: ClientFilter; stage: StageFilter; q: string; searchIn: Filter };
 
@@ -209,7 +209,7 @@ export default function CorrectionTable({
         <Input
           type="search"
           value={query}
-          placeholder={source === "books" ? "Either text…" : "NPC, quest, or either text…"}
+          placeholder={source === "readables" ? "Either text…" : "NPC, quest, or either text…"}
           aria-label="Search"
           className="h-8 min-w-0 basis-64"
           onChange={(event) => setQuery(event.target.value)}
@@ -217,7 +217,7 @@ export default function CorrectionTable({
         <FilterChip
           label="search in"
           value={searchIn === "any" ? undefined : searchIn}
-          options={source === "books" ? SEARCH_IN_OPTIONS.filter((option) => option.value === "text") : SEARCH_IN_OPTIONS}
+          options={source === "readables" ? SEARCH_IN_OPTIONS.filter((option) => option.value === "text") : SEARCH_IN_OPTIONS}
           onChange={(next) => go({ searchIn: (next ?? "any") as Filter })}
         />
         {source === "quests" ? (
@@ -245,7 +245,7 @@ export default function CorrectionTable({
             <>
               <span>
                 Accept all {toAccept.length} shown? Each writes the player&apos;s text as{" "}
-                {source === "books" ? "its page's words" : "what its line speaks"}.
+                {source === "readables" ? "its page's words" : "what its line speaks"}.
               </span>
               <LiteButton
                 variant="accept"
@@ -278,7 +278,7 @@ export default function CorrectionTable({
         >
           <thead className="text-muted-foreground text-left text-xs">
             <tr>
-              <th className="border-b py-2 pr-3 font-normal">{source === "books" ? "Book" : "Quest"}</th>
+              <th className="border-b py-2 pr-3 font-normal">{source === "readables" ? "Book" : "Quest"}</th>
               <th className="border-b py-2 pr-3 font-normal">Client</th>
               <th className="border-b py-2 pr-3 font-normal">Count</th>
               <th className="w-[38%] border-b py-2 pr-3 font-normal">Corpus has</th>
@@ -381,14 +381,14 @@ export default function CorrectionTable({
                         href={localeHref(lang, wording.editHref)}
                         className="border-border bg-background hover:bg-muted inline-flex h-7 items-center rounded-md border px-2.5 text-[0.8rem] font-medium whitespace-nowrap"
                       >
-                        {source === "books" ? "Edit page" : "Edit line"}
+                        {source === "readables" ? "Edit page" : "Edit line"}
                       </Link>
                       {current === "new" ? (
                         <>
                           <LiteButton
                             variant="accept"
                             disabled={busy === row.id || bulk !== null}
-                            title={source === "books" ? "Take the player's text as this page's words" : "Take the player's text as what this line speaks"}
+                            title={source === "readables" ? "Take the player's text as this page's words" : "Take the player's text as what this line speaks"}
                             onClick={() => void resolve(row.id, "accepted", fixOf(row))}
                           >
                             Accept

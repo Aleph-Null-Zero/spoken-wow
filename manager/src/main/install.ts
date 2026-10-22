@@ -526,10 +526,13 @@ export async function checkWritable(game: GameInstall): Promise<void> {
 
 const RESERVED = new Set(['wtf', 'interface', 'addons', WORK_DIR])
 
-/** Folders the manager recorded for this product earlier that the new zip no longer holds: real folders only, never linked, never another product's. */
+/**
+ * Folders the manager recorded for this product earlier that the new zip no longer holds, and the
+ * pack's folder before its section was renamed: real folders only, never linked, never another product's.
+ */
 export async function staleFolders(game: GameInstall, product: Product, dataPath: string, folders: string[]): Promise<string[]> {
   const state = loadState(dataPath)
-  const previous = getRecord(state, game.id, product.id)?.folders ?? []
+  const previous = [...(getRecord(state, game.id, product.id)?.folders ?? []), ...(product.legacy?.folders ?? [])]
   const otherOwned = new Set(
     Object.entries(state.installs[game.id] ?? {})
       .filter(([id]) => id !== product.id)

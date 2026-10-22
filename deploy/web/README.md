@@ -16,11 +16,11 @@ every address the addons have ever emitted still resolves.
   shared/                 everything the app writes, and nothing a release owns
     app.env               secrets, mode 600                    on root
     ecosystem.config.js   pm2's config, `make web-deploy-scripts`  on root
-    manifest.json         the zones manifest, rewritten on drain   on root
+    manifest.json         the places manifest, rewritten on drain  on root
     audio/          -> the old quests store, frozen  ~3.1 GB  \
     sounds/         -> the old zones store, frozen   ~453 MB   |
     books/          -> the old books store, frozen             |
-    audio-history/  -> every take: quests/ zones/ books/        > symlinks to
+    audio-history/  -> every take: quests/ places/ readables/  > symlinks to
     voices/         -> clone clips                              |  /mnt/voice
     audio-previews/ -> rendered pronunciation previews          |
     downloads/      -> the complete sound pack, served off disk /
@@ -29,7 +29,7 @@ every address the addons have ever emitted still resolves.
 
 /mnt/voice/spoken/        a 30 GB block volume; `deploy/web/store.sh` sets it up
   .store                  marker: present only while the volume is mounted
-  audio/ sounds/ books/ audio-history/{quests,zones,books}/ voices/ audio-previews/ downloads/
+  audio/ sounds/ books/ audio-history/{quests,places,readables}/ voices/ audio-previews/ downloads/
 ```
 
 **`audio-history/` is the only audio.** Every take is one file there, written once by the
@@ -91,10 +91,10 @@ no longer lives in is one somebody sets on the wrong box.
 | `SPOKEN_QUESTS_VOICE_REFERENCES` | `shared/voice-references` | shared; **must be set**, or fish.audio references are cut into a release and lost on the next deploy |
 | `SPOKEN_QUESTS_SEED_CLIPS` | `shared/seed-clips` | shared; unset, it points inside a release, which has none, and **Seed from clips** finds nothing |
 | `SPOKEN_QUESTS_PREVIEWS` | `shared/audio-previews` | shared; **must be set**, or previews land inside `releases/`, where `prune.sh` counts them as a release and eventually deletes them |
-| `SPOKEN_ZONES_ROOT` | `current` | per release; the zones pipeline resolves its own paths from it |
-| `SPOKEN_ZONES_AUDIO_HISTORY` | `shared/audio-history/zones` | shared |
-| `SPOKEN_BOOKS_AUDIO_HISTORY` | `shared/audio-history/books` | shared; **must be set**, for the reason the quests one must |
-| `SPOKEN_ZONES_MANIFEST` | `shared/manifest.json` | shared; the app rewrites it whenever a batch drains |
+| `SPOKEN_PLACES_ROOT` | `current` | per release; the places pipeline resolves its own paths from it |
+| `SPOKEN_PLACES_AUDIO_HISTORY` | `shared/audio-history/places` | shared |
+| `SPOKEN_READABLES_AUDIO_HISTORY` | `shared/audio-history/readables` | shared; **must be set**, for the reason the quests one must |
+| `SPOKEN_PLACES_MANIFEST` | `shared/manifest.json` | shared; the app rewrites it whenever a batch drains |
 
 Five more come from `shared/app.env`, which `ecosystem.config.js` parses and merges into the
 pm2 environment. They are secrets, and that file is the only place they exist:
@@ -152,23 +152,23 @@ ssh -L 3002:127.0.0.1:3002 "$SPOKEN_DROPLET"     # then http://127.0.0.1:3002
 
 ```bash
 curl -fsS 'https://spoken.rusty.one/api/quests/search?q=thrall&filter=npc' | grep Thrall
-curl -fsS 'https://spoken.rusty.one/api/zones/search' | head -c 200
+curl -fsS 'https://spoken.rusty.one/api/places/search' | head -c 200
 curl -sI -H 'Range: bytes=0-1' 'https://spoken.rusty.one/api/quests/audio/quests/5-accept.mp3' | head -1   # 206
-curl -sI 'https://spoken.rusty.one/api/zones/audio/1411/zone.mp3' | head -1
+curl -sI 'https://spoken.rusty.one/api/places/audio/1411/zone.mp3' | head -1
 
 # every address shape the two addons have ever emitted
 curl -sI 'https://voiceover.rusty.one/r/quest/5/accept'      | grep -i location  # /quests/r/quest/5/accept
-curl -sI 'https://lore.rusty.one/enUS/r/1411/razor-hill'     | grep -i location  # /zones/r/1411/razor-hill
+curl -sI 'https://lore.rusty.one/enUS/r/1411/razor-hill'     | grep -i location  # /places/r/1411/razor-hill
 curl -sI 'https://lore.rusty.one/r/1411/razor-hill'          | grep -i location  # the same
-curl -sI 'https://lore.rusty.one/deDE/r/1411/razor-hill'     | grep -i location  # /deDE/zones/r/1411/razor-hill
-curl -sI 'https://lore.rusty.one/?q=razor'                   | grep -i location  # /zones?q=razor
+curl -sI 'https://lore.rusty.one/deDE/r/1411/razor-hill'     | grep -i location  # /deDE/places/r/1411/razor-hill
+curl -sI 'https://lore.rusty.one/?q=razor'                   | grep -i location  # /places?q=razor
 curl -sI 'https://voiceover.rusty.one/?q=thrall'             | grep -i location  # /quests?q=thrall
 curl -sI 'https://spoken.rusty.one/downloads/SpokenQuestsAudioComplete-latest.zip' | grep -i location  # the meta addon's page
 ```
 
 Then sign in and regenerate one line in each section with a key set on `/profile`.
 
-`make quests-audio-status` and `make zones-audio-status` compare file counts and sizes
+`make quests-audio-status` and `make places-audio-status` compare file counts and sizes
 between the workstation and the droplet.
 
 ## GitHub credentials, step by step
@@ -284,7 +284,7 @@ make web-releases                  # list, marking the live one
 make web-rollback                  # one release older
 make web-rollback RELEASE=20260727-2143-a1b2c3d
 make quests-history-status         # archive parity between local and droplet
-make zones-history-status
+make places-history-status
 make web-logs                      # pm2 logs spoken
 ```
 

@@ -10,7 +10,7 @@
 -- (enderObject for an object), absent where that is its giver, notext = true for a quest Forever
 -- serves that the corpus has no words for yet }. A sort that is a word is a group the client has
 -- no QuestSort for. The words are Data/QuestText.lua's. Made from the client tables of
--- Forever 1.60.1.70338 and Era 1.15.9.69109 (wago.tools) and Efficient Games' data
+-- Forever 1.60.1.70450 and Era 1.15.9.69109 (wago.tools) and Efficient Games' data
 -- at commit 2ae2154 (CC BY 4.0, efficient.games).
 -- Regenerate with the Forever repack's world DB up:
 --   make quests-compendium
@@ -4323,10 +4323,10 @@ SpokenQuestsCompendium = {
 		[91920] = { "Wild Eyes", zones = { 1421 }, prev = 430, ender = 1937, races = 8589934770 },
 		[91921] = { "Return to Quinn (Again)", zones = { 1421 }, prev = 91920, ender = 1951, races = 8589934770 },
 		[92124] = { "Book Inventory", zones = { 1429 }, prev = 91741, ender = 247229, races = 4294967373 },
-		[92401] = { "A Frightened Request", zones = { 1458 }, dungeon = 2999, races = 8589934770 },
-		[92415] = { "Remember That I Love You", zones = { 1458 }, dungeon = 2999, ender = 14450, races = 4294967373 },
-		[92421] = { "Light's Justice", zones = { 1458 }, dungeon = 2999, races = 8589934770 },
-		[92422] = { "The Wrath of Rath'mael", zones = { 1458 }, dungeon = 2999, races = 8589934770 },
+		[92401] = { "A Frightened Request", zones = { 1420 }, dungeon = 2999, races = 8589934770 },
+		[92415] = { "Remember That I Love You", zones = { 1420 }, dungeon = 2999, ender = 14450, races = 4294967373 },
+		[92421] = { "Light's Justice", zones = { 1420 }, dungeon = 2999, races = 8589934770 },
+		[92422] = { "The Wrath of Rath'mael", zones = { 1420 }, dungeon = 2999, races = 8589934770 },
 		[92434] = { "Blood in the Streets", zones = { 1416 }, races = 8589934770, notext = true },
 		[92460] = { "Coming of Age", zones = { 2521 }, ender = 251361 },
 		[92461] = { "Harmony in Balance", zones = { 2521 }, prev = 92460 },
@@ -4524,13 +4524,13 @@ SpokenQuestsCompendium = {
 		[95126] = { "The Moonsilver Blade", sort = 141, ender = 248840, races = 16, classes = 2 },
 		[95140] = { "Old Fire-Eye", sort = 141, races = 16, classes = 2 },
 		[95161] = { "Remember That I Love You", zones = { 2548 }, prev = 92415, ender = 228, races = 4294967373 },
-		[95189] = { "Crest of Lordaeron", zones = { 1458 }, dungeon = 2999, ender = 15991, races = 4294967373 },
-		[95195] = { "Bloodied Insignia", zones = { 1458 }, dungeon = 2999, ender = 466, races = 4294967373 },
-		[95204] = { "Crest of Lordaeron", zones = { 1458 }, dungeon = 2999, ender = 7825, races = 8589934770 },
+		[95189] = { "Crest of Lordaeron", zones = { 1420 }, dungeon = 2999, ender = 15991, races = 4294967373 },
+		[95195] = { "Bloodied Insignia", zones = { 1420 }, dungeon = 2999, ender = 466, races = 4294967373 },
+		[95204] = { "Crest of Lordaeron", zones = { 1420 }, dungeon = 2999, ender = 7825, races = 8589934770 },
 		[95212] = { "Never Saddle on Quality", zones = { 1426 }, races = 4294967373 },
 		[95213] = { "Stolen Blasting Powder", zones = { 1426 }, ender = 1256, races = 4294967373 },
 		[95214] = { "Stolen Blasting Powder", zones = { 1426 }, races = 4294967373 },
-		[95216] = { "The New Plague", zones = { 1458 }, dungeon = 2999, races = 8589934770 },
+		[95216] = { "The New Plague", zones = { 1420 }, dungeon = 2999, races = 8589934770 },
 		[95217] = { "The Quarry's Smith", zones = { 1426 }, races = 4294967373 },
 		[95314] = { "That Shadowvale Green Elixir", zones = { 1420 }, races = 8589934770 },
 		[95328] = { "Whispering Horror Residue", zones = { 1420 }, ender = 4607, races = 8589934770 },
@@ -4652,11 +4652,11 @@ SpokenQuestsCompendium = {
 		[97281] = { "A Simmering Storm", zones = { 1411 }, ender = 3293 },
 		[97282] = { "Stormy Potential", zones = { 1411 }, prev = 97281 },
 		[97286] = { "Research Access", sort = 161, ender = 211022, races = 8589934770, classes = 128 },
-		[97288] = { "Unending Torment", zones = { 1458 }, dungeon = 2999, ender = 2055, races = 8589934770 },
-		[97289] = { "Unending Torment", zones = { 1458 }, dungeon = 2999, prev = 97288, ender = 271613, races = 8589934770 },
+		[97288] = { "Unending Torment", zones = { 1420 }, dungeon = 2999, ender = 2055, races = 8589934770 },
+		[97289] = { "Unending Torment", zones = { 1420 }, dungeon = 2999, prev = 97288, ender = 271613, races = 8589934770 },
 		[97290] = { "Unending Torment", zones = { 1458 }, prev = 97289, ender = 2055, races = 8589934770 },
-		[97291] = { "Unending Torment", zones = { 1458 }, dungeon = 2999, prev = 97290, races = 8589934770 },
-		[97292] = { "Unending Torment", zones = { 1458 }, dungeon = 2999, prev = 97291, races = 8589934770 },
+		[97291] = { "Unending Torment", zones = { 1420 }, dungeon = 2999, prev = 97290, races = 8589934770 },
+		[97292] = { "Unending Torment", zones = { 1420 }, dungeon = 2999, prev = 97291, races = 8589934770 },
 		[97485] = { "Traditions of the Bluff", zones = { 1456 }, races = 8589934770 },
 		[97538] = { "Pigments for Paints", zones = { 1442 }, races = 8589934770 },
 		[97558] = { "Hides for the Forsaken", zones = { 1420 }, races = 8589934770 },

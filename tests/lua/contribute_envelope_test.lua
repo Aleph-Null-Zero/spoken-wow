@@ -32,11 +32,11 @@ local tampered = body:gsub("9123", "9124")
 Expect("...and does not match a changed body", C:Checksum(tampered) ~= tonumber(sum), true)
 
 -- A page whose own words are ">>" would otherwise end the block early.
-local fenced = C:Envelope("books", { { "page", "1" } }, "before\n>>\nafter")
+local fenced = C:Envelope("readables", { { "page", "1" } }, "before\n>>\nafter")
 Expect("a >> line in the text is escaped", fenced:match("\n\\>>\n") ~= nil, true)
 Expect("...and the real fence still closes the block", fenced:match("\nafter\n>>\nsum=") ~= nil, true)
 
-local none = C:Envelope("zones", { { "map", "1537" } }, nil)
+local none = C:Envelope("places", { { "map", "1537" } }, nil)
 Expect("an envelope with no text has no fence", none:match("text<<") == nil, true)
 
 Expect("an unknown source is refused", C:Envelope("mail", { { "page", "1" } }, "x"), nil)
@@ -45,38 +45,38 @@ Expect("a field value never spans lines",
 
 -- An empty string is deliberately folded into "no text", the same as nil: a fence around
 -- nothing would tell the reader nothing the fields don't already say.
-local emptyText = C:Envelope("books", { { "page", "1" } }, "")
+local emptyText = C:Envelope("readables", { { "page", "1" } }, "")
 Expect("an empty string text has no fence, like nil", emptyText:match("text<<") == nil, true)
 
 ------------------------------------------------------------------------------- the fence, exactly
 -- A line only *starting* with ">>" is not the fence and must survive untouched -- escaping it
 -- would corrupt a contributed line like ">>see attached", and the reader's exact-match
 -- unescape (only a line that IS "\+>>" loses one backslash) would never undo it.
-local trailer = C:Envelope("books", { { "page", "1" } }, "before\n>>trailer\nafter")
+local trailer = C:Envelope("readables", { { "page", "1" } }, "before\n>>trailer\nafter")
 Expect("a line only starting with >> is not escaped", trailer:match("\n>>trailer\n") ~= nil, true)
 Expect("...and gains no backslash", trailer:match("\\>>trailer") == nil, true)
 
 -- A line that was already "\>>" in the player's own text must come back out as "\>>": the
 -- reader strips exactly one backslash from a line matching ^\+>>$, so the writer adds exactly
 -- one every time, however many backslashes were already there.
-local already = C:Envelope("books", { { "page", "1" } }, "before\n" .. "\\>>" .. "\nafter")
+local already = C:Envelope("readables", { { "page", "1" } }, "before\n" .. "\\>>" .. "\nafter")
 Expect("an already-escaped \\>> line gains one more backslash", already:match("\n\\\\>>\n") ~= nil, true)
 
-local doubled = C:Envelope("books", { { "page", "1" } }, "before\n" .. "\\\\>>" .. "\nafter")
+local doubled = C:Envelope("readables", { { "page", "1" } }, "before\n" .. "\\\\>>" .. "\nafter")
 Expect("two backslashes before >> become three", doubled:match("\n\\\\\\>>\n") ~= nil, true)
 
 -- CRLF normalises to \n before a line is tested against the fence pattern, same as Flatten.
-local crlf = C:Envelope("books", { { "page", "1" } }, "line1\r\n>>\r\nline2")
+local crlf = C:Envelope("readables", { { "page", "1" } }, "line1\r\n>>\r\nline2")
 Expect("a \\r\\n-terminated >> line is still recognised and escaped",
     crlf:match("\nline1\n\\>>\nline2\n>>\nsum=") ~= nil, true)
 
 -- No trailing newline in the text closes the fence directly under the last line; a trailing
 -- newline in the text is data and survives as a blank line before the fence.
-local noTrailing = C:Envelope("books", { { "page", "1" } }, "a\nb")
+local noTrailing = C:Envelope("readables", { { "page", "1" } }, "a\nb")
 Expect("no trailing newline in the text: the fence follows the last line directly",
     noTrailing:match("\na\nb\n>>\n") ~= nil, true)
 
-local trailingNewline = C:Envelope("books", { { "page", "1" } }, "a\nb\n")
+local trailingNewline = C:Envelope("readables", { { "page", "1" } }, "a\nb\n")
 Expect("a trailing newline in the text becomes a blank line before the fence",
     trailingNewline:match("\na\nb\n\n>>\n") ~= nil, true)
 
@@ -135,15 +135,15 @@ else
         noise[i] = string.char(33 + math.random(0, 89))
     end
 end
-local huge = C:Envelope("books", { { "page", "1" } }, table.concat(noise))
+local huge = C:Envelope("readables", { { "page", "1" } }, table.concat(noise))
 Expect("Link refuses a result over its cap", C:Link("https://x", huge), nil)
 
 -- The fixture Encode itself produces, so the TypeScript decoder is pinned against the exact
 -- same bytes the Lua encoder emits -- not a second, hand-rolled encoding of the same fixture.
 if os.getenv("SPOKEN_WRITE_FIXTURES") then
     local dir = here .. "/../fixtures/contributions/"
-    local bookFixture = assert(io.open(dir .. "books-page.txt", "r")):read("*a")
-    local file = assert(io.open(dir .. "books-page.e1.txt", "w"))
+    local bookFixture = assert(io.open(dir .. "readables-page.txt", "r")):read("*a")
+    local file = assert(io.open(dir .. "readables-page.e1.txt", "w"))
     file:write(C:Encode(bookFixture))
     file:close()
 end
@@ -167,22 +167,22 @@ if os.getenv("SPOKEN_WRITE_FIXTURES") then
         { "title", "A Rough Start" },
     }, "Убей шестерых.\n\nПотом возвращайся."))
 
-    Write("books-page.txt", C:Envelope("books", {
+    Write("readables-page.txt", C:Envelope("readables", {
         { "addon", "SpokenBooks/1.1.0" }, { "build", "3.3.5/12340" }, { "locale", "enUS" },
         { "page", "1839201" }, { "book", "Ledger of Nothing" }, { "number", "2" },
     }, "A page no corpus has ever held.\n\nWritten for this test alone."))
 
-    Write("zones-subzone.txt", C:Envelope("zones", {
+    Write("places-subzone.txt", C:Envelope("places", {
         { "addon", "SpokenZones/2.0.1" }, { "build", "11509" }, { "locale", "enUS" },
         { "map", "1537" }, { "zone", "Ironforge" }, { "subzone", "A Nook With No Lore" },
         { "x", "0.55" }, { "y", "0.47" },
     }, nil))
 
-    -- The main zones gap, not an edge case: GetSubZoneText() returns "" for the open part of a
-    -- zone, and SpokenZones/Contribute.lua always writes the field (CaptureContribution never
+    -- The main places gap, not an edge case: GetSubZoneText() returns "" for the open part of a
+    -- zone, and Spoken_Places/Contribute.lua always writes the field (CaptureContribution never
     -- omits "subzone" the way it omits "x"/"y"), so the wire shape is subzone="" rather than
     -- the field being absent -- pinning that shape is the whole point of this fixture.
-    Write("zones-zone.txt", C:Envelope("zones", {
+    Write("places-zone.txt", C:Envelope("places", {
         { "addon", "SpokenZones/2.0.1" }, { "build", "11509" }, { "locale", "enUS" },
         { "map", "1537" }, { "zone", "Ironforge" }, { "subzone", "" },
     }, nil))

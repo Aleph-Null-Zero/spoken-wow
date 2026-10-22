@@ -7,7 +7,7 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - The quests are the corpus's (corpus/corpus.json.gz): the ones the voice packs were made from.
 - Where: the zone the quest belongs to, as the quest log files it (QuestSortID: an AreaTable
   zone, or a dungeon, which counts as the zone its entrance is in), else where its giver stands
-  (the corpus's spawns): the area the server's own map files put the point in, as the books'
+  (the corpus's spawns): the area the server's own map files put the point in, as the readables'
   places have it (area_reader; COMPENDIUM_MAPS, the repack's maps folder), else the smallest zone
   rectangle around it. A quest of a class, a profession or a season is filed under that
   instead (a negative QuestSortID), named as the client names it, in every language.
@@ -83,7 +83,7 @@ WAGO_CACHE = os.path.join(ROOT, "pipelines", "lib", "cache", "wago")
 # Forever's client (wago.tools' wow_classic_beta), and Classic Era's: the builds wago.mjs pins
 # (tests/test_compendium_tables.py holds them equal). With Era's alone, Forever's own zones and
 # sorts resolve to nothing, even where the DB names them.
-BUILD = "1.60.1.70338"
+BUILD = "1.60.1.70450"
 ERA_BUILD = "1.15.9.69109"
 # Efficient Games' Forever data: what players' Forever clients recorded, per client build (EG Link,
 # CC BY 4.0, credited in THIRD_PARTY.md), at one commit of their repository: it grows every day,
@@ -1084,12 +1084,23 @@ def read_existing(path):
     return quest_lines, sort_lines
 
 
+def refile_dungeon(line):
+    """A quest line filed under a dungeon, under the zone dungeons.json now gives its entrance."""
+    found = re.search(r"\bdungeon = (\d+)", line)
+    if not found or int(found.group(1)) not in INSTANCE_ZONE:
+        return line
+    return re.sub(r"zones = \{ [^}]* \}", "zones = { %d }" % INSTANCE_ZONE[int(found.group(1))], line, count=1)
+
+
 def without_db(args):
     quests, givers, spawns = corpus_quests()
     enders = quest_enders([], quests)
     quest_lines, sort_lines = read_existing(args.out)
     # Every hand correction, as the last run with the DB applied them and any written since.
     quest_lines = reapply_overrides(quest_lines, load_overrides()["quests"])
+    # A dungeon moved in dungeons.json takes its quests along: the test that checks them against
+    # Data/Dungeons.lua fails until the next run with the DB otherwise.
+    quest_lines = {qid: refile_dungeon(line) for qid, line in quest_lines.items()}
     # Listed without words last time: made again below, or now the corpus's.
     quest_lines = {qid: line for qid, line in quest_lines.items() if "notext = true" not in line}
     with open(FACTIONS, encoding="utf-8") as f:
@@ -1132,10 +1143,13 @@ def connect(args):
 
 
 def with_db(args):
+    # The run that reads the DB places every giver, and the rectangles overlap along every border:
+    # a giver at a zone's edge fell into its neighbour (A Sealed Crate in Durotar).
+    area_at = area_reader()
+    if not area_at:
+        raise SystemExit(f"no map files at {MAPS_DIR}: set COMPENDIUM_MAPS to the repack's data/maps folder")
     quests, givers, spawns = corpus_quests()
-    maps = Maps(area_at=area_reader())
-    if not maps.area_at:
-        print(f"no map files at {MAPS_DIR} (COMPENDIUM_MAPS): givers are placed by zone rectangles")
+    maps = Maps(area_at=area_at)
     db = connect(args)
     ids = sorted(quests)
     marks = ",".join(["%s"] * len(ids))

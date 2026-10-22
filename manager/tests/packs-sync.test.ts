@@ -20,8 +20,8 @@ afterEach(async () => {
 })
 
 const keys = channelKeys()
-const PACK = 'SpokenZonesAudio_deDE'
-const product = productById('zones-audio-deDE')!
+const PACK = 'SpokenPlacesAudio_deDE'
+const product = productById('places-audio-deDE')!
 const v1: PackSpec = { packId: PACK, rev: '20261018T000000Z', files: { [`${PACK}.toc`]: 'toc', 'Sounds/1.ogg': 'one', 'Sounds/2.ogg': 'two' } }
 const v2: PackSpec = { packId: PACK, rev: '20261019T000000Z', files: { [`${PACK}.toc`]: 'toc', 'Sounds/1.ogg': 'ONE!', 'Sounds/3.ogg': 'three' } }
 
@@ -147,7 +147,7 @@ describe('syncPacks', () => {
     const game = await makeGame(tmpDir())
     const data = tmpDir()
     write(path.join(game.addOnsPath, 'Spoken_ZonesAudio_deDE', 'Spoken_ZonesAudio_deDE.toc'), 'old')
-    updateState(data, (s) => setRecord(s, game.id, product.id, { version: '2.0.0', folders: ['Spoken_ZonesAudio_deDE'], installedAt: '2026-10-01T00:00:00.000Z', tag: 'zones-audio-deDE/v2.0.0' }))
+    updateState(data, (s) => setRecord(s, game.id, product.id, { version: '2.0.0', folders: ['Spoken_ZonesAudio_deDE'], installedAt: '2026-10-01T00:00:00.000Z', tag: 'places-audio-deDE/v2.0.0' }))
     const { manifest, base } = await channel(v1)
     const result = await syncPacks(game, { product, manifests: [manifest], baseUrl: base }, ctx(data))
     expect(result.removed).toEqual(['Spoken_ZonesAudio_deDE'])

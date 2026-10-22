@@ -326,8 +326,8 @@ world.npcGUID, world.gossipText, DUI.handler = questGiver, nil, nil
 -- A zone clip whose transcript is the quest text word for word.
 Spoken:StopAll()
 DUI:HandleQuestDetail()
-local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Places" })
-zones:Enqueue({ key = "z:12", path = "z12.ogg", length = 12,
+local places = Spoken:RegisterSource("places", { title = "Places", addon = "Spoken_Places" })
+places:Enqueue({ key = "z:12", path = "z12.ogg", length = 12,
     present = { header = "Elwynn Forest", transcript = QUEST_TEXT, bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 Expect("a zone clip is playing", Spoken:GetCurrent() and Spoken:GetCurrent().key, "z:12")
@@ -351,10 +351,10 @@ Expect("closing DialogueUI does not cut the line off", Spoken:GetQueueSize(), 1)
 DUI:Show()
 provider.stopPlaying()
 Expect("Stop removes it", Spoken:GetQueueSize(), 0)
-zones:Enqueue({ key = "z:13", path = "z13.ogg", length = 12,
+places:Enqueue({ key = "z:13", path = "z13.ogg", length = 12,
     present = { header = "Elwynn Forest", transcript = "Lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
-zones:Enqueue({ key = "z:14", path = "z14.ogg", length = 12,
+places:Enqueue({ key = "z:14", path = "z14.ogg", length = 12,
     present = { header = "Teldrassil", transcript = "More lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 Expect("another part's line is speaking", Spoken:GetCurrent() and Spoken:GetCurrent().key, "z:13")
@@ -367,8 +367,8 @@ local keys = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(keys, clip.key) end
 Expect("...the line it cut off skipped, and the next one still waiting", table.concat(keys, " "), "101-accept z:14")
 Spoken:StopAll()
-zones:StopAll()
-zones:Enqueue({ key = "z:15", path = "z15.ogg", length = 12,
+places:StopAll()
+places:Enqueue({ key = "z:15", path = "z15.ogg", length = 12,
     present = { header = "Darkshore", transcript = "Lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 VO.Addon:InvokeQuestHandler("QUEST_DETAIL", "test", true)
@@ -378,7 +378,7 @@ Expect("...is not playing, so the button offers Play", provider.isPlaying(), fal
 provider.playFile()
 Expect("...and Play brings it forward", Spoken:GetCurrent() and Spoken:GetCurrent().fileName, "101-accept")
 Spoken:StopAll()
-zones:StopAll()
+places:StopAll()
 -- Answered for what the client is showing, which is the page DialogueUI asks about.
 world.questID = 102
 Expect("no recording, no button", provider.doesFileExist("quest", 102, "detail"), false)
@@ -559,7 +559,7 @@ play.scripts.OnClick(play, "LeftButton")
 skip.scripts.OnClick(skip)
 Expect("Skip skips what speaks", Spoken:GetCurrent() == nil or Spoken:GetCurrent().fileName ~= "101-accept", true)
 Spoken:StopAll()
-zones:Enqueue({ key = "z:16", path = "z16.ogg", length = 12,
+places:Enqueue({ key = "z:16", path = "z16.ogg", length = 12,
     present = { header = "Duskwood", transcript = "Lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 play.scripts.OnClick(play, "LeftButton")
@@ -567,7 +567,7 @@ Expect("...in front of a zone's lore, which is skipped", Spoken:GetCurrent() and
     "101-accept")
 Expect("...the lore not kept to replay", Spoken:GetQueueSize(), 1)
 Spoken:StopAll()
-zones:StopAll()
+places:StopAll()
 DUI.TTSButton = stub.Widget("Button")
 DUI.TTSButton:SetAlpha(0.6)
 Bridge:RefreshPlayButton()
@@ -652,26 +652,15 @@ DUI.handler = nil
 ---------------------------------------------------------------- the player over the window
 local frame = env.PlayerFrame.frame
 driver.scripts.OnShow(driver)
-Expect("by default the player is left out of DialogueUI's window", frame:GetParent(), _G.UIParent)
+Expect("the player is left out of DialogueUI's window", frame:GetParent(), _G.UIParent)
 Expect("...and can still be dragged", env.Addon:IsFrameLocked(), false)
+dui.ShowPlayer = true
 driver:Hide()
 driver.scripts.OnHide(driver)
 driver:Show()
-dui.ShowPlayer = true
 driver.scripts.OnShow(driver)
-Expect("turned on, while DialogueUI is open the player sits on its window", frame:GetParent(), DUI)
-Expect("...the same size on screen", frame:GetScale(), env.Addon.db.profile.Frame.FrameScale / 0.8)
-Expect("...and can still be dragged there", env.Addon:IsFrameLocked(), false)
-driver:Hide()
-driver.scripts.OnHide(driver)
-Expect("when it closes the player goes back to UIParent", frame:GetParent(), _G.UIParent)
-Expect("...at its own size", frame:GetScale(), env.Addon.db.profile.Frame.FrameScale)
-Expect("...and can be dragged again", env.Addon:IsFrameLocked(), false)
-driver:Show()
-dui.ShowPlayer = false
-driver.scripts.OnShow(driver)
-Expect("with the setting off the player is left alone", frame:GetParent(), _G.UIParent)
-dui.ShowPlayer = true
+Expect("...even with Show Spoken Over DialogueUI left on from an older version", frame:GetParent(), _G.UIParent)
+dui.ShowPlayer = nil
 driver:Hide()
 driver.scripts.OnHide(driver)
 
@@ -697,17 +686,13 @@ subtitle.SetFrameStrata = function(_, value) strata = value end
 local anchor = subtitle.anchor and subtitle.anchor.y
 driver:Show()
 driver.scripts.OnShow(driver)
-Expect("while DialogueUI is open the subtitles sit on its window", subtitle:GetParent(), DUI)
-Expect("...the same size on screen", subtitle:GetScale(), (words.SubtitleScale or 1) / 0.8)
-Expect("...above it", strata, "FULLSCREEN")
+Expect("while DialogueUI is open the subtitles stay on UIParent, which DialogueUI hides", subtitle:GetParent(), _G.UIParent)
+Expect("...at their own size", subtitle:GetScale(), words.SubtitleScale or 1)
 Expect("...in the same place", subtitle.anchor and subtitle.anchor.y, anchor)
 Subtitle:Update()
-Expect("...and stay there as they update", subtitle:GetParent(), DUI)
+Expect("...and stay there as they update", subtitle:GetParent(), _G.UIParent)
 driver:Hide()
 driver.scripts.OnHide(driver)
-Expect("when it closes they go back to UIParent", subtitle:GetParent(), _G.UIParent)
-Expect("...at their own size", subtitle:GetScale(), words.SubtitleScale or 1)
-Expect("...and their own strata, under the game's panels", strata, "LOW")
 Spoken:StopAll()
 env.Addon:SetPlayerStyle("classic")
 driver:Show()
@@ -842,8 +827,9 @@ end
 local captions, scroll = Row(VO.L.OPT_DUI_CAPTIONS), Row(VO.L.OPT_DUI_AUTOSCROLL)
 Expect("nothing there changes DialogueUI's own settings", table.getn(layout.entries) > 0
     and Row("Turn On Text To Speech") == nil, true)
-Expect("the place has the DialogueUI options", captions ~= nil and Row(VO.L.OPT_DUI_SHOW_PLAYER) ~= nil
+Expect("the place has the DialogueUI options", captions ~= nil
     and Row(VO.L.OPT_DUI_PLAY_BUTTON) ~= nil and scroll ~= nil, true)
+Expect("...and no Show Spoken Over DialogueUI", Row("Show Spoken Over DialogueUI"), nil)
 -- The style as the page reads it: DialogueUI's art is not here to make the style available.
 local playerStyle, chosen = env.Addon.PlayerStyle, "dialogueui"
 env.Addon.PlayerStyle = function() return chosen end
@@ -863,22 +849,6 @@ for _, style in ipairs({ "subtitle", "minimal", "classic", "none" }) do
     layout:Refresh()
     Expect("...and with the " .. style .. " style too", captions:IsShown() and Row(VO.L.OPT_DUI_PLAY_BUTTON):IsShown(), true)
 end
--- Show Spoken Over DialogueUI keeps the window or the subtitles on screen; Voice Only has neither.
-local showPlayer = Row(VO.L.OPT_DUI_SHOW_PLAYER)
-Expect("Show Spoken Over DialogueUI is not offered with Voice Only", showPlayer:IsShown(), false)
-for _, style in ipairs({ "subtitle", "minimal", "classic", "dialogueui" }) do
-    chosen = style
-    layout:Refresh()
-    Expect("...and is with the " .. style .. " style", showPlayer:IsShown(), true)
-end
--- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked:
--- Mark Words in DialogueUI says so, once, rather than each of them.
-local markTip
-for _, entry in ipairs(layout.entries) do
-    if entry.label == VO.L.OPT_DUI_CAPTIONS then markTip = entry.tooltip end
-end
-Expect("Mark Words in DialogueUI's tooltip points to the Words section", markTip ~= nil
-    and string.find(markTip, "as set under Words", 1, true) ~= nil, true)
 chosen = "dialogueui"
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)

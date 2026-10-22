@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "frFR" then
 	return
@@ -22,10 +22,8 @@ L.OPT_PLAY_BUTTON = "Lire les récits à voix haute"
 L.OPT_AUTOPLAY = "Lire automatiquement"
 L.OPT_AUTOPLAY_SUB = "Inclure les sous-zones"
 L.OPT_AUTOPLAY_EXPLORED = "Inclure les lieux déjà découverts"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "Lit chaque lieu une fois par personnage, même un lieu déjà découvert."
 L.OPT_LANG_RELOAD = "Tapez /reload pour passer à cette langue."
 L.OPT_LANGUAGE = "Langue du texte"
-L.OPT_LANGUAGE_TIP = "Le texte des récits ; la voix suit la langue de la voix."
 L.OPT_LANG_AUTO_FMT = "Auto (%1$s)"
 L.OPT_LANG_SET_FMT = "Les récits seront en %1$s après le rechargement de l'interface."
 L.OPT_LANG_PROFILE_FMT = "Ce profil lit les récits en %1$s. Tapez /reload pour changer."
@@ -40,6 +38,10 @@ L.AUDIO_READ_TIP = "Écouter la lecture de ce récit."
 L.REPORT_BUTTON = "Signaler"
 L.IN_ZONE_FMT = "Emplacement : %1$s"
 L.DISCOVERED_FMT = "%1$d sur %2$d découvertes"
+L.ZONE_COUNT_FMT = "%1$d zones"
+L.ZONE_COUNT_ONE = "1 zone"
+L.CONTINENT_COUNT_FMT = "%1$d continents"
+L.CONTINENT_COUNT_ONE = "1 continent"
 
 L.QUEUE_HELD_COMBAT = "En attente de la fin du combat."
 L.QUEUE_HELD_CINEMATIC = "En attente de la fin de la cinématique."
@@ -100,4 +102,4 @@ L.DUNGEONS = "Donjons et raids"
 
 L.OPEN_IN_COMPENDIUM = "Ouvrir dans le Compendium d'Azeroth"
 
-SpokenZones:RegisterStrings("frFR", L)
+SpokenPlaces:RegisterStrings("frFR", L)

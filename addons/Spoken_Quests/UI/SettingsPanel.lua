@@ -64,8 +64,7 @@ function SettingsPanel:Setup()
         function() return audio().StopAudioOnDisengage end,
         function(value) audio().StopAudioOnDisengage = value end)
     -- The NPC's own greeting first, then Spoken's line: for quest windows and gossip windows alike.
-    local greetingFirst = layout:Checkbox(L.OPT_PANEL_GAME_GREETING_FIRST,
-        L.OPT_PANEL_GAME_GREETING_FIRST_TIP,
+    local greetingFirst = layout:Checkbox(L.OPT_PANEL_GAME_GREETING_FIRST, nil,
         function() return audio().GreetingFirst end,
         function(value)
             audio().GreetingFirst = value
@@ -220,17 +219,12 @@ function SettingsPanel:DialogueUIRows(layout)
         end
         return row
     end
-    Box("Captions", L.OPT_DUI_CAPTIONS, L.OPT_DUI_CAPTIONS_TIP)
+    Box("Captions", L.OPT_DUI_CAPTIONS)
     -- Scrolling follows the marked words, so it waits on them.
     layout:Indent()
     layout:Requires(Box("AutoScroll", L.OPT_DUI_AUTOSCROLL, nil),
         function() return dui().Captions end, L.REASON_DUI_CAPTIONS)
     layout:Outdent()
-    local showPlayer = Box("ShowPlayer", L.OPT_DUI_SHOW_PLAYER, nil)
-    -- It keeps Spoken's window or subtitles on screen, and Voice Only has neither.
-    if Spoken and Spoken.GetPlayerStyle then
-        layout:ShowWhen(showPlayer, function() return Spoken:GetPlayerStyle() ~= "none" end)
-    end
     Box("PlayButton", L.OPT_DUI_PLAY_BUTTON, nil)
     return function()
         for key, value in pairs(Addon.DialogueUIDefaults) do dui()[key] = value end

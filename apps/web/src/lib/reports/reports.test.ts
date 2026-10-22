@@ -6,11 +6,11 @@ import { SOURCES, isSource } from "@/lib/sections";
 describe("isSource", () => {
   it("accepts every section that can file a report", () => {
     // The gate on the public write path: a source it rejects becomes "quests" there, so a
-    // books report would be filed against the wrong corpus rather than refused. Migration
+    // readables report would be filed against the wrong corpus rather than refused. Migration
     // 0028 widened the table's check constraint to match this list.
     expect(isSource("quests")).toBe(true);
-    expect(isSource("zones")).toBe(true);
-    expect(isSource("books")).toBe(true);
+    expect(isSource("places")).toBe(true);
+    expect(isSource("readables")).toBe(true);
     expect(isSource("lexicon")).toBe(false);
   });
 

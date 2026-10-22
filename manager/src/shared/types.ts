@@ -36,12 +36,12 @@ export function isSupportedFlavor(flavor: Flavor): boolean {
   return SUPPORTED_FLAVORS.includes(flavor)
 }
 
-export type Section = 'quests' | 'zones' | 'books'
+export type Section = 'quests' | 'places' | 'readables'
 export type QuestsPack = 'all' | 'alliance' | 'horde' | 'shared' | 'gossip'
 
 /** What can be installed: Spoken itself, or a voice pack. A static table (shared/products.ts). */
 export interface Product {
-  /** `spoken`, `quests-audio`, `quests-audio-alliance`, `zones-audio-deDE`, ... (the release tag prefix). */
+  /** `spoken`, `quests-audio`, `quests-audio-alliance`, `places-audio-deDE`, ... (the release tag prefix). */
   id: string
   kind: 'addon' | 'voices' | 'community'
   /** "Spoken","Quests voices", "Places voices", "Readables voices". */
@@ -59,6 +59,12 @@ export interface Product {
   folders: string[] | null
   /** Regular-expression source an asset name must match (the zip). */
   assetPattern: string
+  /**
+   * What the pack was released as before its section was renamed (Places was zones-audio and
+   * SpokenZonesAudio, Readables books-audio and SpokenBooksAudio): its releases still count, its
+   * folder is still this product's, and installing the new one moves it to the backup.
+   */
+  legacy?: { id: string; tagPrefix: string; folders: string[]; assetPattern: string }
 }
 
 /**

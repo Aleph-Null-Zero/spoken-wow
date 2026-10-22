@@ -20,8 +20,8 @@ describe("nextContributionFilters", () => {
   it("resets a dimension to its default when `next` names it with no value", () => {
     // FilterChip's reset button calls onChange(undefined) -- the key is present, the value
     // isn't, and that must read as "clear this filter", not "leave it alone".
-    expect(nextContributionFilters({ status: "accepted", bucket: "blocked", client: "forever", source: "books", stage: [], sort: DEFAULT_SORT }, { bucket: undefined })).toEqual(
-      { status: "accepted", bucket: "ready", client: "forever", source: "books", stage: [], sort: DEFAULT_SORT },
+    expect(nextContributionFilters({ status: "accepted", bucket: "blocked", client: "forever", source: "readables", stage: [], sort: DEFAULT_SORT }, { bucket: undefined })).toEqual(
+      { status: "accepted", bucket: "ready", client: "forever", source: "readables", stage: [], sort: DEFAULT_SORT },
     );
   });
 
@@ -42,9 +42,9 @@ describe("contributionsHref", () => {
   });
 
   it("puts the section in the path and the stage in the query only when one is picked", () => {
-    const books = { status: "new", bucket: "ready", client: "all", source: "books", stage: [], sort: DEFAULT_SORT } as const;
-    expect(contributionsHref(books, {})).toBe("/contributions/books?status=new&client=all");
-    expect(contributionsHref({ ...books, source: "quests" }, { stage: ["complete", "gossip"] })).toBe(
+    const readables = { status: "new", bucket: "ready", client: "all", source: "readables", stage: [], sort: DEFAULT_SORT } as const;
+    expect(contributionsHref(readables, {})).toBe("/contributions/readables?status=new&client=all");
+    expect(contributionsHref({ ...readables, source: "quests" }, { stage: ["complete", "gossip"] })).toBe(
       "/contributions/quests?status=new&client=all&stage=complete%2Cgossip",
     );
   });
@@ -154,9 +154,9 @@ describe("bucketOf", () => {
     expect(bucketOf({ ...moment, quest: "gossip", locale: "deDE" }, { ...npc, race: null }, roster)).toBe("blocked");
   });
 
-  it("is ready for zones and books, which name no NPC", () => {
-    expect(bucketOf({ ...moment, source: "zones", quest: null }, null, roster)).toBe("ready");
-    expect(bucketOf({ ...moment, source: "books", quest: null, locale: "deDE" }, null, roster)).toBe("ready");
+  it("is ready for places and readables, which name no NPC", () => {
+    expect(bucketOf({ ...moment, source: "places", quest: null }, null, roster)).toBe("ready");
+    expect(bucketOf({ ...moment, source: "readables", quest: null, locale: "deDE" }, null, roster)).toBe("ready");
   });
 });
 
@@ -234,7 +234,7 @@ describe("contributionsHref search", () => {
 describe("stagesOf", () => {
   it("reads a comma-separated list in the dropdown's order, dropping what is not a stage", () => {
     expect(stagesOf("gossip,accept")).toEqual(["accept", "gossip"]);
-    expect(stagesOf("complete,zones")).toEqual(["complete"]);
+    expect(stagesOf("complete,places")).toEqual(["complete"]);
     expect(stagesOf(undefined)).toEqual([]);
   });
 });

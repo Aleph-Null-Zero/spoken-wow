@@ -13,7 +13,7 @@ export function correctionNote(contributionId: number): string {
   return `correction from the game, contribution #${contributionId}`;
 }
 
-/** Every note a books contribution's page may carry, accepted or corrected. */
+/** Every note a readables contribution's page may carry, accepted or corrected. */
 export function pageNotes(contributionId: number): string[] {
   return [noteFor(contributionId), correctionNote(contributionId)];
 }

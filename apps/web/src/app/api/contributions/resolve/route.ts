@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
   // Rejecting a row already written ignores its line, so it also takes what ignoring takes.
   const mayIgnore = body.status === "rejected" && (await mayIgnoreIn(session, lang));
-  // A books row's match as the moderator saw it: accepting refuses a row that now matches
+  // A readables row's match as the moderator saw it: accepting refuses a row that now matches
   // otherwise, as the bulk route does.
   const bookMatch = bookMatchOf(body.bookMatch);
   const outcome = await resolveContribution(id, body.status, session.user.id, undefined, mayIgnore, bookMatch);

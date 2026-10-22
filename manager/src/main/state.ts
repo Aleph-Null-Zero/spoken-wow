@@ -2,6 +2,7 @@
 // Every function takes the data path, so nothing here needs electron.
 import fs from 'node:fs'
 import path from 'node:path'
+import { currentProductId } from '../shared/products'
 import { DEFAULT_SETTINGS, SETTING_CHOICES, type Settings } from '../shared/types'
 
 // ---------------------------------------------------------------- files
@@ -105,10 +106,13 @@ export function sanitizeState(raw: unknown): StateFile {
     for (const [gameId, products] of Object.entries(installs as Record<string, unknown>)) {
       if (typeof products !== 'object' || products === null) continue
       const perGame: Record<string, InstallRecord> = {}
-      for (const [productId, rec] of Object.entries(products as Record<string, unknown>)) {
+      for (const [savedId, rec] of Object.entries(products as Record<string, unknown>)) {
         if (typeof rec !== 'object' || rec === null) continue
         const x = rec as Record<string, unknown>
         if (typeof x.version !== 'string') continue
+        // Saved under the pack's id before its section was renamed; a record under the new id wins.
+        const productId = currentProductId(savedId)
+        if (productId !== savedId && perGame[productId]) continue
         perGame[productId] = {
           version: x.version,
           folders: strings(x.folders),

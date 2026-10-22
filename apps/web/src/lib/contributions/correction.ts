@@ -35,7 +35,7 @@
 import "server-only";
 
 import { recordActivity } from "@/lib/activity/store";
-import { BookConflict, BookMissing, saveBookText } from "@/lib/books/text";
+import { BookConflict, BookMissing, saveBookText } from "@/lib/readables/text";
 import { db } from "@/lib/db";
 import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import { branchesOnPlayerGender } from "@/lib/player-words";
@@ -77,7 +77,7 @@ export async function acceptCorrection(
   const contribution = rows[0];
   if (!contribution) return { ok: false, reason: "not-found" };
   const lang = contribution.locale;
-  if ((contribution.source !== "quests" && contribution.source !== "books") || !contribution.text || !isLang(lang)) {
+  if ((contribution.source !== "quests" && contribution.source !== "readables") || !contribution.text || !isLang(lang)) {
     return {
       ok: false,
       reason: "not-a-correction",
@@ -86,7 +86,7 @@ export async function acceptCorrection(
   }
 
   const [state] = against ? [against] : await lineStates([contribution]);
-  if (state.kind === "known" && contribution.source === "books" && contribution.status !== "accepted"
+  if (state.kind === "known" && contribution.source === "readables" && contribution.status !== "accepted"
       && (await bookCorrectionWritten(id, lang))) {
     return markAccepted(contribution, lang, userId);
   }
@@ -109,7 +109,7 @@ export async function acceptCorrection(
   }
 
   try {
-    if (contribution.source === "books") {
+    if (contribution.source === "readables") {
       await saveBookText({ lineId: target.lineId, text: contribution.text, note: correctionNote(id), editedBy: userId, lang });
     } else if (lang === BASE_LANG) {
       const refusal = await correctEnglish(momentOf(target.lineId), target.variant, contribution.text, id, userId);

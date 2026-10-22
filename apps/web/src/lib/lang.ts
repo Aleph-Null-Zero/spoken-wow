@@ -8,9 +8,9 @@
  *
  * THE SAME LIST AS pipelines/lib/locales.mjs, restated here as a literal so the type of a
  * code is the twelve codes rather than `string`. lang.test.ts fails if the two drift, the way
- * pipelines/zones/tools/validate.mjs guards the addon's copy.
+ * pipelines/places/tools/validate.mjs guards the addon's copy.
  *
- * It was here before as lib/zones/lang.ts, and went when zones lost its language axis in
+ * It was here before as lib/places/lang.ts, and went when zones lost its language axis in
  * 4939d3f because nothing had been translated. It comes back for all three sections at once.
  */
 export const LOCALES = [

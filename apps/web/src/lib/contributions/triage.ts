@@ -30,8 +30,8 @@ export type QuestSummary = { title: string; questId: number; stage: QuestStage |
 /**
  * The Quest column's content for one contribution.
  *
- * Null for a source with no quest concept at all -- zones and books never carry `quest`/`title`,
- * and there is no ambiguity to flag there the way there is for a quests-source row.
+ * Null for a source with no quest concept at all -- places and readables never carry
+ * `quest`/`title`, and there is no ambiguity to flag there the way there is for a quests-source row.
  *
  * "gossip" for a quests-source envelope missing either field: checkEnvelope's other shape for
  * that source is an `npc:<id>` key with neither, and an empty cell would read as "we lost the
@@ -48,7 +48,7 @@ export function questFor(row: { source: string; meta: Record<string, string> }):
 }
 
 /**
- * The Match column's content for one books contribution: what the client showed, what the
+ * The Match column's content for one readables contribution: what the client showed, what the
  * matcher (or a moderator) decided it is, that decision in words, and the page it names.
  */
 export type BookSummary = {
@@ -66,7 +66,7 @@ export function bookFor(
   describe: (lineId: string) => string,
   hrefOf?: (lineId: string) => string,
 ): BookSummary | null {
-  if (row.source !== "books") return null;
+  if (row.source !== "readables") return null;
   const number = Number(row.meta.number);
   return {
     title: row.meta.book?.trim() || null,

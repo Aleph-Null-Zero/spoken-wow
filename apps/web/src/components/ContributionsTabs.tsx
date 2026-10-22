@@ -6,11 +6,11 @@ import { LinkTabs } from "@/components/StatusTabs";
 
 const SECTION_LABELS: Record<Section, string> = {
   quests: "Quests",
-  books: "Writings",
-  zones: "Zones",
+  readables: "Readables",
+  places: "Places",
 };
 
-function viewsOf(section: "quests" | "books") {
+function viewsOf(section: "quests" | "readables") {
   return [
     { key: "contributions", label: "Contributions", href: `/contributions/${section}` },
     { key: "corrections", label: "Corrections", href: `/contributions/${section}/corrections` },
@@ -20,9 +20,9 @@ function viewsOf(section: "quests" | "books") {
 type View = ReturnType<typeof viewsOf>[number]["key"];
 
 /**
- * The sections of /contributions, and under Quests and Books their two views: lines the corpus
- * lacks and corrections to lines it has, which only quests and books can have. Links, not client
- * state: each is its own page with its own gate. Each tab carries how many new rows wait in it,
+ * The sections of /contributions, and under Quests and Readables their two views: lines the corpus
+ * lacks and corrections to lines it has, which only quests and readables can have. Links, not
+ * client state: each is its own page with its own gate. Each tab carries how many new rows wait in it,
  * when given.
  */
 export default function ContributionsTabs({
@@ -44,7 +44,7 @@ export default function ContributionsTabs({
   return (
     <>
       <LinkTabs label="Contributions" tabs={localised(lang, sections)} active={section} />
-      {section === "quests" || section === "books" ? (
+      {section === "quests" || section === "readables" ? (
         <LinkTabs
           label={SECTION_LABELS[section]}
           tabs={localised(

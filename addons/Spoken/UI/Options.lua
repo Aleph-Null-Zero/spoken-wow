@@ -56,9 +56,9 @@ local PARTS = {
         icon = [[Interface\Icons\INV_Scroll_03]], order = 1 },
     { key = "gossip", label = L.OPT_PART_GOSSIP, text = L.OPT_PART_GOSSIP_TEXT,
         icon = [[Interface\Icons\UI_Chat]], order = 2 },
-    { key = "zones", label = L.OPT_PART_ZONES, text = L.OPT_PART_ZONES_TEXT,
+    { key = "places", label = L.OPT_PART_PLACES, text = L.OPT_PART_PLACES_TEXT,
         icon = [[Interface\Icons\INV_Misc_Map02]], order = 3 },
-    { key = "books", label = L.OPT_PART_BOOKS, text = L.OPT_PART_BOOKS_TEXT,
+    { key = "readables", label = L.OPT_PART_READABLES, text = L.OPT_PART_READABLES_TEXT,
         icon = [[Interface\Icons\INV_Misc_Book_09]], order = 4 },
 }
 
@@ -145,7 +145,7 @@ local STYLE_TEXTS = {
     none = L.OPT_STYLE_NONE_TEXT,
 }
 -- The languages a voice pack can speak: the same list, in the same order, as each module's
--- (SpokenQuests' Language.LOCALES, SpokenBooks.LOCALES).
+-- (SpokenQuests' Language.LOCALES, SpokenReadables.LOCALES).
 LANGUAGES = {
     { code = "enUS", native = "English", english = "English" },
     { code = "deDE", native = "Deutsch", english = "German" },
@@ -340,7 +340,7 @@ local function Build()
     -- The family's one entry in the game's settings. This page is its Home; each feature
     -- addon's page is nested under it (Options:AddPage).
     panel.name = "Spoken"
-    -- The rows are laid out in a scroller, as the books and zones panels are: the canvas
+    -- The rows are laid out in a scroller, as the Readables and Places panels are: the canvas
     -- neither scrolls nor clips, and the contributions rows pushed this panel past its bottom
     -- edge, drawing the minimap section over the game world.
     scroller = Layout.Scroll(panel)
@@ -471,7 +471,7 @@ local function Build()
     layout:OnRefresh(function() wheel:SetText(Subtitles() and L.SUBTITLE_WHEEL_HINT or L.WINDOW_WHEEL_HINT) end)
 
     -- The voice language, once for every module: they share the same list of languages, and a
-    -- player who picks Portuguese means it for quests and books alike.
+    -- player who picks Portuguese means it for quests and readables alike.
     layout:Section(L.OPT_LANGUAGE_TITLE)
     local language = function() return Addon.db.profile.Language end
     local voices, fallbacks = { "auto" }, { "none" }
@@ -591,7 +591,7 @@ local function Build()
         return compendium ~= nil and compendium.Available ~= nil and compendium:Available()
     end
     Requires(open, Available, L.REASON_COMPENDIUM_OFF)
-    -- The words of every tab's stories, and of Zones' panel beside the map.
+    -- The words of every tab's stories, and of Places' panel beside the map.
     local size = layout:Slider(L.OPT_COMPENDIUM_FONT_SIZE, 9, 20, 1,
         function() return Spoken:CompendiumFontSize() end,
         function(v) Spoken:SetCompendiumFontSize(v) end, nil, Layout.Number)
@@ -600,8 +600,8 @@ local function Build()
     -- In the order of the window's tabs.
     for _, unlock in ipairs({
         { tab = "quests", part = "quests", label = L.OPT_UNLOCK_QUESTS, module = L.OPT_PART_QUESTS },
-        { tab = "places", part = "zones", label = L.OPT_UNLOCK_PLACES, module = L.OPT_PART_ZONES },
-        { tab = "readables", part = "books", label = L.OPT_UNLOCK_WRITINGS, module = L.OPT_PART_BOOKS },
+        { tab = "places", part = "places", label = L.OPT_UNLOCK_PLACES, module = L.OPT_PART_PLACES },
+        { tab = "readables", part = "readables", label = L.OPT_UNLOCK_READABLES, module = L.OPT_PART_READABLES },
         -- Spoken NPCs has no part to turn off: its tab is there while the addon is.
         { tab = "bosses", label = L.OPT_UNLOCK_BOSSES },
     }) do
@@ -742,7 +742,7 @@ local function Build()
         function() return audio().CueBetweenLines end,
         function(v) audio().CueBetweenLines = v end)
     if BackgroundSound:IsAvailable() then
-        layout:Checkbox(L.OPT_BACKGROUND_SOUND, L.OPT_BACKGROUND_SOUND_TIP,
+        layout:Checkbox(L.OPT_BACKGROUND_SOUND, nil,
             function() return audio().KeepTalkingInBackground end,
             function(v) audio().KeepTalkingInBackground = v end,
             function() BackgroundSound:Sync() end)
@@ -780,7 +780,7 @@ local function Build()
         end, nil, true)
         -- The opt-out the first Contribute click promises. Independent of hiding the
         -- buttons: a player who collects has no use for them, and hiding them must not stop it.
-        rows:Checkbox(L.OPT_GATHER, L.OPT_GATHER_TIP,
+        rows:Checkbox(L.OPT_GATHER, nil,
             function() return Gather:IsEnabled() end,
             function(v)
                 -- Choosing here is an answer to the first-click question too.
@@ -843,7 +843,7 @@ local function Build()
             -- The feature addons' DialogueUI rows are kept in their own settings too.
             DialogueUIOptions:Reset()
             Addon.db:ResetProfile()
-            -- Unset, the Compendium's Text Size is the one the Zones page had: set, it is back
+            -- Unset, the Compendium's Text Size is the one the Places page had: set, it is back
             -- to its default.
             Addon.db.profile.CompendiumFontSize = 12
             Addon.db.global.Layout = nil

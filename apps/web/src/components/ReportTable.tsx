@@ -30,12 +30,12 @@ import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { LinkTabs } from "@/components/StatusTabs";
 import { usePendingPush } from "@/components/usePendingPush";
 import { useSearchBox } from "@/components/useSearchBox";
-import { Player as BooksPlayer } from "@/components/books/Player";
+import { Player as ReadablesPlayer } from "@/components/readables/Player";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Player as ZonesPlayer } from "@/components/zones/Player";
+import { Player as PlacesPlayer } from "@/components/places/Player";
 import { explorerHref, reportHref, targetExplorerHref } from "@/lib/links";
-import type { ResultLine as BookLine } from "@/lib/books/search";
+import type { ResultLine as BookLine } from "@/lib/readables/search";
 import { searchPath, type Heading, type SourceLine } from "@/lib/reports/detail";
 import {
   reportsHref,
@@ -50,13 +50,13 @@ import { resolveReport } from "@/lib/reports/client";
 import { applyResolutions, type ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import { cn } from "@/lib/utils";
-import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+import type { ResultLine as ZoneLine } from "@/lib/places/search";
 import type { Source } from "@/lib/sections";
 
 const SECTION_LABELS: Record<Section, string> = {
   quests: "Quests",
-  books: "Books",
-  zones: "Zones",
+  readables: "Readables",
+  places: "Places",
 };
 
 const VIEW_LABELS: Record<StatusView, string> = { ...STATUS_LABELS, all: "All" };
@@ -363,7 +363,7 @@ export default function ReportTable({
           </p>
           <ReportContextNote context={report.context}>
             {/* The text the reporter's addon saw, as the contributions page would take it. */}
-            {report.source !== "zones" && report.context?.text?.trim() ? (
+            {report.source !== "places" && report.context?.text?.trim() ? (
               <ReportContribution
                 report={report}
                 onFixed={(fixed) => setResolved((current) => ({ ...current, [fixed.id]: fixed }))}
@@ -513,14 +513,14 @@ export default function ReportTable({
               line={playingLine as QuestLine}
               version={playingVersion}
             />
-          ) : playing.source === "zones" ? (
-            <ZonesPlayer
+          ) : playing.source === "places" ? (
+            <PlacesPlayer
               audioRef={audio}
               line={playingLine as ZoneLine}
               version={playingVersion}
             />
           ) : (
-            <BooksPlayer
+            <ReadablesPlayer
               audioRef={audio}
               line={playingLine as BookLine}
               version={playingVersion}

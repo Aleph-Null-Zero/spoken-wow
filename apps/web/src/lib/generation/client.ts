@@ -218,7 +218,7 @@ export type QueueSnapshot = {
   queues?: QueueLine[];
   /**
    * Carries the source because two explorers poll one queue, and each may only adopt its
-   * own: a quests page told that a zones file is now at version 3 would look for a line it
+   * own: a quests page told that a places file is now at version 3 would look for a line it
    * does not have. The language for the same reason: an English page must not adopt a
    * Portuguese version number.
    */
@@ -233,9 +233,9 @@ export type QueuedBatch = { batchId: string; queued: number; skipped: number };
 /**
  * Start a batch, or say why not.
  *
- * The quests half sends filters and the zones half sends ids, which is the queue route's
+ * The quests half sends filters and the places half sends ids, which is the queue route's
  * distinction rather than this function's: quests re-derives the job set server-side so a
- * forty-thousand-line batch is a small request, while the zones corpus is ~1,400 lines
+ * forty-thousand-line batch is a small request, while the places corpus is ~1,400 lines
  * selected by hand, where the ids ARE what the user picked.
  *
  * A string rather than null for the refusals that have something to tell the operator -
@@ -248,7 +248,7 @@ export async function queueBatch(
     // Both id-driven sections, for the same reason: their explorers already hold the set
     // of ids the visitor was shown, and quoting one set while queueing another is the
     // failure the quote exists to prevent.
-    | { source: "zones" | "books"; lineIds: string[] },
+    | { source: "places" | "readables"; lineIds: string[] },
   label: string,
   lang: Lang = BASE_LANG,
 ): Promise<QueuedBatch | { error: string } | null> {

@@ -1,11 +1,11 @@
 // The client's own tables (DB2), as wago.tools serves them per build and locale.
 //
 // One pinned build per client, one reader and one cache for every pipeline that reads them: the
-// books' places, the zones' area seeds and alias tables, and tools/export_compendium.py, which
+// readables' places, the places' area seeds and alias tables, and tools/export_compendium.py, which
 // reads the same cache under the same file names. A table is fetched once per build and locale
 // and read from the cache after that, so an export run twice gives the same file.
 //
-// Moving a pin is deliberate: the area names change, so the files derived from them (the zones'
+// Moving a pin is deliberate: the area names change, so the files derived from them (the places'
 // seeds and alias tables, ForeverAreas.lua, the Compendium and Places.lua) are regenerated and
 // reviewed together.
 
@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 // Classic Era's client, which other clients' players still run.
 export const ERA_BUILD = "1.15.9.69109";
 // World of Warcraft Forever's client (wago.tools' wow_classic_beta).
-export const FOREVER_BUILD = "1.60.1.70338";
+export const FOREVER_BUILD = "1.60.1.70450";
 // Retail's, whose Adventure Guide (the Journal tables) the boss tools read.
 export const RETAIL_BUILD = "12.1.5.70448";
 

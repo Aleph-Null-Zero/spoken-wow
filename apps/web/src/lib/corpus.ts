@@ -2,7 +2,7 @@
  * What a voiceline is: the shape every reader of the quest corpus agrees on.
  *
  * TYPES AND PURE HELPERS ONLY. The rows themselves come from lib/quests/catalogue.ts now,
- * which reads quest_line the way the zones and books catalogues read theirs. This module
+ * which reads quest_line the way the places and readables catalogues read theirs. This module
  * used to read and memoise corpus/corpus.json.gz; that file is an export of the table
  * these days, and the only things that still read it are the Python CLI and the addon
  * build, neither of which runs here.

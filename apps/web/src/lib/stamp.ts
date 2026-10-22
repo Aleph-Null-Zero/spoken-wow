@@ -1,6 +1,6 @@
 /**
  * What a versioned table's rows are, as one comparable value, for memos that are validated
- * rather than invalidated (see lib/books/catalogue.ts for why: two pm2 workers).
+ * rather than invalidated (see lib/readables/catalogue.ts for why: two pm2 workers).
  *
  * Three terms because there are three ways such a table moves: an edit inserts a version, so
  * the highest id moves; an import can delete, so the count moves; a restore moves the live

@@ -13,7 +13,7 @@ setfenv(1, SpokenEnv)
 -- corpus that simply has nothing.
 
 local VERSION = 1
-local SOURCES = { quests = true, zones = true, books = true }
+local SOURCES = { quests = true, places = true, readables = true }
 
 local MODULUS = 2147483647
 local FACTOR = 31
@@ -111,7 +111,7 @@ end
 
 --- The integrity check on a pasted envelope.
 ---
---- Deliberately not SpokenBooks:ChecksumOf, whose number is a frozen page id: coupling an id
+--- Deliberately not SpokenReadables:ChecksumOf, whose number is a frozen page id: coupling an id
 --- format to a transport format means neither can change without the other. The arithmetic is
 --- the same because the constraint is the same -- Lua 5.1 has no bitwise operators and the
 --- modulus is the largest signed 32-bit prime, so every intermediate stays exact in a double.
@@ -166,7 +166,7 @@ local function Fence(text)
     return table.concat(lines, "\n")
 end
 
----@param source string  "quests" | "zones" | "books"
+---@param source string  "quests" | "places" | "readables"
 ---@param fields table   array of { key, value }, in the order they are written
 ---@param text string|nil the one multi-line field, or nil where the source has none
 ---@return string|nil     the envelope, or nil for a source this format does not carry

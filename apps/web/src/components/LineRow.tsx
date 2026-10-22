@@ -501,7 +501,7 @@ export default function LineRow({
       </td>
 
       {/* Audio, in a column of its own rather than floated into the prose, the way the
-          books table has always had it: the point of a column is that it lines up down the
+          readables table has always had it: the point of a column is that it lines up down the
           page, and "which of these has no clip yet" is the question this screen is most
           often asked. It holds what the clip's state is, and which take that clip is. */}
       <td className="px-2 py-2 text-xs whitespace-nowrap">
@@ -561,7 +561,7 @@ export default function LineRow({
 
       <td className="py-1.5 pr-1 pl-0">
         <span className="flex items-center justify-end whitespace-nowrap">
-          {/* The same chip the zones and books rows carry; ReportsBadge says why. */}
+          {/* The same chip the places and readables rows carry; ReportsBadge says why. */}
           <ReportsBadge
             source="quests"
             lineId={line.lineId}

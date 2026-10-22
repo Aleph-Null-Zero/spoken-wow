@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "zhCN" then
 	return
@@ -22,10 +22,8 @@ L.OPT_PLAY_BUTTON = "朗读剧情"
 L.OPT_AUTOPLAY = "自动朗读"
 L.OPT_AUTOPLAY_SUB = "包括次级地区"
 L.OPT_AUTOPLAY_EXPLORED = "包括以前发现的地方"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "每个角色对每个地方朗读一次，包括以前发现的地方。"
 L.OPT_LANG_RELOAD = "输入 /reload 即可切换。"
 L.OPT_LANGUAGE = "文本语言"
-L.OPT_LANGUAGE_TIP = "剧情文本的语言；语音跟随语音语言。"
 L.OPT_LANG_AUTO_FMT = "自动（%1$s）"
 L.OPT_LANG_SET_FMT = "界面重新载入后，剧情将使用%1$s。"
 L.OPT_LANG_PROFILE_FMT = "此配置文件将以%1$s朗读剧情。输入 /reload 即可切换。"
@@ -40,6 +38,10 @@ L.AUDIO_READ_TIP = "收听这段剧情的朗读"
 L.REPORT_BUTTON = "报告"
 L.IN_ZONE_FMT = "位于%1$s"
 L.DISCOVERED_FMT = "已发现 %1$d / %2$d"
+L.ZONE_COUNT_FMT = "%1$d 个地区"
+L.ZONE_COUNT_ONE = "1 个地区"
+L.CONTINENT_COUNT_FMT = "%1$d 块大陆"
+L.CONTINENT_COUNT_ONE = "1 块大陆"
 
 L.QUEUE_HELD_COMBAT = "等待战斗结束。"
 L.QUEUE_HELD_CINEMATIC = "等待过场动画结束。"
@@ -90,4 +92,4 @@ L.OPT_DEV_PREVIEW = "提供未完成的翻译"
 
 L.OPEN_IN_COMPENDIUM = "在艾泽拉斯百科中打开"
 
-SpokenZones:RegisterStrings("zhCN", L)
+SpokenPlaces:RegisterStrings("zhCN", L)

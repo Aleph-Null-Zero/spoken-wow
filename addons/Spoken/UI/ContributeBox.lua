@@ -3,7 +3,7 @@ setfenv(1, SpokenEnv)
 -- A frame holding one envelope, ready to copy.
 --
 -- Not a StaticPopup, which is what every other copy box in this project is (ReportButton.lua
--- here, UI/CopyLink.lua in books and zones): `hasEditBox` gives one line sized for a character
+-- here, UI/CopyLink.lua in Readables and Places): `hasEditBox` gives one line sized for a character
 -- name, and an envelope is a few kilobytes over many lines. So this is a frame of its own with
 -- a scrolling, multi-line edit box, and it is the only one -- three addons share it, which is
 -- also why it lives in the player.
@@ -24,7 +24,7 @@ local box
 
 local function Build()
     -- "BackdropTemplate" is what carries SetBackdrop, the mixin having moved out of the base
-    -- frame. UI/PlayerFrame.lua and the zones lore window both pass it for the same reason.
+    -- frame. UI/PlayerFrame.lua and the Places lore window both pass it for the same reason.
     local frame = CreateFrame("Frame", "SpokenContributeBox", UIParent, "BackdropTemplate")
     frame:SetWidth(WIDTH)
     frame:SetHeight(HEIGHT)
@@ -39,7 +39,7 @@ local function Build()
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     frame:SetClampedToScreen(true)
     -- Without this the envelope draws straight onto the world: white text over grass, which is
-    -- what the first player to see this frame reported. The same dialog art the zones lore
+    -- what the first player to see this frame reported. The same dialog art the Places lore
     -- window uses, so the two read as one addon.
     if frame.SetBackdrop then
         frame:SetBackdrop({
@@ -241,7 +241,7 @@ end
 ---
 --- `gather`, when a feature addon passes it, is the line on screen as Gather keeps it:
 --- { key = ..., envelope = ... }. On the first click ever, it turns the box into a choice
---- between sending this one line and gathering in the background. Zones pass none: a place's
+--- between sending this one line and gathering in the background. Places pass none: a place's
 --- contribution is the description the player writes on the site, which nothing can gather.
 ---@return boolean shown  False when there is nothing to show, so a caller can stay quiet.
 function Spoken:ShowContribution(payload, address, isLink, gather)

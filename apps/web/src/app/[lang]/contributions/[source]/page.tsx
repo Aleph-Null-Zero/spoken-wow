@@ -7,8 +7,8 @@ import { notFound, redirect } from "next/navigation";
 import ContributionTable, { type ContributionRow } from "@/components/ContributionTable";
 import ContributionsTabs from "@/components/ContributionsTabs";
 import { auth } from "@/lib/auth";
-import { bookFacets, catalogue } from "@/lib/books/catalogue";
-import { pageKeyOf } from "@/lib/books/tools";
+import { bookFacets, catalogue } from "@/lib/readables/catalogue";
+import { pageKeyOf } from "@/lib/readables/tools";
 import { bulkAcceptable, loadBookCorpus, matchBook, type BookCorpusPage, type BookMatchResult } from "@/lib/contributions/book-match";
 import { clientFilterOf, clientOf, matchesClient } from "@/lib/contributions/client";
 import { corpusLookup } from "@/lib/contributions/existing";
@@ -49,7 +49,7 @@ import { getResolutions, getResolutionsById, resolutionKey, type NpcRowKind } fr
 import { BASE_LANG, isClientLang, isLang, langName, localeHref, type Lang } from "@/lib/lang";
 import { loadRoster } from "@/lib/voices/roster-store";
 import { can, isAdmin } from "@/lib/permissions";
-import { lineByPath } from "@/lib/zones/catalogue";
+import { lineByPath } from "@/lib/places/catalogue";
 import { Contained, Wide } from "@/components/Width";
 
 export const metadata: Metadata = { title: "Contributions · Spoken" };
@@ -60,8 +60,8 @@ export const dynamic = "force-dynamic";
 /**
  * The corpus text a contribution already resolves to, or undefined where it does not.
  *
- * A zones row is looked up by its key; a books row by the page the matcher found, in the row's
- * language only. A quests row is left out of the map entirely rather than looked up and always
+ * A places row is looked up by its key; a readables row by the page the matcher found, in the
+ * row's language only. A quests row is left out of the map entirely rather than looked up and always
  * missing, so the table can tell "not checked" apart from "checked and the corpus has nothing".
  */
 async function existingTextFor(
@@ -72,7 +72,7 @@ async function existingTextFor(
 
   await Promise.all(
     contributions.map(async (row) => {
-      if (row.source === "books") {
+      if (row.source === "readables") {
         const match = bookMatches.get(row.id);
         const lineId = match && "lineId" in match ? match.lineId : null;
         const page = lineId
@@ -82,7 +82,7 @@ async function existingTextFor(
         return;
       }
       const lookup = corpusLookup(row.source, row.key);
-      if (lookup?.source === "zones") {
+      if (lookup?.source === "places") {
         const line = await lineByPath(lookup.mapID, lookup.slug);
         if (line) found[row.id] = line.full;
       }
@@ -92,14 +92,14 @@ async function existingTextFor(
   return found;
 }
 
-/** What each books row is by its words, owner or title, and a way to name a page or book in the row's language. */
+/** What each readables row is by its words, owner or title, and a way to name a page or book in the row's language. */
 async function bookMatchesFor(contributions: Contribution[]) {
-  const books = contributions.filter((row) => row.source === "books");
-  if (books.length === 0) {
+  const readables = contributions.filter((row) => row.source === "readables");
+  if (readables.length === 0) {
     return { matches: new Map<number, BookMatchResult>(), describe: (_lang: string) => (id: string) => id };
   }
   const corpus = await loadBookCorpus();
-  const matches = new Map(books.map((row) => [row.id, matchBook(row, corpus)]));
+  const matches = new Map(readables.map((row) => [row.id, matchBook(row, corpus)]));
   const byLine = new Map(corpus.pages.map((p) => [p.lineId, p]));
   const firstOf = new Map<string, BookCorpusPage>();
   for (const p of corpus.pages) {
@@ -125,7 +125,7 @@ async function bookMatchesFor(contributions: Contribution[]) {
  *
  * A row present with `npc` set but every field null is meaningful, not absent: it says a
  * moderator or the resolver looked and found no race to assign (a narrator, say). Absent
- * entirely means the envelope never named an NPC at all -- zones and books never do, and a
+ * entirely means the envelope never named an NPC at all -- places and readables never do, and a
  * quests envelope keyed on quest+event rather than npc doesn't either.
  */
 async function npcFor(contributions: Contribution[]): Promise<Record<number, NpcSummary>> {
@@ -185,7 +185,7 @@ async function npcFor(contributions: Contribution[]): Promise<Record<number, Npc
   }
 
   for (const { row, observed: o } of observed) {
-    // No npc named at all -- zones, books, or a quest keyed on quest+event -- is the one case
+    // No npc named at all -- places, readables, or a quest keyed on quest+event -- is the one case
     // with nothing to show; a kind-less envelope (o.npcKind === null) still has an id and a
     // name and gets a summary too, npcSummaryFrom's own reason for allowing a null npcKind.
     if (o.npcId === null) continue;
@@ -208,10 +208,10 @@ async function npcFor(contributions: Contribution[]): Promise<Record<number, Npc
   return found;
 }
 
-/** Where a zones or books row was read, in the client's own words. */
+/** Where a places or readables row was read, in the client's own words. */
 function placeOf(row: Contribution): string | null {
-  if (row.source === "zones") return [row.meta.zone, row.meta.subzone].filter(Boolean).join(" · ") || null;
-  if (row.source === "books") return row.meta.book ? `${row.meta.book}${row.meta.number ? ` p.${row.meta.number}` : ""}` : null;
+  if (row.source === "places") return [row.meta.zone, row.meta.subzone].filter(Boolean).join(" · ") || null;
+  if (row.source === "readables") return row.meta.book ? `${row.meta.book}${row.meta.number ? ` p.${row.meta.number}` : ""}` : null;
   return null;
 }
 
@@ -282,7 +282,7 @@ export default async function Page({
     filter: rawFilter,
   } = await searchParams;
   const status: ContributionStatus = isStatus(rawStatus) ? rawStatus : "new";
-  // Only quests' New tab is split: books and zones name no speaker, an accepted row was ready
+  // Only quests' New tab is split: readables and places name no speaker, an accepted row was ready
   // by definition, and a rejected one's speaker no longer matters.
   const bucket: Bucket = namesSpeaker(source) && isBucket(rawBucket) ? rawBucket : "ready";
 
@@ -293,7 +293,7 @@ export default async function Page({
   // Which quest panel the text was read off -- accept, progress or complete -- or gossip.
   const stage: StageFilter = source === "quests" ? stagesOf(rawStage) : [];
 
-  // Books and zones name no NPC or quest, so their search is always over the text.
+  // Readables and places name no NPC or quest, so their search is always over the text.
   const q = typeof rawQ === "string" ? rawQ.trim() : "";
   const searchIn = namesSpeaker(source) && isSearchIn(rawFilter) ? rawFilter : "any";
 
@@ -336,8 +336,8 @@ export default async function Page({
   // Every matching row's, not just this page's: "Accept all" leaves out the ones the matcher can't place.
   const { matches: bookMatches, describe } = await bookMatchesFor(matching);
   const [existing, linedIds] = await Promise.all([existingTextFor(shown, bookMatches), linesInExplorer(shown)]);
-  // Every language's books, for placing a row in one -- only when this page shows a books row.
-  const books = shown.some((row) => row.source === "books")
+  // Every language's books, for placing a row in one -- only when this page shows a readables row.
+  const books = shown.some((row) => row.source === "readables")
     ? (await bookFacets(lang)).map(({ bookId, title, pages }) => ({ bookId, title, pages }))
     : [];
 
@@ -361,9 +361,9 @@ export default async function Page({
     npc: npcs[row.id] ?? null,
     quest: questFor(row),
     book:
-      row.source === "books"
+      row.source === "readables"
         ? bookFor(row, bookMatches.get(row.id)!, describe(row.locale), (lineId) =>
-            localeHref(lang, `/books/r/${pageKeyOf(lineId)}`))
+            localeHref(lang, `/readables/r/${pageKeyOf(lineId)}`))
         : null,
     hasLine: linedIds.has(row.id),
     hasSpeaker: hasSpeaker.has(row.id),

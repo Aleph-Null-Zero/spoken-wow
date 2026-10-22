@@ -1,5 +1,5 @@
 /**
- * Which page a books contribution is, answered by whoever edits its language.
+ * Which page a readables contribution is, answered by whoever edits its language.
  *
  * Needs DATABASE_URL and migrations applied (0074).
  */
@@ -42,7 +42,7 @@ afterAll(async () => {
   await closeDb();
 });
 
-async function contribution(source = "books"): Promise<number> {
+async function contribution(source = "readables"): Promise<number> {
   const { rows } = await db().query<{ id: number }>(
     `insert into "contribution" ("source", "key", "locale", "build", "meta", "raw", "dedup", "text", "ip")
      values ($3, '123456', 'ptBR', '1.15.7/1', '{"book": "Livro", "number": "2"}', 'raw', $2, 'Palavras.', $1)
@@ -144,7 +144,7 @@ describe("POST /api/contributions/page", () => {
   });
 
   it("leaves a row that is not a book's alone", async () => {
-    const id = await contribution("zones");
+    const id = await contribution("places");
     editable.add("ptBR");
     expect((await POST(post({ id, newBook: true }))).status).toBe(409);
   });

@@ -4,8 +4,8 @@ Spoken shows the words of the line it reads (quest dialogue, NPC dialogue, place
 readables' pages) in each window, and as subtitles. The Small Window and the DialogueUI window show
 Rows at Once of them, one or two rows, and the Small Window's **+** button expands them to eight;
 the Large Window shows as many rows as its box holds, up to three. The captions follow the
-recording: with **Type Words Out** on (the default) the words appear as the voice reaches them,
-and with **Highlight Words** on (off by default) two adjacent words are lit, in gold, or in deep
+recording: with **Type Words Out** on (off by default) the words appear as the voice reaches them,
+and with **Highlight Words** on (the default) two adjacent words are lit, in gold, or in deep
 red on parchment. They move, resize and scale with their window.
 
 The **Subtitles Only** narrator style shows the words without a window instead, low in the middle
@@ -111,9 +111,9 @@ Other sources can supply `clip.present.transcript`; the player also accepts
 `clip.text`. A source whose text is in a script the game's font cannot draw (Czech on a
 Western client, for one) names a font file in `clip.present.font`. The captions, the subtitle
 and every window then draw that clip's header, label and text in it, at the player's own size;
-a clip without one stays in the player's font, and so does a file the client cannot load. Readable captions are exported by `pipelines/books/tools/lib/lua.mjs`
+a clip without one stays in the player's font, and so does a file the client cannot load. Readable captions are exported by `pipelines/readables/tools/lib/lua.mjs`
 using the same plain text conversion as narration. The current English export
-was regenerated from the public `/api/books/search?lang=enUS` catalogue on
+was regenerated from the public `/api/readables/search?lang=enUS` catalogue on
 2026-09-27; page IDs, book order and lookup checksums are unchanged.
 
 The DialogueUI window draws the captions in DialogueUI's font, size and colours, with an
@@ -142,13 +142,13 @@ Run from the repository root:
 ```sh
 make test-player
 node scripts/check-addon-xml.mjs
-make zones-check
-make books-test
+make places-check
+make readables-test
 ```
 
 The caption suite is `tests/captions/verify.lua`. It runs the real queue,
 player layouts, actions and quest adapter with simulated widgets and time.
 It checks playback changes, page boundaries, Unicode, resizing, attachment,
-queue placement, expansion and settings. The books and zones suites also cover
+queue placement, expansion and settings. The readables and places suites also cover
 caption sources, language fallback and queued pages. The fixture models layout and text width; it
 does not reproduce the game's font rendering or audio.

@@ -5,10 +5,12 @@ name: Release addons
 #
 # The tag prefix picks the addon, because the two version independently and always have:
 #
-#     spoken/v1.0.0   ->  addons/Spoken
-#     quests/v2.0.0   ->  addons/Spoken_Quests
-#     zones/v1.0.0    ->  addons/Spoken_Places
-#     books/v2.0.0    ->  addons/Spoken_Readables
+#     spoken/v1.0.0     ->  addons/Spoken
+#     quests/v2.0.0     ->  addons/Spoken_Quests
+#     places/v1.0.0     ->  addons/Spoken_Places
+#     readables/v2.0.0  ->  addons/Spoken_Readables
+#
+# Places and Readables were tagged zones/v* and books/v* before their sections were renamed.
 #
 # Unprefixed v*.*.* tags are deliberately not matched: seventeen of them already exist
 # from the AI_VoiceOver_Continued lineage and were imported as legacy/quests/v*.
@@ -21,8 +23,8 @@ on:
     tags:
       - "spoken/v*.*.*"
       - "quests/v*.*.*"
-      - "zones/v*.*.*"
-      - "books/v*.*.*"
+      - "places/v*.*.*"
+      - "readables/v*.*.*"
 
 jobs:
   build:
@@ -41,8 +43,8 @@ jobs:
           case "${GITHUB_REF_NAME%%/*}" in
             spoken) toc=addons/Spoken/Spoken.toc;               script=scripts/spoken/package.sh ;;
             quests) toc=addons/Spoken_Quests/Spoken_Quests.toc;   script=scripts/quests/package.sh ;;
-            zones)  toc=addons/Spoken_Places/Spoken_Places.toc;     script=scripts/zones/package.sh  ;;
-            books)  toc=addons/Spoken_Readables/Spoken_Readables.toc;     script=scripts/books/package.sh  ;;
+            places)    toc=addons/Spoken_Places/Spoken_Places.toc;       script=scripts/places/package.sh ;;
+            readables) toc=addons/Spoken_Readables/Spoken_Readables.toc; script=scripts/readables/package.sh ;;
             *)      echo "unknown tag prefix in ${GITHUB_REF_NAME}" >&2; exit 1 ;;
           esac
           {
@@ -76,7 +78,7 @@ jobs:
       # Substitution into a fixed template needs no template engine anyway, and this keeps the
       # engine's one useful behaviour: an unfilled placeholder is an error, not empty text.
       # Only the quests addon has a template. Spoken's notes are its changelog section (the next
-      # step); zones and books take GitHub's generated notes.
+      # step); places and readables take GitHub's generated notes.
       - name: Render the release notes
         if: steps.target.outputs.name == 'quests'
         env:

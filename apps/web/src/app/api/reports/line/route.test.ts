@@ -55,7 +55,7 @@ describe("GET /api/reports/line", () => {
 
   it("returns the line's reports and no other section's", async () => {
     const lineId = `line-route-${Date.now()}`;
-    for (const source of ["quests", "zones"] as const) {
+    for (const source of ["quests", "places"] as const) {
       await createReport({
         source,
         lineId,
@@ -70,9 +70,9 @@ describe("GET /api/reports/line", () => {
     }
     authorise.mockResolvedValueOnce(ALLOWED);
 
-    const response = await GET(get(`source=zones&lineId=${encodeURIComponent(lineId)}`));
+    const response = await GET(get(`source=places&lineId=${encodeURIComponent(lineId)}`));
     const { reports } = (await response.json()) as { reports: { body: string }[] };
 
-    expect(reports.map((report) => report.body)).toEqual(["from zones"]);
+    expect(reports.map((report) => report.body)).toEqual(["from places"]);
   });
 });

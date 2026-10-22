@@ -2,7 +2,7 @@ setfenv(1, VoiceOver)
 
 -- The Contribute button, on the Blizzard quest frame itself.
 --
--- Modeled on SpokenBooks/UI/PlayButton.lua, the closest precedent in this repo for a button
+-- Modeled on Spoken_Readables/UI/PlayButton.lua, the closest precedent in this repo for a button
 -- the game's own frame has to host because ours cannot. There the reason is that the book
 -- addon has no player frame of its own at all; here the reason is narrower but just as final:
 -- this button's whole precondition, Contribute:HasGap(), is true exactly when nothing was
