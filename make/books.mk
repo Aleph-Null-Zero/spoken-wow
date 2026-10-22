@@ -22,7 +22,7 @@
         release-audio-dry release-audio icon test \
         full-release
 
-PIPELINE := pipelines/books
+PIPELINE := pipelines/readables
 QUESTS   := pipelines/quests
 
 help: ## List the books targets
@@ -32,7 +32,7 @@ help: ## List the books targets
 db: ## Start the vmangos MySQL (the quests pipeline's; loading the dump is its own job)
 	@docker compose -f $(QUESTS)/docker-compose.yml up -d mysql
 
-extract: ## vmangos -> pipelines/books/corpus/extract.json
+extract: ## vmangos -> pipelines/readables/corpus/extract.json
 	@node $(PIPELINE)/tools/extract.mjs
 
 import: ## corpus/extract.json -> book_line (needs DATABASE_URL)
@@ -67,7 +67,7 @@ include make/droplet.mk
 # Books' own archive under the shared audio-history, the directory
 # SPOKEN_BOOKS_AUDIO_HISTORY names in deploy/web/ecosystem.config.js.
 REMOTE_HISTORY := $(REMOTE_ROOT)/shared/audio-history/books/
-LOCAL_HISTORY  := pipelines/books/audio-history/
+LOCAL_HISTORY  := pipelines/readables/audio-history/
 
 # macOS ships openrsync as /usr/bin/rsync, which reports itself as "2.6.9 compatible" and
 # rejects --info. Prefer a real rsync 3.x anywhere on PATH.
@@ -115,7 +115,7 @@ package-acted: check-synced ## Build the voice-acted overlay zip into dist/ (LOC
 acted: pull-recorded package-acted ## Pull the recordings and build the voice-acted overlay (after sync)
 
 package: ## Zip the addon into dist/ (for a release)
-	@./scripts/books/package.sh
+	@./scripts/readables/package.sh
 
 # STORED, NOT DEFLATED. The payload is mp3, which is already compressed: deflate spends
 # minutes on 450 MB to save well under a percent. -0 makes this a container rather than a
@@ -132,7 +132,7 @@ package: ## Zip the addon into dist/ (for a release)
 # on the droplet after every generation, which is what the site used to do.
 ifneq ($(filter-out enUS,$(LOCALE)),)
 package-audio: check-synced sounds lookup ## Zip the sound pack into dist/ (LOCALE=xx for a language's)
-	@LOCALE="$(LOCALE)" ./scripts/books/package-audio.sh
+	@LOCALE="$(LOCALE)" ./scripts/readables/package-audio.sh
 else
 package-audio: check-synced sounds lookup
 	@mkdir -p dist
@@ -152,53 +152,53 @@ package-audio: check-synced sounds lookup
 endif
 
 # The in-game addon list reads a TGA or BLP, never the PNGs in
-# pipelines/books/assets/, so the icon is converted and committed -- an addon must build
+# pipelines/readables/assets/, so the icon is converted and committed -- an addon must build
 # with no ffmpeg on the machine. Borrowed from the zones pipeline rather than copied: the
 # script takes a source and a destination and knows nothing about which project it serves.
 #
 # Both addons carry the same icon: they install as a pair, and two icons would imply they
 # are alternatives to each other. A language's pack wears the icon with its badge:
-# scripts/books/package-audio.sh copies spoken-books-<locale>.tga over it.
-icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/books/assets (needs ffmpeg)
-	@python3 pipelines/zones/tools/make-icon.py pipelines/books/assets/spoken-books-512.png addons/Spoken_Readables/Textures/AddonIcon.tga
+# scripts/readables/package-audio.sh copies spoken-books-<locale>.tga over it.
+icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/readables/assets (needs ffmpeg)
+	@python3 pipelines/places/tools/make-icon.py pipelines/readables/assets/spoken-books-512.png addons/Spoken_Readables/Textures/AddonIcon.tga
 	@cp addons/Spoken_Readables/Textures/AddonIcon.tga addons/SpokenBooksAudio/Textures/AddonIcon.tga
 	@echo "==> copied to addons/SpokenBooksAudio/Textures/AddonIcon.tga"
-	@for png in pipelines/books/assets/spoken-books-??[A-Z][A-Z]-512.png; do python3 pipelines/zones/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
+	@for png in pipelines/readables/assets/spoken-books-??[A-Z][A-Z]-512.png; do python3 pipelines/places/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 deploy: ## Symlink the addon into a client (CLIENT=era|anniversary|forever)
-	@./scripts/books/deploy.sh
+	@./scripts/readables/deploy.sh
 
 deploy-copy: ## Copy the addon into the client instead of symlinking
-	@./scripts/books/deploy.sh --copy
+	@./scripts/readables/deploy.sh --copy
 
 status: ## Show what is installed in every client
-	@./scripts/books/deploy.sh --status
+	@./scripts/readables/deploy.sh --status
 
 remove: ## Uninstall the addon from every client
-	@./scripts/books/deploy.sh --remove
+	@./scripts/readables/deploy.sh --remove
 
 test: ## The pipeline's unit tests
-	@pnpm --filter @spoken/books-pipeline test
+	@pnpm --filter @spoken/readables-pipeline test
 
 #-------------------------------------------------------------------------------
 # The release
 #
-# The Writings sound pack, uploaded to CurseForge by scripts/books/release.sh. Build its zip
+# The Writings sound pack, uploaded to CurseForge by scripts/readables/release.sh. Build its zip
 # first: the release script refuses one that is missing rather than uploading a stale one it
 # found in dist/.
 #-------------------------------------------------------------------------------
 
 release-dry: ## Show what `make books-release` would upload to CurseForge
-	@./scripts/books/release.sh --dry-run
+	@./scripts/readables/release.sh --dry-run
 
 release: ## Upload the built sound pack to CurseForge (needs CURSEFORGE_TOKEN)
-	@./scripts/books/release.sh
+	@./scripts/readables/release.sh
 
 release-audio-dry: ## Show what uploading the sound pack would send (LOCALE=xx for a language)
-	@./scripts/books/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/readables/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 
 release-audio: ## Upload the sound pack (LOCALE=xx for a language's)
-	@./scripts/books/release.sh --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/readables/release.sh --lang=$(or $(LOCALE),enUS) audio
 
 # The whole pack release, from production's data to the stores, with one question before
 # anything is uploaded. Each step is its own target and still runs alone; this is their order.
@@ -211,9 +211,9 @@ full-release: require-droplet ## Sync, pull live takes, build and upload the sou
 	@$(MAKE) --no-print-directory -f make/books.mk sync
 	@$(MAKE) --no-print-directory -f make/books.mk pull-live LOCALE=$(LOCALE)
 	@$(MAKE) --no-print-directory -f make/books.mk package-audio LOCALE=$(LOCALE)
-	@./scripts/books/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/readables/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh --dry-run books $(or $(LOCALE),enUS)
 	@printf 'Upload the books pack to CurseForge and GitHub? [y/N] '; \
 	  read -r answer; [ "$$answer" = y ] || { echo aborted; exit 1; }
-	@./scripts/books/release.sh --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/readables/release.sh --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh books $(or $(LOCALE),enUS)

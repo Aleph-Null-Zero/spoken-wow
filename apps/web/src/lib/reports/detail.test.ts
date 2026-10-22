@@ -9,9 +9,9 @@
 import { describe, expect, it } from "vitest";
 
 import { detailOf, regeneratePath, reportTargetOf, searchPath } from "./detail";
-import type { ResultLine as BookLine } from "@/lib/books/search";
+import type { ResultLine as BookLine } from "@/lib/readables/search";
 import type { ResultLine as QuestLine } from "@/lib/search";
-import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+import type { ResultLine as ZoneLine } from "@/lib/places/search";
 
 const questLine = {
   lineId: "q:374:accept",

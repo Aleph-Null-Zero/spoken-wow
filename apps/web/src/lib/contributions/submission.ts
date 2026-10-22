@@ -11,7 +11,7 @@
  */
 import { createHash } from "node:crypto";
 
-import { normaliseText } from "@books-tools/lib/text.mjs";
+import { normaliseText } from "@readables-tools/lib/text.mjs";
 
 import { clientLang } from "@/lib/lang";
 

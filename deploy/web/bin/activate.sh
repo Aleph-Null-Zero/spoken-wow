@@ -23,7 +23,7 @@ PM2=${PM2:-$(command -v pm2 || echo /usr/local/bin/pm2)}
 # apply a pronunciation rule. The area-name seeds used to be checked here too; they are
 # build-time inputs to the zones tools now, read by nothing the app imports, so the release
 # does not carry them.
-[ -f "$TARGET/pipelines/zones/tools/voice/pronunciation.json" ] || { echo "activate: $TARGET has no zones pronunciation rules" >&2; exit 1; }
+[ -f "$TARGET/pipelines/places/tools/voice/pronunciation.json" ] || { echo "activate: $TARGET has no zones pronunciation rules" >&2; exit 1; }
 
 # The audio stores live on a block volume, reached through symlinks in shared/ (see
 # deploy/web/store.sh). /etc/fstab mounts it `nofail`, so a droplet that boots without it

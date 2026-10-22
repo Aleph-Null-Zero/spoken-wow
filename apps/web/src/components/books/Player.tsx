@@ -3,7 +3,7 @@
 import { useLang } from "@/components/LangProvider";
 import { withLang } from "@/lib/lang";
 import AudioPlayer from "@/components/AudioPlayer";
-import type { ResultLine } from "@/lib/books/search";
+import type { ResultLine } from "@/lib/readables/search";
 
 /**
  * The books section's half of the player: which clip a page plays, and what to call it.

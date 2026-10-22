@@ -11,10 +11,10 @@ credits.
 | --- | --- |
 | Write or correct the text | The site, `/zones` (apps/web). See [LORE.md](LORE.md). |
 | Cut a take of a line | The site, on the droplet. One queue and one lock per line, with the signed-in editor's own key. |
-| Record what exists | The `take` table. `pipelines/zones/tools/voice/manifest.json` is an export of it, committed so that a clone with no Postgres can build and review. |
+| Record what exists | The `take` table. `pipelines/places/tools/voice/manifest.json` is an export of it, committed so that a clone with no Postgres can build and review. |
 | Report, build the lookup, check it | This repository, `make zones-*`. |
 | Assemble and package a pack | This repository, from the live takes and the archive. |
-| Upload | `scripts/zones/release.sh`, CurseForge, and GitHub for the packs. |
+| Upload | `scripts/places/release.sh`, CurseForge, and GitHub for the packs. |
 
 A take is one mp3 in the archive, written once and never changed. Which take is live is a flag on
 its row, so a new take cannot overwrite an old one, and a pack's `Sounds/` folder is not kept: it
@@ -27,8 +27,8 @@ is assembled from the live rows right before packaging.
 ```sh
 make zones-voice                                              # every line: counts, characters, credits, minutes
 make zones-voice-zones                                        # the zone lines only
-node pipelines/zones/tools/voice/generate.mjs --missing --stale --list
-node pipelines/zones/tools/voice/generate.mjs --zone Durotar --limit 20
+node pipelines/places/tools/voice/generate.mjs --missing --stale --list
+node pipelines/places/tools/voice/generate.mjs --zone Durotar --limit 20
 ```
 
 Selectors: `--zone <id|name>` (repeatable; a zone selects its areas too), `--zones-only`,
@@ -36,7 +36,7 @@ Selectors: `--zone <id|name>` (repeatable; a zone selects its areas too), `--zon
 was cut), `--dictionary-drift` (cut with another pronunciation dictionary than the one in use;
 needs `DATABASE_URL`), `--older-than <date>`, `--all`, `--limit <n>` and `--list`. The credit
 estimate uses the rate measured from the manifest, and falls back to `creditRate` in
-`pipelines/zones/tools/voice/config.json`, the only thing that file holds.
+`pipelines/places/tools/voice/config.json`, the only thing that file holds.
 
 To cut a take, open the line on the site's Zones page and generate it there. Editing a line's text
 makes its take stale.
@@ -61,7 +61,7 @@ a file name that drifts by one character plays silence. Nothing renames one.
 
 ```sh
 make zones-lookup                   # export-manifest.mjs, then build-lookup.mjs (LOCALE=xx for another language)
-node pipelines/zones/tools/voice/export-manifest.mjs --check    # is the committed manifest what the database says?
+node pipelines/places/tools/voice/export-manifest.mjs --check    # is the committed manifest what the database says?
 make zones-validate-audio           # manifest, files on disk, lookup table and lore agree
 ```
 
@@ -122,7 +122,7 @@ make zones-full-release             # all of the above, with one question before
 - The pack depends on Spoken in the upload's metadata. It cannot load without Spoken.
 - Bump `PACK_FORMAT` in `Audio.lua` only when the data shape of `Sounds.lua` changes, and do not
   cut a pack for a change to the module alone.
-- The module ships in Spoken's zip: `scripts/spoken/package.sh` calls `scripts/zones/package.sh`.
+- The module ships in Spoken's zip: `scripts/spoken/package.sh` calls `scripts/places/package.sh`.
   `make zones-release` with no target uploads the English pack.
 
 `make zones-acted` builds an overlay pack from the voice actors' recordings, as

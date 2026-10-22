@@ -16,14 +16,14 @@
  * to a paid one is how a typo fix ends up costing credits.
  */
 import { requireIn } from "@/lib/generation/authz";
-import { isKnownLine } from "@/lib/books/catalogue";
+import { isKnownLine } from "@/lib/readables/catalogue";
 import {
   BookConflict,
   BookMissing,
   bookHistory,
   restoreBookText,
   saveBookText,
-} from "@/lib/books/text";
+} from "@/lib/readables/text";
 
 export const dynamic = "force-dynamic";
 

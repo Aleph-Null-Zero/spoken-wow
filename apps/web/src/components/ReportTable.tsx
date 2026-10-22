@@ -35,7 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
 import { explorerHref, reportHref, targetExplorerHref } from "@/lib/links";
-import type { ResultLine as BookLine } from "@/lib/books/search";
+import type { ResultLine as BookLine } from "@/lib/readables/search";
 import { searchPath, type Heading, type SourceLine } from "@/lib/reports/detail";
 import {
   reportsHref,
@@ -50,7 +50,7 @@ import { resolveReport } from "@/lib/reports/client";
 import { applyResolutions, type ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import { cn } from "@/lib/utils";
-import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+import type { ResultLine as ZoneLine } from "@/lib/places/search";
 import type { Source } from "@/lib/sections";
 
 const SECTION_LABELS: Record<Section, string> = {

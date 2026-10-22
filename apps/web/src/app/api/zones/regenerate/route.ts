@@ -11,7 +11,7 @@
  * segment is encoding risk for no benefit.
  */
 import { requireIn, requireSpeaker } from "@/lib/generation/authz";
-import { regenerateZoneLine } from "@/lib/zones/regenerate";
+import { regenerateZoneLine } from "@/lib/places/regenerate";
 
 export const dynamic = "force-dynamic";
 

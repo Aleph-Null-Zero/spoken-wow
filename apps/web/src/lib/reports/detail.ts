@@ -12,10 +12,10 @@
  */
 import { BASE_LANG, withLang, type Lang } from "@/lib/lang";
 import { noApiKeyMessage } from "@/lib/no-api-key";
-import type { ResultLine as BookLine } from "@/lib/books/search";
+import type { ResultLine as BookLine } from "@/lib/readables/search";
 import type { CorpusLine } from "@/lib/corpus";
 import type { ResultLine as QuestLine } from "@/lib/search";
-import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+import type { ResultLine as ZoneLine } from "@/lib/places/search";
 
 import { npcHref, npcPageHref, questsHref } from "@/lib/links";
 

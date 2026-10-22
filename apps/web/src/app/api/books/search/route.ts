@@ -4,11 +4,11 @@
  * The URL carries `page`, not `offset`, so a shared link survives a change to PAGE_SIZE.
  * The arithmetic stays here. Shaped on the zones route, including the 503 below.
  */
-import { catalogue, isCorpusEmpty, loadContext } from "@/lib/books/catalogue";
+import { catalogue, isCorpusEmpty, loadContext } from "@/lib/readables/catalogue";
 import { langParam, worksHere } from "@/lib/lang-server";
 import { recordingsFor } from "@/lib/recordings/store";
-import { filtersFromParams, PAGE_SIZE } from "@/lib/books/filters";
-import { search } from "@/lib/books/search";
+import { filtersFromParams, PAGE_SIZE } from "@/lib/readables/filters";
+import { search } from "@/lib/readables/search";
 
 export const dynamic = "force-dynamic";
 

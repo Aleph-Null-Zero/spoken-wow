@@ -22,15 +22,15 @@ import { SearchBar } from "@/components/books/SearchBar";
 import { Contained, Wide } from "@/components/Width";
 import { Loading, Refreshing } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
-import type { BookFacet } from "@/lib/books/catalogue";
+import type { BookFacet } from "@/lib/readables/catalogue";
 import {
   filterParams,
   filtersFromParams,
   ownerEntityKind,
   PAGE_SIZE,
   type PageFilters,
-} from "@/lib/books/filters";
-import type { ResultLine, SearchResult } from "@/lib/books/search";
+} from "@/lib/readables/filters";
+import type { ResultLine, SearchResult } from "@/lib/readables/search";
 import { totals as estimateTotals, LIST_RATE } from "@/lib/generation/billing";
 import {
   fetchGenerationStatus,

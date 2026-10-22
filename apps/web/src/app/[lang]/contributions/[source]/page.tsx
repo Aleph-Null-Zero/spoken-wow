@@ -7,8 +7,8 @@ import { notFound, redirect } from "next/navigation";
 import ContributionTable, { type ContributionRow } from "@/components/ContributionTable";
 import ContributionsTabs from "@/components/ContributionsTabs";
 import { auth } from "@/lib/auth";
-import { bookFacets, catalogue } from "@/lib/books/catalogue";
-import { pageKeyOf } from "@/lib/books/tools";
+import { bookFacets, catalogue } from "@/lib/readables/catalogue";
+import { pageKeyOf } from "@/lib/readables/tools";
 import { bulkAcceptable, loadBookCorpus, matchBook, type BookCorpusPage, type BookMatchResult } from "@/lib/contributions/book-match";
 import { clientFilterOf, clientOf, matchesClient } from "@/lib/contributions/client";
 import { corpusLookup } from "@/lib/contributions/existing";
@@ -49,7 +49,7 @@ import { getResolutions, getResolutionsById, resolutionKey, type NpcRowKind } fr
 import { BASE_LANG, isClientLang, isLang, langName, localeHref, type Lang } from "@/lib/lang";
 import { loadRoster } from "@/lib/voices/roster-store";
 import { can, isAdmin } from "@/lib/permissions";
-import { lineByPath } from "@/lib/zones/catalogue";
+import { lineByPath } from "@/lib/places/catalogue";
 import { Contained, Wide } from "@/components/Width";
 
 export const metadata: Metadata = { title: "Contributions · Spoken" };

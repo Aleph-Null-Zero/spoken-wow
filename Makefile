@@ -90,11 +90,11 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/minimal_window_test.lua
 	@$(LUA) tests/minimal-classic/verify.lua
 	@$(LUA) tests/captions/verify.lua
-	@$(LUA) tests/lua/zones_source_test.lua
-	@$(LUA) tests/lua/zones_flight_test.lua
-	@$(LUA) tests/lua/zones_instance_test.lua
-	@$(LUA) tests/lua/zones_greeting_test.lua
-	@$(LUA) tests/lua/zones_pending_test.lua
+	@$(LUA) tests/lua/places_source_test.lua
+	@$(LUA) tests/lua/places_flight_test.lua
+	@$(LUA) tests/lua/places_instance_test.lua
+	@$(LUA) tests/lua/places_greeting_test.lua
+	@$(LUA) tests/lua/places_pending_test.lua
 	@$(LUA) tests/lua/quests_source_test.lua
 	@$(LUA) tests/lua/quest_npc_silence_test.lua
 	@$(LUA) tests/lua/quest_greeting_first_test.lua
@@ -104,14 +104,14 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/quest_wording_test.lua
 	@$(LUA) tests/lua/quests_no_packs_test.lua
 	@$(LUA) tests/lua/duplicate_player_test.lua
-	@$(LUA) tests/lua/zones_options_test.lua
-	@$(LUA) tests/lua/zones_test_line_test.lua
-	@$(LUA) tests/lua/zones_lore_ui_test.lua
-	@$(LUA) tests/lua/zones_lands_test.lua
-	@$(LUA) tests/lua/zones_map_click_test.lua
-	@$(LUA) tests/lua/zones_map_highlight_test.lua
-	@$(LUA) tests/lua/zones_area_at_test.lua
-	@$(LUA) tests/lua/zones_discovery_test.lua
+	@$(LUA) tests/lua/places_options_test.lua
+	@$(LUA) tests/lua/places_test_line_test.lua
+	@$(LUA) tests/lua/places_lore_ui_test.lua
+	@$(LUA) tests/lua/places_lands_test.lua
+	@$(LUA) tests/lua/places_map_click_test.lua
+	@$(LUA) tests/lua/places_map_highlight_test.lua
+	@$(LUA) tests/lua/places_area_at_test.lua
+	@$(LUA) tests/lua/places_discovery_test.lua
 	@$(LUA) tests/lua/subtitle_pages_test.lua
 	@$(LUA) tests/lua/defaults_test.lua
 	@$(LUA) tests/lua/scroll_mode_upgrade_test.lua
@@ -120,32 +120,32 @@ test-player: ## Run the addons' Lua tests (needs luajit)
 	@$(LUA) tests/lua/packs_test.lua
 	@$(LUA) tests/lua/quests_options_test.lua
 	@$(LUA) tests/lua/quests_dialogueui_test.lua
-	@$(LUA) tests/lua/books_source_test.lua
-	@$(LUA) tests/lua/books_options_test.lua
+	@$(LUA) tests/lua/readables_source_test.lua
+	@$(LUA) tests/lua/readables_options_test.lua
 	@$(LUA) tests/lua/module_settings_test.lua
 	@$(LUA) tests/lua/module_profiles_test.lua
 	@$(LUA) tests/lua/locale_parity_test.lua
-	@$(LUA) tests/lua/books_reader_test.lua
-	@$(LUA) tests/lua/books_playlist_test.lua
-	@$(LUA) tests/lua/books_dialogueui_test.lua
-	@$(LUA) tests/lua/books_events_test.lua
-	@$(LUA) tests/lua/books_close_test.lua
-	@$(LUA) tests/lua/books_contribute_test.lua
-	@$(LUA) tests/lua/books_readables_test.lua
+	@$(LUA) tests/lua/readables_reader_test.lua
+	@$(LUA) tests/lua/readables_playlist_test.lua
+	@$(LUA) tests/lua/readables_dialogueui_test.lua
+	@$(LUA) tests/lua/readables_events_test.lua
+	@$(LUA) tests/lua/readables_close_test.lua
+	@$(LUA) tests/lua/readables_contribute_test.lua
+	@$(LUA) tests/lua/readables_compendium_test.lua
 	@$(LUA) tests/lua/quests_compendium_test.lua
 	@$(LUA) tests/lua/quests_shift_queue_test.lua
 	@$(LUA) tests/lua/quests_compendium_races_test.lua
-	@$(LUA) tests/lua/books_language_test.lua
+	@$(LUA) tests/lua/readables_language_test.lua
 	@$(LUA) tests/lua/gather_test.lua
-	@$(LUA) tests/lua/zones_contribute_test.lua
-	@$(LUA) tests/lua/zones_language_test.lua
-	@$(LUA) tests/lua/zones_each_place_once_test.lua
-	@$(LUA) tests/lua/zones_city_test.lua
-	@$(LUA) tests/lua/zones_dungeons_test.lua
+	@$(LUA) tests/lua/places_contribute_test.lua
+	@$(LUA) tests/lua/places_language_test.lua
+	@$(LUA) tests/lua/places_each_place_once_test.lua
+	@$(LUA) tests/lua/places_city_test.lua
+	@$(LUA) tests/lua/places_dungeons_test.lua
 	@$(LUA) tests/lua/npcs_bosses_test.lua
-	@$(LUA) tests/lua/zones_story_place_test.lua
-	@$(LUA) tests/lua/zones_area_zones_test.lua
-	@$(LUA) tests/lua/zones_forever_places_test.lua
+	@$(LUA) tests/lua/places_story_place_test.lua
+	@$(LUA) tests/lua/places_area_zones_test.lua
+	@$(LUA) tests/lua/places_forever_places_test.lua
 	@$(LUA) tests/lua/minimap_compartment_test.lua
 	@$(LUA) tests/lua/bronze_rings_test.lua
 
@@ -157,8 +157,8 @@ contribute-fixtures:
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/contribute_envelope_test.lua
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/report_url_contract_test.lua
 	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/quests_contribute_test.lua
-	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/zones_contribute_test.lua
-	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/books_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/places_contribute_test.lua
+	SPOKEN_WRITE_FIXTURES=1 $(LUA) tests/lua/readables_contribute_test.lua
 
 # The Python half needs its own venv:
 #
@@ -180,10 +180,10 @@ lint: ## The checks CI gates on
 	@pnpm -r typecheck
 	@node scripts/check-addon-xml.mjs
 	@./scripts/spoken/check-changelog.sh
-	@node pipelines/zones/tools/validate.mjs
+	@node pipelines/places/tools/validate.mjs
 	@node scripts/descriptions.mjs --check
-	@node pipelines/zones/tools/locale/check-strings.mjs
-	@node pipelines/zones/tools/locale/build-languages.mjs --check
+	@node pipelines/places/tools/locale/check-strings.mjs
+	@node pipelines/places/tools/locale/build-languages.mjs --check
 
 # The store project pages, for every addon. One tool over publishers/*/ rather than one
 # per project: the pages are the same shape, and a second copy of this would be a second place

@@ -17,7 +17,7 @@ covers how they are made. Spoken has no guide; `docs/spoken/` holds its changelo
   - `SpokenZonesAudio` and `SpokenBooksAudio` are sound packs. The quests packs have no folder
     here; they are built into `pipelines/quests/audio/`, which is gitignored.
 - `apps/web`: the site, `spoken.rusty.one`, a Next.js app backed by Postgres. It imports
-  `pipelines/zones` and `pipelines/books` (`@tools/*` and `@books-tools/*`), so a change there is
+  `pipelines/places` and `pipelines/readables` (`@tools/*` and `@readables-tools/*`), so a change there is
   a change to the site.
 - `pipelines/`: `quests` is Python, `zones` and `books` are Node, and `lib` holds the `.mjs`
   modules they and the site share.
@@ -83,8 +83,8 @@ shown) and its book's `n{uuid}`, and the paths derived from them. A minted page 
 the world database folds into the real one, and its id stays behind as an alias. Renaming one
 re-ships a pack every player has downloaded and orphans the take history. Each is derived in exactly one
 place: `pipelines/quests/tts_cli/naming.py` (mirrored by
-`apps/web/src/lib/contributions/naming.ts`), `pipelines/zones/tools/voice/naming.mjs` and
-`pipelines/books/tools/lib/naming.mjs`.
+`apps/web/src/lib/contributions/naming.ts`), `pipelines/places/tools/voice/naming.mjs` and
+`pipelines/readables/tools/lib/naming.mjs`.
 
 **Migrations are forward-only and additive.** Deploy migrates before the symlink swap and
 rollback restores code without reverting the schema.

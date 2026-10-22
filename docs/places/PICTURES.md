@@ -6,18 +6,18 @@ Only pictures chosen by hand and reviewed ship, so a place with no picture shows
 
 ## From the wiki to a texture
 
-1. `node pipelines/zones/tools/pictures/fetch.mjs [--refresh]` asks warcraft.wiki.gg for a picture
+1. `node pipelines/places/tools/pictures/fetch.mjs [--refresh]` asks warcraft.wiki.gg for a picture
    for each zone and area page, preferring files the wiki marks as Classic. It writes
    `pictures/manifest.json` (page, file, licence, author) and the downloads to
-   `pipelines/zones/tools/cache/pictures/raw/`.
-2. `node pipelines/zones/tools/pictures/gallery.mjs [out]` downloads every picture on each place's
+   `pipelines/places/tools/cache/pictures/raw/`.
+2. `node pipelines/places/tools/pictures/gallery.mjs [out]` downloads every picture on each place's
    pages into a folder per place, to choose from by eye. The one `fetch.mjs` chose is prefixed
    `[picked]`.
 3. The chosen picture of each place is cleaned and sharpened with an image model
    (`Textures/Pictures/CREDITS.md` names it). That step runs outside this repository. What `prepare.py` reads is its result: in a folder laid out
    as the Places tab is (`Azeroth/<continent>/<zone>[/<area>]`), `<place> - new.png` beside the
    original, `<place> - old.<ext>`. A place with no `- new` has no picture.
-4. `make zones-pictures` runs `pipelines/zones/tools/pictures/prepare.py`, which writes the textures,
+4. `make zones-pictures` runs `pipelines/places/tools/pictures/prepare.py`, which writes the textures,
    `Data/Pictures.lua` and `Textures/Pictures/CREDITS.md`.
 
 ```sh

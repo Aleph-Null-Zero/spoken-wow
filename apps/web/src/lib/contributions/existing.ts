@@ -16,7 +16,7 @@
  * so the two can't drift apart the way addons/Spoken_Readables/Checksum.lua warns a duplicated
  * rule eventually does.
  */
-import { normaliseKey, slugFor } from "@/lib/zones/tools";
+import { normaliseKey, slugFor } from "@/lib/places/tools";
 
 const DIGITS = /^\d+$/;
 

@@ -26,8 +26,8 @@
 import { skipReasonFor } from "@/lib/text-gate";
 import type { PoolClient } from "pg";
 
-import { BOOK_ID_COMPAT, PAGE_COUNT } from "@books-tools/lib/page.mjs";
-import { normaliseText } from "@books-tools/lib/text.mjs";
+import { BOOK_ID_COMPAT, PAGE_COUNT } from "@readables-tools/lib/page.mjs";
+import { normaliseText } from "@readables-tools/lib/text.mjs";
 
 import { recordActivity } from "@/lib/activity/store";
 import { db, inTransaction } from "@/lib/db";
@@ -42,7 +42,7 @@ import {
 } from "@/lib/npc/store";
 import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import type { CorpusLine } from "@/lib/corpus";
-import { isGeneratable, mintBookId, mintPageId } from "@/lib/books/tools";
+import { isGeneratable, mintBookId, mintPageId } from "@/lib/readables/tools";
 import { branchesOnPlayerGender, speakPlayerTokens } from "@/lib/player-words";
 import { corpus } from "@/lib/quests/catalogue";
 import { forgetIgnores, writeIgnore } from "@/lib/quests/ignores";

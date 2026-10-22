@@ -6,8 +6,8 @@ import { notFound } from "next/navigation";
 
 import ReportForm from "@/components/ReportForm";
 import ListenFirst from "@/components/reports/ListenFirst";
-import { audioRelPath } from "@/lib/zones/audio";
-import { isCorpusEmpty, lineByPath, loadContext } from "@/lib/zones/catalogue";
+import { audioRelPath } from "@/lib/places/audio";
+import { isCorpusEmpty, lineByPath, loadContext } from "@/lib/places/catalogue";
 import { Contained } from "@/components/Width";
 
 /**

@@ -62,13 +62,13 @@ addons/Spoken_Places/
                          Options, CopyLink
 addons/Spoken/UI/        Compendium.lua, TextView.lua, Face.lua: shared with the other modules
 addons/Spoken/Data/Dungeons.lua   the dungeon and raid table every tab reads (generated)
-pipelines/zones/tools/   scrapers, the lore store and exporter, locale tools, pictures, voice
+pipelines/places/tools/   scrapers, the lore store and exporter, locale tools, pictures, voice
 pipelines/lib/dungeons.json   the dungeon table's source
-scripts/zones/           package.sh, package-audio.sh, release.sh
+scripts/places/           package.sh, package-audio.sh, release.sh
 make/zones.mk            the make zones-* targets
 publishers/zones/        the store pages for the packs
 apps/web                 the site, with the lore explorer at /zones
-tests/lua/zones_*_test.lua
+tests/lua/places_*_test.lua
 ```
 
 ## Commands
@@ -94,7 +94,7 @@ tests/lua/zones_*_test.lua
 | `/spp found` | List every place counted as found, and why. |
 | `/spp debug` | Print area names, keys and discovery messages while you play. |
 | `/spp verify` | Check every zone map in the data against this client. |
-| `/spp dump` | Write the map tree into the saved variables. `/reload`, then `node pipelines/zones/tools/seed-from-dump.mjs`. |
+| `/spp dump` | Write the map tree into the saved variables. `/reload`, then `node pipelines/places/tools/seed-from-dump.mjs`. |
 
 `/sp` is Spoken's own command. `/sp compendium` opens Azeroth's Compendium, `/sp stopall` stops
 every module, and `/sp diagnostics` prints Spoken's state followed by each module's.
@@ -108,16 +108,16 @@ make test-player            # every addon Lua test, the zones_*_test.lua ones in
 make lint                   # what CI gates on
 ```
 
-`make zones-check` and `make lint` run `pipelines/zones/tools/locale/build-languages.mjs --check`,
+`make zones-check` and `make lint` run `pipelines/places/tools/locale/build-languages.mjs --check`,
 which fails while `Data/Languages.lua` is out of date. The Lua block check
-(`pipelines/zones/tools/lua-syntax-check.py`) needs Python.
+(`pipelines/places/tools/lua-syntax-check.py`) needs Python.
 
 ## Running the checkout in the game
 
 `/link-addon` (the skill in `.claude/skills/link-addon`) links the worktree's addons into the
 client's `Interface/AddOns`. `/reload` then runs the checkout's code. A texture the game did not
 list at start draws solid green until the client restarts, so a new picture needs a restart and
-not only `/reload`. `scripts/zones/deploy.sh` is older: it installs into Classic Era and
+not only `/reload`. `scripts/places/deploy.sh` is older: it installs into Classic Era and
 Anniversary folders only.
 
 ## License

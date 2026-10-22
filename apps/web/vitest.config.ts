@@ -68,9 +68,9 @@ export default defineConfig({
       // The zones pipeline, as tsconfig.json resolves it. Vitest reads neither that file's
       // paths nor next.config.ts's tracing root, so the alias has to be stated twice or a
       // test that touches lib/zones cannot load at all.
-      "@tools": path.resolve(__dirname, "../../pipelines/zones/tools"),
+      "@tools": path.resolve(__dirname, "../../pipelines/places/tools"),
       // The books pipeline, for the same reason and with the same caveat.
-      "@books-tools": path.resolve(__dirname, "../../pipelines/books/tools"),
+      "@readables-tools": path.resolve(__dirname, "../../pipelines/readables/tools"),
     },
   },
 });

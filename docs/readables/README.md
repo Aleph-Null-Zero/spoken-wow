@@ -5,8 +5,8 @@ vmangos world database, reviewable at `/books` on the site, and
 read aloud in game by Spoken's Readables module (`addons/Spoken_Readables`).
 
 Players see this section as **Readables**: the module, its page and tab, its commands (`/spr`; `/spw`
-and `/spb` still work), the sound packs' titles and the site's labels. Everything they never see keeps the name books:
-this folder, `pipelines/books`, `make books-*`, the `books` source and part key, the
+and `/spb` still work), the sound packs' titles and the site's labels. Most of what they never see still says books
+(the folders already say readables): `make books-*`, the `books` source and part key, the
 `SpokenBooks*` globals and saved variables, `b:{pageTextID}`, the `/books` routes, and the
 `SpokenBooksAudio` folder with its `books-audio` tags.
 
@@ -95,13 +95,13 @@ Accepting a row for a page nothing in the corpus has mints it: `b:n{uuid}`, in t
 in a new `n{uuid}` book. A minted page is voiced, reported and shipped in packs like any other. If
 a later import finds its words in the world database, it folds into the real page: texts, takes,
 reports and contributions move, and the minted id stays as an alias so a pack that shipped it still
-plays (`pipelines/books/tools/lib/absorb.mjs`).
+plays (`pipelines/readables/tools/lib/absorb.mjs`).
 
 ## The stages
 
 | Stage | Input | Output | Who runs it |
 | --- | --- | --- | --- |
-| `extract` | vmangos world DB | `pipelines/books/corpus/extract.json` | a maintainer, after a dump refresh |
+| `extract` | vmangos world DB | `pipelines/readables/corpus/extract.json` | a maintainer, after a dump refresh |
 | `import` | that file | `book_page` and `book_line` rows | the same maintainer |
 | review | `book_line` | corrected text | anyone, at `/books` |
 | generate | `book_line` | mp3s and `take` rows | anyone with an ElevenLabs key |
@@ -115,7 +115,7 @@ droplet.
 ```bash
 orb start
 make books-db                 # the vmangos MySQL, which pipelines/quests provisions
-make books-extract            # -> pipelines/books/corpus/extract.json
+make books-extract            # -> pipelines/readables/corpus/extract.json
 make books-import
 pnpm --filter @spoken/web dev # /books
 ```
@@ -168,10 +168,10 @@ class or gender word, its words against the captions that hold a token, where ex
 fits; then nothing. Nothing is the right last answer: the alternative is reading the wrong
 page's words aloud.
 
-**The checksum is the load-bearing part.** `pipelines/books/tools/lib/naming.mjs` and
+**The checksum is the load-bearing part.** `pipelines/readables/tools/lib/naming.mjs` and
 `addons/Spoken_Readables/Checksum.lua` must produce the same number for the same text, over
 UTF-8 bytes, using only multiply, add and modulo — the clients run Lua 5.1, which has no
-bitwise operators. `tests/lua/books_source_test.lua` asserts the two agree, on an ASCII
+bitwise operators. `tests/lua/readables_source_test.lua` asserts the two agree, on an ASCII
 string and an accented one. They have to: the lookup is keyed on that number, and a
 disagreement makes every page unfindable, silently.
 
@@ -280,7 +280,7 @@ Readables tab (`UI/Readables.lua`, key `readables`; the rest of the code says bo
 every book, letter, note, scroll, tablet, plaque, gravestone, exhibit and picture Spoken Readables
 reads, found or not, with the words of each on the right, on the spellbook's parchment, to read
 and to listen to wherever you are. Which readables exist and where they are comes from
-`Data/Places.lua` (`pipelines/books/tools/places.mjs`); what this character has found, from
+`Data/Places.lua` (`pipelines/readables/tools/places.mjs`); what this character has found, from
 `SpokenBooksCharacter` (`Core.lua`); the words, from `Data/Books.lua`. `make books-places` reads
 the repack's world DB (`PLACES_MYSQL_*`) and its map files (`PLACES_MAPS`, the repack's `data/maps`
 folder; it stops without them). A quest places a readable only when the quests corpus or the
@@ -341,7 +341,7 @@ CLIENT=forever make books-deploy   # symlink Spoken_Readables and SpokenBooksAud
 make books-status                  # what is installed where, and how many mp3s exist
 ```
 
-`scripts/books/deploy.sh` links only those two folders and defaults to Classic Era, so pass
+`scripts/readables/deploy.sh` links only those two folders and defaults to Classic Era, so pass
 `CLIENT=forever`. It looks under `/Applications/World of Warcraft`. Spoken has to be installed
 as well: the repo's `/link-addon` skill links every addon folder of a checkout into a client,
 Forever by default.
@@ -369,7 +369,7 @@ make books-release                 # needs CURSEFORGE_TOKEN
 The pack's version is the `## Version:` line in its `.toc`, and its release notes are the
 matching `## <version>` section of `docs/readables/CHANGELOG.md` — a version with no section there
 fails before anything is sent. `make books-package` builds `Spoken_Readables` alone, for a
-`books/v<version>` tag, which `.github/workflows/release-addons.yaml` still builds. `scripts/books/release.sh` carries the two ids in
+`books/v<version>` tag, which `.github/workflows/release-addons.yaml` still builds. `scripts/readables/release.sh` carries the two ids in
 `target_curseforge()`, and an unknown target fails on the empty id rather than defaulting, for
 the reason `docs/quests/CLAUDE.md` gives: an id left in that function is an id something
 eventually uploads to, and uploading a books pack over another project is not recoverable
@@ -396,7 +396,7 @@ language, staged under `build/books/<lang>/` rather than the committed `addons/S
 make books-pull-live LOCALE=esMX      # this language's live takes
 make books-sounds LOCALE=esMX         # build/books/esMX/Sounds, from the archive
 make books-lookup LOCALE=esMX         # build/books/esMX/Data/Sounds.lua
-LOCALE=esMX ./scripts/books/package-audio.sh  # dist/SpokenBooksAudio_esMX-<v>.zip
+LOCALE=esMX ./scripts/readables/package-audio.sh  # dist/SpokenBooksAudio_esMX-<v>.zip
 make books-release-audio LOCALE=esMX  # uploads it, CurseForge only
 ```
 

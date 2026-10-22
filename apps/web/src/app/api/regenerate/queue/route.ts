@@ -33,12 +33,12 @@ import { batchJobs, matchingLines } from "@/lib/search";
 import { filtersFromParams, needsStale } from "@/lib/search-request";
 import { recordingsFor } from "@/lib/recordings/store";
 import { ensureQueueRunning, queueWorker } from "@/lib/generation/boot";
-import { catalogue as bookCatalogue } from "@/lib/books/catalogue";
+import { catalogue as bookCatalogue } from "@/lib/readables/catalogue";
 import type { Lang } from "@/lib/lang";
 import { isAdmin } from "@/lib/permissions";
 import type { Provider } from "@/lib/generation/speakers/speaker";
 import { pinnedVoices } from "@/lib/voices/references";
-import { catalogue as zoneCatalogue } from "@/lib/zones/catalogue";
+import { catalogue as zoneCatalogue } from "@/lib/places/catalogue";
 
 export const dynamic = "force-dynamic";
 

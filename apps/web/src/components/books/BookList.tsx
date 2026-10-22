@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import { PageRow, type RowState } from "@/components/books/PageRow";
-import type { ResultLine } from "@/lib/books/search";
+import type { ResultLine } from "@/lib/readables/search";
 
 /**
  * The results, as a table whose first two columns belong to the book rather than the page.

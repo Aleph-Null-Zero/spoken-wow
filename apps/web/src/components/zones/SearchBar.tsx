@@ -10,14 +10,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AUDIO_STATE_OPTIONS } from "@/lib/audio-state";
-import type { ZoneFacet } from "@/lib/zones/catalogue";
+import type { ZoneFacet } from "@/lib/places/catalogue";
 import {
   activeFilterCount,
   FIELDS,
   KINDS,
   STATES,
   type LineFilters,
-} from "@/lib/zones/filters";
+} from "@/lib/places/filters";
 
 /**
  * The same controls the quests explorer uses, on this section's fields.

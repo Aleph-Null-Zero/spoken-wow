@@ -25,8 +25,8 @@ import {
   type QueueJob,
 } from "./queue";
 import { regenerateLine, type RegenerateResult } from "./regenerate";
-import { regenerateBookLine } from "@/lib/books/regenerate";
-import { regenerateZoneLine } from "@/lib/zones/regenerate";
+import { regenerateBookLine } from "@/lib/readables/regenerate";
+import { regenerateZoneLine } from "@/lib/places/regenerate";
 import { generationStatus } from "./status";
 import type { Lang } from "@/lib/lang";
 import type { Source } from "@/lib/sections";

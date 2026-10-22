@@ -7,8 +7,10 @@
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { sectionFolder } from "./packs.mjs";
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 export function archiveOf(section) {
-  return process.env[`SPOKEN_${section.toUpperCase()}_AUDIO_HISTORY`] ?? join(ROOT, "pipelines", section, "audio-history");
+  return process.env[`SPOKEN_${section.toUpperCase()}_AUDIO_HISTORY`] ?? join(ROOT, "pipelines", sectionFolder(section), "audio-history");
 }

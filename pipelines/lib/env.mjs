@@ -4,7 +4,7 @@
 // share -- the CurseForge token, the ElevenLabs key, the vmangos MySQL, DATABASE_URL --
 // and a pipeline's own .env holds only what is its alone. Before this, each pipeline
 // carried its own copy of the shared half; the copies drifted (zones held a stale
-// ElevenLabs key) and scripts/books/release.sh had to search all three .env files in turn
+// ElevenLabs key) and scripts/readables/release.sh had to search all three .env files in turn
 // to find the one CurseForge token.
 //
 // A short reader rather than a dependency, matching this repo's other tools, which have

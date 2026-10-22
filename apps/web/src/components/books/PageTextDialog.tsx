@@ -5,7 +5,7 @@ import { withLang } from "@/lib/lang";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
 
-import type { ResultLine } from "@/lib/books/search";
+import type { ResultLine } from "@/lib/readables/search";
 
 // Rewriting a page, and putting an earlier wording back.
 //

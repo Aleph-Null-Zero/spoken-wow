@@ -156,7 +156,7 @@ The Wago ids for the pack projects are listed above anyway: the projects exist, 
 that endpoint takes a larger file they are what it uploads to.
 A language's pack -- Spoken Spanish (AL) Audio: Places is the first -- has no Wago project at all:
 its page leaves `wago:` out, `scripts/descriptions.mjs` writes no Wago copy of it, and
-`scripts/zones/release.sh` skips the Wago upload for it.
+`scripts/places/release.sh` skips the Wago upload for it.
 
 **So the packs have a third channel**, `scripts/audio-github-release.sh` (`make audio-release`),
 one GitHub release per pack under `<pack>/vX.Y.Z` — the ceiling there is 2 GB a file. It runs

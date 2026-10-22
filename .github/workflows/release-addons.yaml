@@ -41,8 +41,8 @@ jobs:
           case "${GITHUB_REF_NAME%%/*}" in
             spoken) toc=addons/Spoken/Spoken.toc;               script=scripts/spoken/package.sh ;;
             quests) toc=addons/Spoken_Quests/Spoken_Quests.toc;   script=scripts/quests/package.sh ;;
-            zones)  toc=addons/Spoken_Places/Spoken_Places.toc;     script=scripts/zones/package.sh  ;;
-            books)  toc=addons/Spoken_Readables/Spoken_Readables.toc;     script=scripts/books/package.sh  ;;
+            zones)  toc=addons/Spoken_Places/Spoken_Places.toc;     script=scripts/places/package.sh  ;;
+            books)  toc=addons/Spoken_Readables/Spoken_Readables.toc;     script=scripts/readables/package.sh  ;;
             *)      echo "unknown tag prefix in ${GITHUB_REF_NAME}" >&2; exit 1 ;;
           esac
           {

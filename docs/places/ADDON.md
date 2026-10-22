@@ -183,7 +183,7 @@ The game cannot open a link, so a Report button shows an address to copy
 the one the clip is read in for Report on the player's window, and the text language for
 Report on a page. The slug is the key with spaces as hyphens and other
 characters dropped, and `zone` for a zone. `validate.mjs` fails the build if the Lua slug and
-`slugFor` in `pipelines/zones/tools/voice/naming.mjs` disagree, or two areas in a zone share one.
+`slugFor` in `pipelines/places/tools/voice/naming.mjs` disagree, or two areas in a zone share one.
 
 A place with no story shows Contribute under the sentence saying so. It sends the place the page
 shows, not where the player stands: the addon version, build, locale, the pack's language, the map,
@@ -194,6 +194,6 @@ Buttons and Hide Contribute Buttons settings hide both.
 
 ## Checks for this part
 
-`tests/lua/zones_*_test.lua`, run by `make test-player`. They cover the source and its queue, language,
+`tests/lua/places_*_test.lua`, run by `make test-player`. They cover the source and its queue, language,
 options, the greeting, discovery, the tab, the map click and highlight, areas, dungeons, cities,
 Forever-only places and contributions.

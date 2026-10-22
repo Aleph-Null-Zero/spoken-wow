@@ -498,7 +498,7 @@ def import_corpus_data(corpus, verbose=True):
     fresh extract of the world database.
 
     Rerunnable by construction, and the rule for a line that already exists is the one
-    pipelines/books/tools/lib/promote.mjs states: unchanged text is skipped, changed text
+    pipelines/readables/tools/lib/promote.mjs states: unchanged text is skipped, changed text
     is promoted UNLESS somebody has edited it here, in which case the extract's version is
     recorded but not promoted. An import that could overwrite a correction is an import
     nobody dares run, and an import nobody runs means the corpus stops tracking the dump.

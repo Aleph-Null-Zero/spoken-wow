@@ -167,7 +167,7 @@ local function Bare(text)
 end
 
 --- When each word of a book's first page is read. Its narration reads the title first, then a
---- pause, unless the page opens with it (pipelines/books/tools/lib/text.mjs, spokenWithTitle), so
+--- pause, unless the page opens with it (pipelines/readables/tools/lib/text.mjs, spokenWithTitle), so
 --- the words start after the title's share of the recording, each at its share of the rest as the
 --- captions estimate it. Nil where nothing comes before the words, or the length is not known.
 local function TitleFirstTimings(title, text, length)

@@ -4,7 +4,7 @@
  * THE TWO MUST AGREE EXACTLY, and the fixtures under tests/fixtures/contributions are what
  * holds them together -- the Lua writes them, this reads them, and a format change that
  * touches only one side fails in the commit that makes it. The same arrangement, and the same
- * reason, as SpokenBooks/Checksum.lua and pipelines/books/tools/lib/naming.mjs.
+ * reason, as SpokenBooks/Checksum.lua and pipelines/readables/tools/lib/naming.mjs.
  *
  * Free of node imports: the paste box is a client component and previews the parse before
  * anything is sent.

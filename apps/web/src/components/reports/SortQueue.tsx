@@ -25,7 +25,7 @@ import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { Button } from "@/components/ui/button";
 import { LoreDialog } from "@/components/zones/LoreDialog";
 import { Player as ZonesPlayer } from "@/components/zones/Player";
-import type { ResultLine as BookLine } from "@/lib/books/search";
+import type { ResultLine as BookLine } from "@/lib/readables/search";
 import { isTypingTarget } from "@/lib/keyboard";
 import { BASE_LANG, withLang, type Lang } from "@/lib/lang";
 import { explorerHref } from "@/lib/links";
@@ -36,7 +36,7 @@ import type { ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { Source } from "@/lib/sections";
 import { cn, endsSelection } from "@/lib/utils";
-import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+import type { ResultLine as ZoneLine } from "@/lib/places/search";
 
 /** Enough to read a typical complaint whole without pushing the actions off a phone screen. */
 const PREVIEW = 3;

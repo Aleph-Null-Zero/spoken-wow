@@ -117,15 +117,15 @@ areas of two zones, listed once where the story is kept and found and told from 
 Razorfen Downs' story is kept under Thousand Needles, while its entrance is in The Barrens, so the
 tab lists it in The Barrens.
 
-`tests/lua/zones_area_zones_test.lua` checks `AreaZones.lua` against the stories, and
-`tests/lua/zones_story_place_test.lua` checks the lookups.
+`tests/lua/places_area_zones_test.lua` checks `AreaZones.lua` against the stories, and
+`tests/lua/places_story_place_test.lua` checks the lookups.
 
 ### The dungeon table
 
 `pipelines/lib/dungeons.json` is the source, with three parts: `dungeons`, `instances` (instance maps
 that are no dungeon, such as the PvP halls) and `battlegrounds`. Three readers use it: the Quests
 exporter (`pipelines/quests/tools/export_compendium.py`), the Readables exporter
-(`pipelines/books/tools/places.mjs`) and `pipelines/lib/dungeons.mjs`, which writes
+(`pipelines/readables/tools/places.mjs`) and `pipelines/lib/dungeons.mjs`, which writes
 `addons/Spoken/Data/Dungeons.lua` with each name in every language from the client's Map table.
 
 ```sh
@@ -138,7 +138,7 @@ Razorfen Kraul, Blackrock Spire, Blackrock Depths, Maraudon, the Molten Core, Bl
 Ahn'Qiraj instances, Naxxramas and the Hall of Thanes) have no area story, so no line. Forever's City
 of Dalaran is the `dalaran` area of Alterac Mountains, and its Ruins of Lordaeron Tirisfal Glades'
 `ruins of lordaeron`, the surface ruins its entrance is in. Run `make dungeons`, then the Quests and Readables exporters, after editing
-the JSON. `tests/lua/zones_dungeons_test.lua` checks the table against the stories and the Quests
+the JSON. `tests/lua/places_dungeons_test.lua` checks the table against the stories and the Quests
 data.
 
 ### Areas only Forever has
@@ -148,7 +148,7 @@ Forever's AreaTable and not in Era's (`ForeverOnlyAreas`, left out of the list o
 cannot report them), Forever's spelling of a place the lore keeps under another key
 (`ForeverNames`: Legashi Encampment is the frozen `legash encampment`), and places no Forever
 player can reach (`NotOnForever`). The two hand-kept inputs are in
-`pipelines/zones/tools/seed/forever-places.json`. Forever is recognised by the client having a map
+`pipelines/places/tools/seed/forever-places.json`. Forever is recognised by the client having a map
 of Mount Hyjal (2482).
 
 ## The map panel

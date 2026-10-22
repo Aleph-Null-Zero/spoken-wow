@@ -719,7 +719,7 @@ local function CmdDump()
 	DumpMapTree(1415, out, seen, 0)  -- Eastern Kingdoms
 	SpokenZonesSettings.dump = out
 	SpokenZones:Print("dumped %d maps to SpokenZonesSettings.dump. Run /reload, then:", #out)
-	SpokenZones:Print("  node pipelines/zones/tools/seed-from-dump.mjs")
+	SpokenZones:Print("  node pipelines/places/tools/seed-from-dump.mjs")
 end
 
 -- Cross-check the generated data against the live client. Catches wrong uiMapIDs

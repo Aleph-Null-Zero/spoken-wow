@@ -18,7 +18,7 @@ wiki.gg --scrape--> lore_line <--edit-- the site (apps/web, /zones)
          make zones-lore-export  -->  Data/<locale>/Zones.lua, Subzones.lua  (commit the diff)
 ```
 
-`pipelines/zones/tools/lore/store.mjs` is the one place that decides between the database and the
+`pipelines/places/tools/lore/store.mjs` is the one place that decides between the database and the
 files. With no `DATABASE_URL` the scrapers read and write the Lua files, and a run limited to one
 zone (`--only`, `--zone`) leaves the files alone.
 
@@ -47,7 +47,7 @@ empty string is truthy in Lua.
 The key of an area is its name made canonical: lower case, apostrophes dropped, a leading "the"
 dropped, any other run of characters outside `a-z0-9` made one space. "The Bulwark" is `bulwark`.
 Every language is keyed by the English name, because a place is one place whatever it is called.
-`normaliseKey` in `pipelines/zones/tools/lib/wiki.mjs` and `SpokenZones:NormaliseAreaKey` in
+`normaliseKey` in `pipelines/places/tools/lib/wiki.mjs` and `SpokenZones:NormaliseAreaKey` in
 `Core.lua` must agree, and `validate.mjs` checks that they do and that every generated key is
 canonical (a key that is not is unreachable). A key is frozen once a story has one: when the
 game renames a place, the key stays and `Data/ForeverAreas.lua` maps the new spelling to it.
@@ -60,7 +60,7 @@ looked up with the map it was reported on as well (see Languages).
 
 ## Which places ship
 
-Only places a client can report. `pipelines/zones/tools/seed/era-areas.json` and
+Only places a client can report. `pipelines/places/tools/seed/era-areas.json` and
 `camelot-areas.json` are dumps of the client's own AreaTable (Era's and Forever's, at the builds
 pinned in `pipelines/lib/wago.mjs`). `make zones-areas` fetches them again when a pin moves. The
 export keeps a subzone only when its key is in one of the two, and drops Forever's second spelling
@@ -75,21 +75,21 @@ than for the other languages, which ship only the places that have text.
 
 ## Building the text
 
-Seeds in `pipelines/zones/tools/seed/`:
+Seeds in `pipelines/places/tools/seed/`:
 
 | File | Holds |
 | --- | --- |
-| `zones.json` | uiMapID to the wiki page title. Check it against the client with `/spp verify`, or rebuild it from a dump with `/spp dump`, `/reload`, `node pipelines/zones/tools/seed-from-dump.mjs [--write]`. |
+| `zones.json` | uiMapID to the wiki page title. Check it against the client with `/spp verify`, or rebuild it from a dump with `/spp dump`, `/reload`, `node pipelines/places/tools/seed-from-dump.mjs [--write]`. |
 | `subzones.json` | Which parent zones to scrape areas for. Areas come from the wiki's `Category:<Zone> subzones`. `category` overrides the category name, `exclude` drops pages, `aliases` maps a client name to a wiki title. |
 | `overrides.json` | Hand-written zone text that wins over the scrape. Empty at present. |
 
 ```sh
-node pipelines/zones/tools/scrape.mjs [--refresh] [--only <uiMapID>] [--verbose]
-node pipelines/zones/tools/scrape-subzones.mjs [--zone <uiMapID>] [--list <uiMapID>] [--refresh]
+node pipelines/places/tools/scrape.mjs [--refresh] [--only <uiMapID>] [--verbose]
+node pipelines/places/tools/scrape-subzones.mjs [--zone <uiMapID>] [--list <uiMapID>] [--refresh]
 ```
 
 Both need Node 18 and no packages. They cache every API response in
-`pipelines/zones/tools/cache/` (gitignored) and wait 500 ms between requests. `--no-classic` and
+`pipelines/places/tools/cache/` (gitignored) and wait 500 ms between requests. `--no-classic` and
 `--no-era-filter` turn off the two steps below.
 
 - The wiki keeps `<Name> (Classic)` articles for places that changed after vanilla. They are
@@ -108,12 +108,12 @@ whole article and has Claude write it back as prose.
 
 ```sh
 make zones-lore-rewrite ZONE=1420     # a dry run of both variants: writes a report to dist/
-node pipelines/zones/tools/rewrite-lore.mjs --zone 1420 --variant a     # writes the corpus
+node pipelines/places/tools/rewrite-lore.mjs --zone 1420 --variant a     # writes the corpus
 ```
 
 Other flags: `--all`, `--variant a|b|both`, `--model`, `--refresh`, `--verbose`. It needs
 `ANTHROPIC_API_KEY` in the root `.env` and spends credits, including with `--dry-run`, which is why
-no scrape runs it. Responses are cached under `pipelines/zones/tools/cache/rewrite/` by model, prompt
+no scrape runs it. Responses are cached under `pipelines/places/tools/cache/rewrite/` by model, prompt
 version and source text.
 
 - `lib/sections.mjs` picks the headings the model may see (History, Background, Description,
@@ -172,9 +172,9 @@ a line English ships with text.
 
 | Command | Fails when |
 | --- | --- |
-| `node pipelines/zones/tools/validate.mjs` | A data file is unbalanced or has a raw control character, a key is not canonical or is in no client's AreaTable seed, a story has post-vanilla text, an alias points at a missing key (or, in `byZone`, at a key with no story under that zone), the `.toc` lists the files in the wrong order or leaves one out, `Language.lua` and `lib/locales.mjs` differ, two areas in a zone share a report slug, or the Lua and JS key and slug code have drifted. It also prints how many area names each language's aliases reach. |
-| `node pipelines/zones/tools/locale/check-strings.mjs` | Reports each language's interface string coverage. It never fails on an incomplete language. |
-| `node pipelines/zones/tools/locale/build-languages.mjs --check` | `Data/Languages.lua` is out of date. |
+| `node pipelines/places/tools/validate.mjs` | A data file is unbalanced or has a raw control character, a key is not canonical or is in no client's AreaTable seed, a story has post-vanilla text, an alias points at a missing key (or, in `byZone`, at a key with no story under that zone), the `.toc` lists the files in the wrong order or leaves one out, `Language.lua` and `lib/locales.mjs` differ, two areas in a zone share a report slug, or the Lua and JS key and slug code have drifted. It also prints how many area names each language's aliases reach. |
+| `node pipelines/places/tools/locale/check-strings.mjs` | Reports each language's interface string coverage. It never fails on an incomplete language. |
+| `node pipelines/places/tools/locale/build-languages.mjs --check` | `Data/Languages.lua` is out of date. |
 | `make zones-lore-check` | The committed Lua differs from the database. Needs `DATABASE_URL`. |
 | `tests/lua/locale_parity_test.lua` | A module's locale keys or format arguments differ from English. |
 

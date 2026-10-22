@@ -18,7 +18,7 @@ local ADDON_NAME, SpokenBooks = ...
 
 -- Kept in step with SpokenZones.LOCALES (addons/Spoken_Places/Language.lua): the addons sit
 -- side by side, and a language offered in one and missing from the other is a setting the
--- player makes once and finds half-honoured. tests/lua/books_language_test.lua holds them
+-- player makes once and finds half-honoured. tests/lua/readables_language_test.lua holds them
 -- together.
 --
 -- `client = false` is a language no game client runs in -- Italian and Vietnamese, which a

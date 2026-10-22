@@ -31,10 +31,10 @@ import {
   type QueueSnapshot,
 } from "@/lib/generation/client";
 import { noApiKeyMessage } from "@/lib/no-api-key";
-import type { ZoneFacet } from "@/lib/zones/catalogue";
+import type { ZoneFacet } from "@/lib/places/catalogue";
 import RecordingDropZone from "@/components/RecordingDropZone";
-import { filterParams, filtersFromParams, PAGE_SIZE, type LineFilters } from "@/lib/zones/filters";
-import type { ResultLine, SearchResult } from "@/lib/zones/search";
+import { filterParams, filtersFromParams, PAGE_SIZE, type LineFilters } from "@/lib/places/filters";
+import type { ResultLine, SearchResult } from "@/lib/places/search";
 import { useClearDirty } from "@/lib/generation/use-clear-dirty";
 import { fetchRows, patchRows } from "@/lib/row-refresh";
 import * as echo from "@/lib/url-echo";

@@ -32,8 +32,8 @@ import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { readLines, shipped } from "../../pipelines/zones/tools/lib/loredata.mjs";
-import { assignFiles } from "../../pipelines/zones/tools/voice/naming.mjs";
+import { readLines, shipped } from "../../pipelines/places/tools/lib/loredata.mjs";
+import { assignFiles } from "../../pipelines/places/tools/voice/naming.mjs";
 import { archiveOf } from "../lib/archives.mjs";
 import { NAMED_QUESTS_SQL, namedBy } from "./relevant.mjs";
 

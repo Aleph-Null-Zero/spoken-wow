@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { Explorer } from "@/components/zones/Explorer";
-import { isCorpusEmpty, zoneFacets } from "@/lib/zones/catalogue";
+import { isCorpusEmpty, zoneFacets } from "@/lib/places/catalogue";
 import { Contained } from "@/components/Width";
 
 export const metadata: Metadata = { title: "Places · Spoken" };

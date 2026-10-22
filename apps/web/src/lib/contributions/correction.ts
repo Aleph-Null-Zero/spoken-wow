@@ -35,7 +35,7 @@
 import "server-only";
 
 import { recordActivity } from "@/lib/activity/store";
-import { BookConflict, BookMissing, saveBookText } from "@/lib/books/text";
+import { BookConflict, BookMissing, saveBookText } from "@/lib/readables/text";
 import { db } from "@/lib/db";
 import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import { branchesOnPlayerGender } from "@/lib/player-words";

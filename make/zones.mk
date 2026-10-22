@@ -1,4 +1,4 @@
-# Entry points for the scripts under scripts/zones/ and pipelines/zones/tools/.
+# Entry points for the scripts under scripts/places/ and pipelines/places/tools/.
 # Everything here is a thin wrapper -- the scripts remain runnable on their own.
 
 .DEFAULT_GOAL := help
@@ -21,7 +21,7 @@ help: ## Show this help
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 package: check ## Build dist/Spoken_Places-<version>.zip for upload
-	@./scripts/zones/package.sh
+	@./scripts/places/package.sh
 
 check: validate lint locale-check ## Run every pre-package check
 
@@ -29,32 +29,32 @@ check: validate lint locale-check ## Run every pre-package check
 # the generator grew to cover every project's pages rather than only this one's.
 
 validate: ## Sanity-check the generated Lua data files
-	@node pipelines/zones/tools/validate.mjs
+	@node pipelines/places/tools/validate.mjs
 
-# The in-game addon list reads a TGA or BLP, never the PNGs in pipelines/zones/assets/, so the
+# The in-game addon list reads a TGA or BLP, never the PNGs in pipelines/places/assets/, so the
 # icon is converted and committed. Both addons carry the same shield: they install as a
 # pair, and two icons would imply they are alternatives to each other. A language's pack wears
-# the shield with its badge: scripts/zones/package-audio.sh copies spoken-zones-<locale>.tga over it.
-icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/zones/assets/*-512.png (needs ffmpeg)
-	@python3 pipelines/zones/tools/make-icon.py pipelines/zones/assets/spoken-zones-512.png addons/Spoken_Places/Textures/AddonIcon.tga
+# the shield with its badge: scripts/places/package-audio.sh copies spoken-zones-<locale>.tga over it.
+icon: ## Rebuild both addons' AddonIcon.tga and the languages' badged TGAs from pipelines/places/assets/*-512.png (needs ffmpeg)
+	@python3 pipelines/places/tools/make-icon.py pipelines/places/assets/spoken-zones-512.png addons/Spoken_Places/Textures/AddonIcon.tga
 	@cp addons/Spoken_Places/Textures/AddonIcon.tga addons/SpokenZonesAudio/Textures/AddonIcon.tga
 	@echo "==> copied to addons/SpokenZonesAudio/Textures/AddonIcon.tga"
-	@for png in pipelines/zones/assets/spoken-zones-??[A-Z][A-Z]-512.png; do python3 pipelines/zones/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
+	@for png in pipelines/places/assets/spoken-zones-??[A-Z][A-Z]-512.png; do python3 pipelines/places/tools/make-icon.py "$$png" "$${png%-512.png}.tga"; done
 
 lint: ## Block-balance check on the addon's Lua
-	@python3 pipelines/zones/tools/lua-syntax-check.py
+	@python3 pipelines/places/tools/lua-syntax-check.py
 
 deploy: ## Symlink the addon into a client (CLIENT=era|anniversary)
-	@./scripts/zones/deploy.sh
+	@./scripts/places/deploy.sh
 
 deploy-copy: ## Copy the addon into the client instead of symlinking
-	@./scripts/zones/deploy.sh --copy
+	@./scripts/places/deploy.sh --copy
 
 status: ## Show what is installed in every client
-	@./scripts/zones/deploy.sh --status
+	@./scripts/places/deploy.sh --status
 
 remove: ## Uninstall the addon from every client
-	@./scripts/zones/deploy.sh --remove
+	@./scripts/places/deploy.sh --remove
 
 clean: ## Remove build output
 	@rm -rf dist
@@ -69,7 +69,7 @@ clean: ## Remove build output
 #-------------------------------------------------------------------------------
 
 # Which language's takes and pack the voice targets act on: English, or LOCALE=esMX for
-# another language's pack (addons/SpokenZonesAudio_esMX). pipelines/zones/tools/voice/store.mjs
+# another language's pack (addons/SpokenZonesAudio_esMX). pipelines/places/tools/voice/store.mjs
 # reads it; sounds, pull-live and package-audio take the same LOCALE, so one variable on the
 # command line moves the whole chain and a run cannot build one language's lookup over
 # another's clips.
@@ -86,28 +86,28 @@ VOICE_LANG = SPOKEN_ZONES_LANG=$(or $(LOCALE),enUS)
 VOICE_DB = DATABASE_URL=$(DATABASE_URL)
 
 voice: ## Report on every voiceline: what is missing, stale, and what it would cost
-	@$(VOICE_LANG) node pipelines/zones/tools/voice/generate.mjs --all
+	@$(VOICE_LANG) node pipelines/places/tools/voice/generate.mjs --all
 
 voice-zones: ## The same, over the 49 zone lines only
-	@$(VOICE_LANG) node pipelines/zones/tools/voice/generate.mjs --all --zones-only
+	@$(VOICE_LANG) node pipelines/places/tools/voice/generate.mjs --all --zones-only
 
 lookup: ## Rebuild the addon's audio lookup table (exports the manifest first)
-	@$(VOICE_LANG) node pipelines/zones/tools/voice/export-manifest.mjs
-	@$(VOICE_LANG) $(VOICE_DB) node pipelines/zones/tools/voice/build-lookup.mjs
+	@$(VOICE_LANG) node pipelines/places/tools/voice/export-manifest.mjs
+	@$(VOICE_LANG) $(VOICE_DB) node pipelines/places/tools/voice/build-lookup.mjs
 
 validate-audio: ## Check manifest, files on disk and lookup table agree (DATABASE_URL=... to use the droplet)
-	@$(VOICE_LANG) $(VOICE_DB) node pipelines/zones/tools/voice/validate-audio.mjs
+	@$(VOICE_LANG) $(VOICE_DB) node pipelines/places/tools/voice/validate-audio.mjs
 
 #-------------------------------------------------------------------------------
 # The site's database
 #
 # Optional to the addon build: with DATABASE_URL unset every target above still
-# works against pipelines/zones/tools/voice/manifest.json. The schema and its migrations
+# works against pipelines/places/tools/voice/manifest.json. The schema and its migrations
 # belong to apps/web now; see make/web.mk and deploy/web/README.md.
 #-------------------------------------------------------------------------------
 
-export: ## Write pipelines/zones/tools/voice/manifest.json from the database
-	@$(VOICE_LANG) node pipelines/zones/tools/voice/export-manifest.mjs
+export: ## Write pipelines/places/tools/voice/manifest.json from the database
+	@$(VOICE_LANG) node pipelines/places/tools/voice/export-manifest.mjs
 
 #-------------------------------------------------------------------------------
 # The lore corpus
@@ -120,20 +120,20 @@ export: ## Write pipelines/zones/tools/voice/manifest.json from the database
 #-------------------------------------------------------------------------------
 
 lore-import: ## Seed lore_line from the committed Lua data files (idempotent)
-	@node pipelines/zones/tools/lore/import.mjs
+	@node pipelines/places/tools/lore/import.mjs
 
 # A language's place names, from the alias table the addon ships (built from the game's
 # AreaTable). The prose has no such source and is written on the site. LOCALE and not LANG,
 # which every shell sets.
 lore-import-names: ## Name zones and subzones in a language from tools/seed/area-names.json (LOCALE=deDE)
 	@test -n "$(LOCALE)" || { echo "lore-import-names: set LOCALE, e.g. LOCALE=deDE"; exit 2; }
-	@node pipelines/zones/tools/lore/import-names.mjs --lang $(LOCALE)
+	@node pipelines/places/tools/lore/import-names.mjs --lang $(LOCALE)
 
 lore-export: ## Write addons/Spoken_Places/Data/<lang>/*.lua, every translated language, from the database
-	@node pipelines/zones/tools/lore/export.mjs
+	@node pipelines/places/tools/lore/export.mjs
 
 lore-check: ## Confirm the committed Lua matches the database
-	@node pipelines/zones/tools/lore/export.mjs --check
+	@node pipelines/places/tools/lore/export.mjs --check
 
 # Translations arrive as a spreadsheet, not through a model: a sheet goes out with the
 # English beside the blanks and comes back filled in. Both are free. The upload
@@ -141,7 +141,7 @@ lore-check: ## Confirm the committed Lua matches the database
 # in the explorer is never overwritten -- so a re-upload is always safe to run.
 lore-rewrite: ## Rewrite one zone's lore from the full wiki article (ZONE=1420, costs credits)
 	@test -n "$(ZONE)" || { echo "usage: make lore-rewrite ZONE=1420"; exit 1; }
-	@node pipelines/zones/tools/rewrite-lore.mjs --zone $(ZONE) --variant both --dry-run
+	@node pipelines/places/tools/rewrite-lore.mjs --zone $(ZONE) --variant both --dry-run
 
 #-------------------------------------------------------------------------------
 # Languages
@@ -154,8 +154,8 @@ lore-rewrite: ## Rewrite one zone's lore from the full wiki article (ZONE=1420, 
 #-------------------------------------------------------------------------------
 
 aliases: ## Rebuild Data/<locale>/Aliases.lua and seed/area-names.json from the client's AreaTable
-	@node pipelines/zones/tools/locale/build-aliases.mjs
-	@node pipelines/zones/tools/locale/build-languages.mjs
+	@node pipelines/places/tools/locale/build-aliases.mjs
+	@node pipelines/places/tools/locale/build-languages.mjs
 
 #-------------------------------------------------------------------------------
 # Which places each client has
@@ -168,28 +168,28 @@ aliases: ## Rebuild Data/<locale>/Aliases.lua and seed/area-names.json from the 
 #-------------------------------------------------------------------------------
 
 areas: ## Refetch seed/era-areas.json and seed/camelot-areas.json from the pinned client builds
-	@node pipelines/zones/tools/fetch-era-areas.mjs
-	@node pipelines/zones/tools/fetch-era-areas.mjs --forever
+	@node pipelines/places/tools/fetch-era-areas.mjs
+	@node pipelines/places/tools/fetch-era-areas.mjs --forever
 
 forever-areas: ## Rebuild Data/ForeverAreas.lua from the area seeds and seed/forever-places.json
-	@node pipelines/zones/tools/lore/export-forever-areas.mjs
+	@node pipelines/places/tools/lore/export-forever-areas.mjs
 
 # The reviewed pictures in the choices folder, as the shipped textures, Data/Pictures.lua and
 # Textures/Pictures/CREDITS.md. A folder holding only the places being worked on is safe: the
 # rest keep their pictures, and nothing is deleted unless ARGS=--prune says the folder holds
 # every place. Needs Python with numpy, Pillow and scipy.
 pictures: ## Prepare the reviewed zone pictures (CHOICES=<folder>, ARGS=--force or --prune)
-	@python3 pipelines/zones/tools/pictures/prepare.py $(if $(CHOICES),--choices "$(CHOICES)") $(ARGS)
+	@python3 pipelines/places/tools/pictures/prepare.py $(if $(CHOICES),--choices "$(CHOICES)") $(ARGS)
 
 languages: ## Rebuild Data/Languages.lua -- what each language covers, and whether it ships
-	@node pipelines/zones/tools/locale/build-languages.mjs
+	@node pipelines/places/tools/locale/build-languages.mjs
 
 # Reports coverage and confirms Languages.lua still matches it. An untranslated
 # language is not a failure; a stale Languages.lua is, because it decides which
 # languages players are offered.
 locale-check: ## Report per-language string coverage, and check Languages.lua is current
-	@node pipelines/zones/tools/locale/check-strings.mjs
-	@node pipelines/zones/tools/locale/build-languages.mjs --check
+	@node pipelines/places/tools/locale/check-strings.mjs
+	@node pipelines/places/tools/locale/build-languages.mjs --check
 
 #-------------------------------------------------------------------------------
 # The droplet
@@ -249,8 +249,8 @@ ssh-check: require-droplet ## Confirm the droplet is reachable and set up
 # take, so there is nothing to send back.
 pull-history: require-droplet ## Fetch the droplet's archived takes (non-destructive)
 	$(preflight)
-	@mkdir -p pipelines/zones/audio-history
-	$(RSYNC) $(HISTORY_RSYNC_OPTS) $(REMOTE_HISTORY) pipelines/zones/audio-history/
+	@mkdir -p pipelines/places/audio-history
+	$(RSYNC) $(HISTORY_RSYNC_OPTS) $(REMOTE_HISTORY) pipelines/places/audio-history/
 	@echo "==> pulled. Build the pack's Sounds/ with:  make zones-sounds"
 
 # Only the takes the pack is built from: the live ones, as the local database has them, so run
@@ -260,7 +260,7 @@ pull-live: require-droplet ## Fetch only the live takes the local database names
 	@$(DB_ENV) RSYNC="$(RSYNC)" scripts/audio/pull-live.sh zones $(or $(LOCALE),enUS)
 
 history-status: require-droplet ## Compare archived take count and size on both sides
-	@echo "local:   $$(find pipelines/zones/audio-history -name '*.mp3' 2>/dev/null | wc -l | tr -d ' ') takes, $$(du -sh pipelines/zones/audio-history 2>/dev/null | cut -f1 || echo 0)"
+	@echo "local:   $$(find pipelines/places/audio-history -name '*.mp3' 2>/dev/null | wc -l | tr -d ' ') takes, $$(du -sh pipelines/places/audio-history 2>/dev/null | cut -f1 || echo 0)"
 	@$(SSH) $(DROPLET) 'echo "droplet: $$(find $(REMOTE_ROOT)/shared/audio-history/zones -name "*.mp3" 2>/dev/null | wc -l | tr -d " ") takes, $$(du -sh $(REMOTE_ROOT)/shared/audio-history/zones 2>/dev/null | cut -f1)"' \
 	  || echo "droplet unreachable (try: make ssh-check)"
 
@@ -302,19 +302,19 @@ check-synced: ## Compare the local zones data with the droplet's, and prompt if 
 # From the database, against production's data: the lookup table is rebuilt here rather than
 # on the droplet after every generation, which is what the site used to do.
 package-audio: check-synced sounds lookup validate-audio ## Build the sound-pack zip (LOCALE=esMX for that language's)
-	@LOCALE="$(or $(LOCALE),enUS)" ./scripts/zones/package-audio.sh
+	@LOCALE="$(or $(LOCALE),enUS)" ./scripts/places/package-audio.sh
 
 release-dry: ## Show what `make release` would upload to CurseForge
-	@./scripts/zones/release.sh --dry-run
+	@./scripts/places/release.sh --dry-run
 
 release: ## Upload the built sound pack to CurseForge (needs CURSEFORGE_TOKEN)
-	@./scripts/zones/release.sh
+	@./scripts/places/release.sh
 
 release-audio-dry: ## Show what uploading the sound pack would send (LOCALE=xx for a language)
-	@./scripts/zones/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/places/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 
 release-audio: ## Upload the sound pack (LOCALE=xx for a language's)
-	@./scripts/zones/release.sh --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/places/release.sh --lang=$(or $(LOCALE),enUS) audio
 
 # The whole pack release, from production's data to the stores, with one question before
 # anything is uploaded. Each step is its own target and still runs alone; this is their order.
@@ -327,9 +327,9 @@ full-release: require-droplet ## Sync, pull live takes, build and upload the sou
 	@$(MAKE) --no-print-directory -f make/zones.mk sync
 	@$(MAKE) --no-print-directory -f make/zones.mk pull-live LOCALE=$(LOCALE)
 	@$(MAKE) --no-print-directory -f make/zones.mk package-audio LOCALE=$(LOCALE)
-	@./scripts/zones/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/places/release.sh --dry-run --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh --dry-run zones $(or $(LOCALE),enUS)
 	@printf 'Upload the zones pack to CurseForge and GitHub? [y/N] '; \
 	  read -r answer; [ "$$answer" = y ] || { echo aborted; exit 1; }
-	@./scripts/zones/release.sh --lang=$(or $(LOCALE),enUS) audio
+	@./scripts/places/release.sh --lang=$(or $(LOCALE),enUS) audio
 	@./scripts/audio-github-release.sh zones $(or $(LOCALE),enUS)

@@ -12,9 +12,9 @@ import RegenerateButton from "@/components/RegenerateButton";
 import ReportsBadge from "@/components/ReportsBadge";
 import TakeSelector from "@/components/TakeSelector";
 import { Button } from "@/components/ui/button";
-import { materialName } from "@/lib/books/filters";
-import { shownText } from "@/lib/books/shown";
-import type { ResultLine } from "@/lib/books/search";
+import { materialName } from "@/lib/readables/filters";
+import { shownText } from "@/lib/readables/shown";
+import type { ResultLine } from "@/lib/readables/search";
 import { cn, endsSelection } from "@/lib/utils";
 
 export type RowState =

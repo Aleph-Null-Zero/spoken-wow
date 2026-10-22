@@ -10,7 +10,7 @@
  */
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-import { catalogue } from "@/lib/books/catalogue";
+import { catalogue } from "@/lib/readables/catalogue";
 import { closeDb, db } from "@/lib/db";
 import { BASE_LANG } from "@/lib/lang";
 import { upsertResolution } from "@/lib/npc/store";

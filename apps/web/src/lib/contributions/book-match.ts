@@ -10,7 +10,7 @@
  * Computed against the corpus as it stands, never stored: once a new book's first page is
  * accepted, its other pages find it by title.
  */
-import { normaliseText } from "@books-tools/lib/text.mjs";
+import { normaliseText } from "@readables-tools/lib/text.mjs";
 
 import type { PoolClient } from "pg";
 

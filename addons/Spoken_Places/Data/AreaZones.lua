@@ -11,7 +11,7 @@
 --         too, and listed only once, where `zone` (or else its story) is.
 --
 -- Spoken's Data/Dungeons.lua does the same for a dungeon kept under another zone than its
--- entrance's (Razorfen Downs), which needs no entry here. Kept by hand; tests/lua/zones_area_zones_test.lua
+-- entrance's (Razorfen Downs), which needs no entry here. Kept by hand; tests/lua/places_area_zones_test.lua
 -- checks every entry against the stories.
 
 local _, SpokenZones = ...

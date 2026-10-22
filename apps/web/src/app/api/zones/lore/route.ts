@@ -18,8 +18,8 @@
  * invalidation. See the note on the memo in lib/zones/catalogue.ts.
  */
 import { requireIn } from "@/lib/generation/authz";
-import { isKnownLine } from "@/lib/zones/catalogue";
-import { LoreConflict, LoreMissing, loreHistory, restoreLore, saveLore } from "@/lib/zones/lore";
+import { isKnownLine } from "@/lib/places/catalogue";
+import { LoreConflict, LoreMissing, loreHistory, restoreLore, saveLore } from "@/lib/places/lore";
 
 export const dynamic = "force-dynamic";
 

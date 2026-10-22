@@ -10,9 +10,9 @@
 import "server-only";
 
 import { fileIndex } from "@/lib/audio";
-import { addressableFiles as booksFiles } from "@/lib/books/audio";
+import { addressableFiles as booksFiles } from "@/lib/readables/audio";
 
-import { addressableFiles as zonesFiles } from "@/lib/zones/audio";
+import { addressableFiles as zonesFiles } from "@/lib/places/audio";
 import { BASE_LANG, type Lang } from "@/lib/lang";
 import type { Source } from "@/lib/sections";
 

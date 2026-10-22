@@ -3,7 +3,7 @@
 import { useLang } from "@/components/LangProvider";
 import { withLang } from "@/lib/lang";
 import AudioPlayer from "@/components/AudioPlayer";
-import type { ResultLine } from "@/lib/zones/search";
+import type { ResultLine } from "@/lib/places/search";
 
 /**
  * The zones section's half of the player: which clip a line plays, and what to call it.

@@ -29,13 +29,13 @@ export const PUBLISHERS_DIR = join(ROOT, "publishers");
 
 export const SECTIONS = ["quests", "zones", "books"];
 
-// The docs folder a section's guides and changelog live in. Places and Readables moved to
-// their player-facing names before the section keys did.
-const DOCS_FOLDERS = { spoken: "spoken", quests: "quests", zones: "places", books: "readables" };
+// The folder name a section's docs/, pipelines/ and scripts/ use. Places and Readables moved
+// to their player-facing names before the section keys did.
+const SECTION_FOLDERS = { spoken: "spoken", quests: "quests", zones: "places", books: "readables" };
 
-export function docsFolder(section) {
-  const folder = DOCS_FOLDERS[section];
-  if (!folder) throw new Error(`no docs folder for '${section}'`);
+export function sectionFolder(section) {
+  const folder = SECTION_FOLDERS[section];
+  if (!folder) throw new Error(`no folder for '${section}'`);
   return folder;
 }
 
@@ -291,8 +291,8 @@ function main([command, ...args]) {
     if (!(field in found)) throw new Error(`no field '${field}'`);
     const value = found[field];
     console.log(Array.isArray(value) ? value.join(" ") : value ?? "");
-  } else if (command === "docs") {
-    console.log(docsFolder(args[0]));
+  } else if (command === "folder") {
+    console.log(sectionFolder(args[0]));
   } else if (command === "meta") {
     const [lang, field] = args;
     const found = metaFor(lang);

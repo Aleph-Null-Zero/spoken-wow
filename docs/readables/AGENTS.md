@@ -27,17 +27,17 @@ by the item or object it was read from, then the same words in any language, the
 page number. Two candidates are never guessed between; a moderator picks. A page nothing in the
 corpus has is minted on accept as `b:n{uuid}`, in a minted `n{uuid}` book when it starts one,
 and the import folds it into the real page if the world database turns out to have it
-(`pipelines/books/tools/lib/absorb.mjs`).
+(`pipelines/readables/tools/lib/absorb.mjs`).
 
 ## The extract must respect `patch`
 
 `gameobject_template` and `item_template` hold one row per content patch, and the server serves
-`max(patch)` at or below its own (`pipelines/books/tools/lib/world.mjs`). A query without that
+`max(patch)` at or below its own (`pipelines/readables/tools/lib/world.mjs`). A query without that
 window returns an object under every name it ever had. `page_text` has no patch column.
 
 ## The checksum constants are load-bearing
 
-`pageChecksum` in `pipelines/books/tools/lib/naming.mjs` is recomputed by the addon in Lua
+`pageChecksum` in `pipelines/readables/tools/lib/naming.mjs` is recomputed by the addon in Lua
 (`addons/Spoken_Readables/Checksum.lua`) over UTF-8 bytes, using only multiply, add and modulo.
 Changing `CHECKSUM_MODULUS` or `CHECKSUM_FACTOR` means re-exporting the data module, whose lookup
 tables are keyed on the result. A title and a page number do not identify a page: two different

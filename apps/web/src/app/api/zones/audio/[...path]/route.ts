@@ -7,7 +7,7 @@
  * row's `isCurrent`; the bytes are that take's archived file.
  */
 import { langParam } from "@/lib/lang-server";
-import { isAddressable } from "@/lib/zones/audio";
+import { isAddressable } from "@/lib/places/audio";
 import { serveTake } from "@/lib/takes/serve";
 import { livePath } from "@/lib/takes/store";
 

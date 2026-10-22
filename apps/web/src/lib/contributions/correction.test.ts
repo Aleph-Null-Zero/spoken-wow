@@ -7,7 +7,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
-import { saveBookText } from "@/lib/books/text";
+import { saveBookText } from "@/lib/readables/text";
 
 import { createContribution } from "./store";
 

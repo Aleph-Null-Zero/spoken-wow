@@ -2,7 +2,7 @@
 
 Run the commands from the repository root. The scrapers and exporters need Node 18 and, for
 anything that reads the database or the voice manifest, `pnpm install` at the root first
-(`pipelines/zones` declares the `pg` and Claude SDK packages the voice tools and the rewrite import).
+(`pipelines/places` declares the `pg` and Claude SDK packages the voice tools and the rewrite import).
 
 ## Adding a place
 
@@ -11,9 +11,9 @@ frozen once a story has one, so choose the key with care ([LORE.md](LORE.md)).
 
 An area with a wiki page. The wiki lists an area under `Category:<Zone> subzones`.
 
-1. Check that the zone is in `pipelines/zones/tools/seed/subzones.json`. `category`, `exclude` and
+1. Check that the zone is in `pipelines/places/tools/seed/subzones.json`. `category`, `exclude` and
    `aliases` there settle a category that lists more than the zone's areas.
-2. `node pipelines/zones/tools/scrape-subzones.mjs --list <uiMapID>` shows what the category holds.
+2. `node pipelines/places/tools/scrape-subzones.mjs --list <uiMapID>` shows what the category holds.
 3. Scrape it with `DATABASE_URL` set. A run limited to one zone (`--zone <uiMapID>`) records into
    the database, and writes nothing at all without one. Then run `make zones-lore-export` and
    commit the diff under `addons/Spoken_Places/Data/`.
@@ -82,7 +82,7 @@ greps answer each part from the data.
 | Areas the client has and the lore does not | Names in `seed/era-areas.json` and `seed/camelot-areas.json` whose keys are in no Subzones file. `/spp debug` prints the name and key of the area the character stands in. |
 | Dungeons with no card | Entries in `pipelines/lib/dungeons.json` without `story`. |
 | Places with no picture | Zone and area keys in the lore and not in `Data/Pictures.lua`. |
-| Lines with no voice | `node pipelines/zones/tools/voice/generate.mjs --missing --list` (per language with `SPOKEN_ZONES_LANG`). |
+| Lines with no voice | `node pipelines/places/tools/voice/generate.mjs --missing --list` (per language with `SPOKEN_ZONES_LANG`). |
 | Lines whose voice is out of date | `generate.mjs --stale --list`. |
 | Languages not finished | `make zones-languages`, then the counts in `Data/Languages.lua`. `check-strings.mjs` reports the interface strings. |
 | Zones with no icon of their own | `ZONE_ICONS` in `addons/Spoken/API.lua`. A map with no icon takes its parent's. A dungeon card uses a key icon. |

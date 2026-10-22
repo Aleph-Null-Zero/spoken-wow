@@ -38,7 +38,7 @@ jobs:
               - addons/**
               - tests/**
               - scripts/check-addon-xml.mjs
-              - pipelines/zones/tools/lua-syntax-check.py
+              - pipelines/places/tools/lua-syntax-check.py
               - docs/spoken/CHANGELOG.md
               - scripts/lib/changelog.mjs
               - scripts/spoken/check-changelog.sh
@@ -67,11 +67,11 @@ jobs:
               - pnpm-workspace.yaml
             zones:
               - .github/workflows/ci.yaml
-              - pipelines/zones/**
+              - pipelines/places/**
               - pipelines/lib/**
               - addons/Spoken_Places/**
               # The books pipeline's and the scripts' Node tests run in this job too.
-              - pipelines/books/**
+              - pipelines/readables/**
               - scripts/**
               # descriptions --check compares publishers/ with the READMEs generated from it.
               - publishers/**
@@ -101,7 +101,7 @@ jobs:
           package-manager-cache: false
       - run: node scripts/check-addon-xml.mjs
       # Block balance in Spoken_Places' Lua (make zones-lint).
-      - run: python3 pipelines/zones/tools/lua-syntax-check.py
+      - run: python3 pipelines/places/tools/lua-syntax-check.py
       # The changelog's rules: credits under Unreleased, and the .toc's version has a section.
       - run: ./scripts/spoken/check-changelog.sh
 
@@ -184,9 +184,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # validate.mjs is what asserts no square bracket survives into spoken text -- the one
       # normalisation rule that is not cosmetic, since eleven_v3 reads [...] as a tag.
-      - run: node pipelines/zones/tools/validate.mjs
+      - run: node pipelines/places/tools/validate.mjs
       - run: node scripts/descriptions.mjs --check
-      - run: node pipelines/zones/tools/locale/check-strings.mjs
-      - run: pnpm --filter @spoken/books-pipeline test
-      - run: pnpm --filter @spoken/zones-pipeline test
+      - run: node pipelines/places/tools/locale/check-strings.mjs
+      - run: pnpm --filter @spoken/readables-pipeline test
+      - run: pnpm --filter @spoken/places-pipeline test
       - run: node --test scripts/lib/*.test.mjs scripts/audio/*.test.mjs

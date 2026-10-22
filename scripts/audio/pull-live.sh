@@ -47,7 +47,7 @@ esac
 # Where sounds.mjs reads the archive from, including its SPOKEN_<SECTION>_AUDIO_HISTORY
 # override, so the pull lands where the build looks.
 override="SPOKEN_$(printf '%s' "$section" | tr '[:lower:]' '[:upper:]')_AUDIO_HISTORY"
-archive=${!override:-$root/pipelines/$section/audio-history}
+archive=${!override:-$root/pipelines/$(node "$root/scripts/lib/packs.mjs" folder "$section")/audio-history}
 
 list=$(mktemp)
 trap 'rm -f "$list"' EXIT

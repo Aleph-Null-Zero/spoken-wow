@@ -29,8 +29,8 @@ import {
 } from "@/lib/contributions/intake";
 import { countRecentContributions, recordContributionHit } from "@/lib/contributions/store";
 import { formatTarget, parseTarget, resolveTarget } from "@/lib/reports/target";
-import { pageById } from "@/lib/books/catalogue";
-import { lineByPath } from "@/lib/zones/catalogue";
+import { pageById } from "@/lib/readables/catalogue";
+import { lineByPath } from "@/lib/places/catalogue";
 import { type Source, isSource } from "@/lib/sections";
 
 export const dynamic = "force-dynamic";

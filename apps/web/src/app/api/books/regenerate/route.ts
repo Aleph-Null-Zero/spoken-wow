@@ -14,7 +14,7 @@
  * when the pack is packaged, against a database synced from production, so the site has no
  * addon artifact to keep up to date.
  */
-import { regenerateBookLine } from "@/lib/books/regenerate";
+import { regenerateBookLine } from "@/lib/readables/regenerate";
 import { requireIn, requireSpeaker } from "@/lib/generation/authz";
 
 export const dynamic = "force-dynamic";

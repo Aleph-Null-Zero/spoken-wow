@@ -1,4 +1,4 @@
--- The Lua half of pipelines/books/tools/lib/naming.mjs.
+-- The Lua half of pipelines/readables/tools/lib/naming.mjs.
 --
 -- THE TWO MUST AGREE EXACTLY. The exporter keys Data/Books.lua on this number, so a page
 -- whose checksum differs by one is a page this addon can never find -- and it fails

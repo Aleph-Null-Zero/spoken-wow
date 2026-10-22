@@ -5,7 +5,7 @@
  * address, traversal-proof by construction. Which take plays is the row's `isCurrent`;
  * the bytes are that take's archived file.
  */
-import { isAddressable } from "@/lib/books/audio";
+import { isAddressable } from "@/lib/readables/audio";
 import { langParam } from "@/lib/lang-server";
 import { serveTake } from "@/lib/takes/serve";
 import { livePath } from "@/lib/takes/store";

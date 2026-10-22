@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { Explorer } from "@/components/books/Explorer";
-import { bookFacets, isCorpusEmpty } from "@/lib/books/catalogue";
+import { bookFacets, isCorpusEmpty } from "@/lib/readables/catalogue";
 import { Contained } from "@/components/Width";
 
 export const metadata: Metadata = { title: "Readables · Spoken" };

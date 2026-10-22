@@ -74,10 +74,10 @@ store_version="$(sed -n 's/^## Version:[[:space:]]*//p' "$STORE_SRC/$STORE.toc" 
 module_packager() {
   case "$1" in
     Spoken_Quests) echo "$REPO/scripts/quests/package.sh" ;;
-    Spoken_Readables) echo "$REPO/scripts/books/package.sh" ;;
-    Spoken_Places) echo "$REPO/scripts/zones/package.sh" ;;
-    # Packed as the places are: scripts/zones/package.sh takes the folder from ADDON and NAME.
-    Spoken_NPCs) echo "$REPO/scripts/zones/package.sh" ;;
+    Spoken_Readables) echo "$REPO/scripts/readables/package.sh" ;;
+    Spoken_Places) echo "$REPO/scripts/places/package.sh" ;;
+    # Packed as the places are: scripts/places/package.sh takes the folder from ADDON and NAME.
+    Spoken_NPCs) echo "$REPO/scripts/places/package.sh" ;;
   esac
 }
 modules_dist="$(mktemp -d)"

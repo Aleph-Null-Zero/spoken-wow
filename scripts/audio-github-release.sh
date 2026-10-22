@@ -148,7 +148,7 @@ release_target() {
   release="$(field "$section" "$lang" "$pack" release)"
   title="$(field "$section" "$lang" "$pack" name)"
   needs="spoken"
-  changelog_file="$REPO/docs/$(node "$REPO/scripts/lib/packs.mjs" docs "$section")/CHANGELOG.md"
+  changelog_file="$REPO/docs/$(node "$REPO/scripts/lib/packs.mjs" folder "$section")/CHANGELOG.md"
 
   echo
   echo "=== $release ==="

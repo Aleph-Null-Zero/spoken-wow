@@ -18,14 +18,14 @@ import path from "node:path";
 
 import { recordActivity } from "@/lib/activity/store";
 import { fileIndex } from "@/lib/audio";
-import { catalogue as booksCatalogue } from "@/lib/books/catalogue";
+import { catalogue as booksCatalogue } from "@/lib/readables/catalogue";
 import { db, query } from "@/lib/db";
 import type { Lang } from "@/lib/lang";
 import type { Source } from "@/lib/sections";
 import { recordedDirOf } from "@/lib/takes/adapters";
 import { archiveName, writeAtomic } from "@/lib/takes/bytes";
 import type { TakeBytes } from "@/lib/takes/store";
-import { catalogue as zonesCatalogue } from "@/lib/zones/catalogue";
+import { catalogue as zonesCatalogue } from "@/lib/places/catalogue";
 
 import { can } from "@/lib/permissions";
 import { currentSession } from "@/lib/session";

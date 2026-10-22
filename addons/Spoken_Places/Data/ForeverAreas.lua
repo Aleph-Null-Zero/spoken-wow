@@ -132,7 +132,7 @@ SpokenZones.ForeverOnlyAreas = {
 }
 
 -- Forever's spelling of a place the lore keeps under another key, normalised: the key the
--- place's lines, clip and picture are frozen under (pipelines/zones/tools/seed/forever-places.json).
+-- place's lines, clip and picture are frozen under (pipelines/places/tools/seed/forever-places.json).
 SpokenZones.ForeverNames = {
 	["legashi encampment"] = "legash encampment",
 }

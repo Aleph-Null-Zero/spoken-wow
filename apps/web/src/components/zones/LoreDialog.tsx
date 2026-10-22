@@ -5,7 +5,7 @@ import { withLang } from "@/lib/lang";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, RotateCcw } from "lucide-react";
 
-import type { ResultLine } from "@/lib/zones/search";
+import type { ResultLine } from "@/lib/places/search";
 
 // Rewriting a line, and putting an earlier wording back.
 //

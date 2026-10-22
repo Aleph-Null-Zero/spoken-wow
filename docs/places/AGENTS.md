@@ -1,7 +1,7 @@
 # AGENTS.md: Places
 
 The root `AGENTS.md` applies, including its credit, data and versioning rules. This file covers
-only the Places section, whose code, pipeline and addon folders keep the name `zones`. Before changing a part, read its file:
+only the Places section, whose make targets, source key and addon internals still say `zones`. Before changing a part, read its file:
 
 - the module, its settings, languages and voice packs: [ADDON.md](ADDON.md)
 - the Places tab, the map panel and the area and dungeon tables: [COMPENDIUM.md](COMPENDIUM.md)
@@ -26,11 +26,11 @@ Fix the source and regenerate. Never hand-edit the output.
 - `addons/SpokenZonesAudio/Sounds/` and `build/zones/<lang>/` are assembled by `make zones-sounds`
   from the live takes. They are not a store.
 
-Kept by hand: `Data/AreaZones.lua`, `pipelines/zones/tools/seed/forever-places.json`,
+Kept by hand: `Data/AreaZones.lua`, `pipelines/places/tools/seed/forever-places.json`,
 `seed/zones.json`, `seed/subzones.json`, `seed/overrides.json` and
-`pipelines/zones/tools/voice/pronunciation.json`.
+`pipelines/places/tools/voice/pronunciation.json`.
 
-`pipelines/zones/tools/voice/generate.mjs` reports on lines and cannot voice one. Keep it that
+`pipelines/places/tools/voice/generate.mjs` reports on lines and cannot voice one. Keep it that
 way: takes are cut on the site.
 
 Line ids (`z:<mapID>`, `s:<mapID>:<key>`) and the keys in them are frozen once a story has one. A
@@ -51,7 +51,7 @@ make lint                 # what CI gates on
   (see root `AGENTS.md`).
 - `SpokenZonesAudio` versions on its own, and its notes go in `docs/places/CHANGELOG.md` under
   `## <version> — audio`. Language packs use `## <version> — zones-audio-<lang>`.
-  `changelog_for()` in `scripts/zones/release.sh` matches on version and kind, and exits on a
+  `changelog_for()` in `scripts/places/release.sh` matches on version and kind, and exits on a
   missing or duplicate section.
 - Do not re-cut a pack for a change to the module alone. A pack upload takes hours.
 - The addon accepts a pack whose `Sounds.lua` `version` equals `PACK_FORMAT` in
@@ -59,4 +59,4 @@ make lint                 # what CI gates on
   Bump it only when the pack's data shape changes.
 - `make zones-full-release` chains sync, pull-live, package-audio and the upload, and asks
   before uploading.
-- `scripts/zones/release.sh` uploads the English pack, or one language's pack with `--lang`.
+- `scripts/places/release.sh` uploads the English pack, or one language's pack with `--lang`.

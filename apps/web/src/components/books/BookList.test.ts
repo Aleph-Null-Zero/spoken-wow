@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { bookRuns } from "./BookList";
-import type { ResultLine } from "@/lib/books/search";
+import type { ResultLine } from "@/lib/readables/search";
 
 const line = (id: string, bookId: string, pageNumber: number, pageCount: number): ResultLine =>
   ({

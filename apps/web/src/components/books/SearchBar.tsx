@@ -9,14 +9,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AUDIO_STATE_OPTIONS } from "@/lib/audio-state";
-import type { BookFacet } from "@/lib/books/catalogue";
+import type { BookFacet } from "@/lib/readables/catalogue";
 import {
   activeFilterCount,
   FIELDS,
   OWNER_KINDS,
   STATES,
   type PageFilters,
-} from "@/lib/books/filters";
+} from "@/lib/readables/filters";
 
 /**
  * The same controls the other two explorers use, on this section's fields.

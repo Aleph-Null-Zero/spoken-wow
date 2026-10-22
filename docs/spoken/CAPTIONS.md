@@ -111,7 +111,7 @@ Other sources can supply `clip.present.transcript`; the player also accepts
 `clip.text`. A source whose text is in a script the game's font cannot draw (Czech on a
 Western client, for one) names a font file in `clip.present.font`. The captions, the subtitle
 and every window then draw that clip's header, label and text in it, at the player's own size;
-a clip without one stays in the player's font, and so does a file the client cannot load. Readable captions are exported by `pipelines/books/tools/lib/lua.mjs`
+a clip without one stays in the player's font, and so does a file the client cannot load. Readable captions are exported by `pipelines/readables/tools/lib/lua.mjs`
 using the same plain text conversion as narration. The current English export
 was regenerated from the public `/api/books/search?lang=enUS` catalogue on
 2026-09-27; page IDs, book order and lookup checksums are unchanged.

@@ -6,9 +6,9 @@
  */
 import { langParam, worksHere } from "@/lib/lang-server";
 import { recordingsFor } from "@/lib/recordings/store";
-import { catalogue, isCorpusEmpty, loadContext } from "@/lib/zones/catalogue";
-import { filtersFromParams, PAGE_SIZE } from "@/lib/zones/filters";
-import { search } from "@/lib/zones/search";
+import { catalogue, isCorpusEmpty, loadContext } from "@/lib/places/catalogue";
+import { filtersFromParams, PAGE_SIZE } from "@/lib/places/filters";
+import { search } from "@/lib/places/search";
 
 export const dynamic = "force-dynamic";
 

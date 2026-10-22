@@ -19,7 +19,7 @@ import ReportsBadge from "@/components/ReportsBadge";
 import TakeSelector from "@/components/TakeSelector";
 import { Button } from "@/components/ui/button";
 import { cn, endsSelection } from "@/lib/utils";
-import type { ResultLine } from "@/lib/zones/search";
+import type { ResultLine } from "@/lib/places/search";
 
 export type RowState =
   | { phase: "busy" }

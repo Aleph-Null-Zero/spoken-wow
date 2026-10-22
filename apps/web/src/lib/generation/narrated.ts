@@ -26,7 +26,7 @@ import { BASE_LANG } from "@/lib/lang";
 import "server-only";
 
 import { commitTake } from "@/lib/takes/commit";
-import { durationOf } from "@/lib/zones/tools";
+import { durationOf } from "@/lib/places/tools";
 
 import { busy, failure } from "./errors";
 import { BUSY, withTakeLock } from "./lock";

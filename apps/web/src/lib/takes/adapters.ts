@@ -28,12 +28,12 @@ import "server-only";
 
 import path from "node:path";
 
-import { historyDir as booksHistory } from "@/lib/books/audio";
+import { historyDir as booksHistory } from "@/lib/readables/audio";
 import { BASE_LANG, type Lang } from "@/lib/lang";
 import { AUDIO_HISTORY_DIR } from "@/lib/paths";
 import { isSafeAudioPath } from "@/lib/range";
 import type { Source } from "@/lib/sections";
-import { historyDir as zonesHistory } from "@/lib/zones/tools";
+import { historyDir as zonesHistory } from "@/lib/places/tools";
 
 type StoreAdapter = {
   /** The section's archive, which a deployment points at its own directory. */
