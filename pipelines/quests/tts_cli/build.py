@@ -9,12 +9,13 @@ Needs no database: the corpus carries every field the lookup tables key on.
 """
 import json
 import os
+import re
 import shutil
 
 from slpp import slpp as lua
 from tqdm import tqdm
 
-from tts_cli.ignores import ignored_files
+from tts_cli.ignores import ignored_files, wordless
 from tts_cli.length_table import write_sound_length_table_lua
 from tts_cli.naming import (FOLLOWUP, followup_stem_from_line_id, gossip_hash_from_line_id,
                             moment_of, quest_moment_stem, quest_stem_from_line_id,
@@ -182,6 +183,29 @@ def body_by_model() -> dict:
         return {int(file_id): body_name(row["race"], row["gender"]) for file_id, row in json.load(f).items()}
 
 
+#: A title the capture kept after the name ("Ishlee Breezewhisper <Skinner>"). The game names
+#: the unit without it, so a key carrying it is never matched and a quest log shows it.
+_SUBNAME = re.compile(r"\s*<[^<>]*>\s*$")
+#: What a capture wrote when it had no name to give: "null", "npc 263664", or the model's
+#: file name ("Doodad_BeerKeg101").
+_PLACEHOLDER = re.compile(r"(?i)null|npc \d+|\w+_\w+")
+
+
+def speaker_name(name: str) -> str:
+    """The name the game shows for the unit: the corpus's, less any <subname>."""
+    return _SUBNAME.sub("", name or "") or name
+
+
+def name_rank(line: dict) -> int:
+    """How far the names table trusts a line's speaker name: an extracted one over a
+    contributed one, which is the contributor's client's language and has put a Russian or
+    German name in the English quest log; a placeholder not at all."""
+    name = speaker_name(line["npcName"])
+    if not name or _PLACEHOLDER.fullmatch(name):
+        return 0
+    return 1 if line.get("contributionId") is not None else 2
+
+
 def build_tables(corpus: dict, ignored=()) -> dict:
     """Every lookup table, as {output filename: (lua table name, data)}.
 
@@ -220,6 +244,9 @@ def build_tables(corpus: dict, ignored=()) -> dict:
                and ("creature", npc["npcId"]) not in split}
     sex_of = {}
     bodies_of = {}
+    # Within a rank the last line's name stands, as it always has: the extract gives a few
+    # NPCs two English names, and another order would flip them.
+    ranks = {}
 
     for line in corpus["lines"]:
         base_id, voice = split_voice(line["lineId"])
@@ -227,7 +254,10 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             continue
 
         kind = line["npcType"]
-        names.setdefault(kind, {})[line["npcId"]] = line["npcName"]
+        rank = name_rank(line)
+        if rank and rank >= ranks.get((kind, line["npcId"]), 0):
+            ranks[(kind, line["npcId"])] = rank
+            names.setdefault(kind, {})[line["npcId"]] = speaker_name(line["npcName"])
 
         # Before the quest tables, which it must stay out of: a follow-up line carries its
         # quest, but it is said in chat rather than in the quest dialog, so matching its text
@@ -274,7 +304,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
             # Same-named NPCs of different voices share one entry here, so it names the line's
             # own file, never a voice's that only some of them speak.
             gossip_by_name[kind].setdefault(
-                escape_lua_string(line["npcName"]), {})[text] = own
+                escape_lua_string(speaker_name(line["npcName"])), {})[text] = own
             continue
 
         # Progress text is never voiced, so an entry would resolve to silence.
@@ -298,7 +328,7 @@ def build_tables(corpus: dict, ignored=()) -> dict:
 
         quest_ids.setdefault(line["source"], {}) \
                  .setdefault(escape_lua_string(line["questTitle"]), {}) \
-                 .setdefault(escape_lua_string(line["npcName"]), {}) \
+                 .setdefault(escape_lua_string(speaker_name(line["npcName"])), {}) \
                  .setdefault(quest_search_text(line["originalText"]), line["questId"])
 
     wordings = several_wordings(wordings)
@@ -455,8 +485,9 @@ def build_module(corpus: dict, store_dir: str, dist_dir: str = DEFAULT_DIST_DIR,
 
     # Compared without extensions: the ignore list is derived from the corpus and so names
     # mp3s, while a staged store may hold the same audio transcoded to something else.
-    skip = {os.path.splitext(rel)[0] for rel in ignored_files(corpus, ignored)} \
-        if ignored else set()
+    silent = set(wordless(corpus)) | set(ignored)
+    skip = {os.path.splitext(rel)[0] for rel in ignored_files(corpus, silent)} \
+        if silent else set()
     audio = [rel for rel in stored_files(store_dir)
              if os.path.splitext(rel)[0] not in skip
              and (include is None or os.path.splitext(rel)[0] in include)]
