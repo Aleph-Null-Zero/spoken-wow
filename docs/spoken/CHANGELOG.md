@@ -9,6 +9,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Readables sound packs say what they hold and that they load with the game, and the Vanilla
   quest packs say they are narrated.
   *([Nucabe](https://github.com/Nucabe))*
+- **Show Spoken Over DialogueUI is gone.** While DialogueUI's window is open, Spoken's window and
+  subtitles step aside, and DialogueUI's own window shows the words and the queue. *([Nucabe](https://github.com/Nucabe))*
+- **Read Greetings is Once for Quest Givers by default.** A quest giver's greeting is read once, and other
+  NPCs greet every time. A choice you made yourself is kept. *([Nucabe](https://github.com/Nucabe))*
 - **The 1.12, 2.4.3 and 3.3.5 clients are no longer supported.** Spoken runs on WoW: Forever, Classic Era
   and TBC Anniversary.
   *([rusty-key](https://github.com/rusty-key))*
