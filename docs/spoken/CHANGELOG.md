@@ -4,6 +4,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **The Ruins of Lordaeron dungeon is listed in Tirisfal Glades**, where its entrance is, and its card
+  is Tirisfal's Ruins of Lordaeron. It was listed in the Undercity. *([Nucabe](https://github.com/Nucabe))*
 - **Highlight Words is on by default, and Type Words Out and Show Progress Bar are off.** The words of a
   line show whole and the word being read is lit. *([Nucabe](https://github.com/Nucabe))*
 - **The AddOns list says what each part reads.** Hovering Spoken now says it reads quests, gossip,

@@ -74,9 +74,9 @@ local strays = {}
 for id in pairs(filed) do table.insert(strays, id) end
 table.sort(strays)
 Expect("every dungeon the Quests data names is in the table, under its entrance's zone", table.concat(strays, ", "), "")
-Expect("Forever's City of Dalaran is Alterac Mountains' Dalaran, and Ruins of Lordaeron the Undercity's",
-    all[2959].zone .. "/" .. all[2959].story[2] .. "|" .. all[2999].zone .. "/" .. all[2999].story[2],
-    "1416/dalaran|1458/ruins of lordaeron")
+Expect("Forever's City of Dalaran is Alterac Mountains' Dalaran, and Ruins of Lordaeron Tirisfal Glades' own ruins, listed there",
+    all[2959].zone .. "/" .. all[2959].story[2] .. "|" .. all[2999].zone .. "/" .. all[2999].story[1] .. "/" .. all[2999].story[2],
+    "1416/dalaran|1420/1420/ruins of lordaeron")
 Expect("the Sunken Temple is the Temple of Atal'Hakkar's area", dungeons[1435][1].key .. "|" .. dungeons[1435][1].dungeon,
     "temple of atalhakkar|109")
 Expect("Razorfen Downs is listed in The Barrens, its story kept under Thousand Needles",
