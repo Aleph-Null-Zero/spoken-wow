@@ -1,7 +1,7 @@
 # AGENTS.md: Places
 
 The root `AGENTS.md` applies, including its credit, data and versioning rules. This file covers
-only the Places section, whose folders keep the name `zones`. Before changing a part, read its file:
+only the Places section, whose code, pipeline and addon folders keep the name `zones`. Before changing a part, read its file:
 
 - the module, its settings, languages and voice packs: [ADDON.md](ADDON.md)
 - the Places tab, the map panel and the area and dungeon tables: [COMPENDIUM.md](COMPENDIUM.md)
