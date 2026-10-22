@@ -1044,10 +1044,13 @@ def connect(args):
 
 
 def with_db(args):
+    # The run that reads the DB places every giver, and the rectangles overlap along every border:
+    # a giver at a zone's edge fell into its neighbour (A Sealed Crate in Durotar).
+    area_at = area_reader()
+    if not area_at:
+        raise SystemExit(f"no map files at {MAPS_DIR}: set COMPENDIUM_MAPS to the repack's data/maps folder")
     quests, givers, spawns = corpus_quests()
-    maps = Maps(area_at=area_reader())
-    if not maps.area_at:
-        print(f"no map files at {MAPS_DIR} (COMPENDIUM_MAPS): givers are placed by zone rectangles")
+    maps = Maps(area_at=area_at)
     db = connect(args)
     ids = sorted(quests)
     marks = ",".join(["%s"] * len(ids))

@@ -4,6 +4,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Readables in the Compendium are filed where Forever has them.** Archmage Khadgar's plaque is
+  under Alterac Mountains as well as Stormwind, Holidays and Events has a line for each event, the
+  Green Hills of Stranglethorn cover is under Stranglethorn Vale, and Hildelve's Journal and
+  Rabine's Letter are no longer under Loch Modan and Silithus. *([Nucabe](https://github.com/Nucabe))*
 - **A quest's page writes your class and race in lower case mid-sentence**, as the quest window does:
   "young hunter", not "young Hunter". German keeps the capital. *([Nucabe](https://github.com/Nucabe))*
 - **Gossip finds its line on Chinese, Korean and French clients.** A reworded line now matches in
