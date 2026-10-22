@@ -60,10 +60,24 @@ local WORLD, CONTINENTS, CITY_IN = C.WORLD, C.CONTINENTS, C.CITY_IN
 local ContinentOf, IsContinent, IS_BATTLEGROUND = C.ContinentOf, C.IsContinent, C.IS_BATTLEGROUND
 SpokenZones.CityIn = CITY_IN
 
+-- A name as the lists order it: "The Barrens" files under B, as a reader looks for it. Only
+-- English's article: no other language's names start with "The ".
+local function SortName(name)
+	return (string.gsub(name, "^The ", "", 1))
+end
+SpokenZones.SortName = SortName
+
+-- Whether `na` comes before `nb`; a tie in sort names (one "The ") is settled by the whole name.
+local function Before(na, nb)
+	local sa, sb = SortName(na), SortName(nb)
+	if sa ~= sb then return sa < sb end
+	return na < nb
+end
+
 local function ByName(a, b)
 	local na, nb = ZoneName(a), ZoneName(b)
 	if na == nb then return a < b end
-	return na < nb
+	return Before(na, nb)
 end
 
 -- A map this client has never heard of: in the data for another client (Forever's 2482, 2521,
@@ -226,7 +240,7 @@ local function DungeonsIn(zone)
 				dungeon = dungeon.dungeon })
 		end
 	end
-	table.sort(list, function(a, b) return a.name < b.name end)
+	table.sort(list, function(a, b) return Before(a.name, b.name) end)
 	dungeonsIn[zone] = list
 	return list
 end
@@ -250,7 +264,7 @@ local function Areas(mapID)
 	table.sort(list, function(a, b)
 		local na, nb = a.entry.name or a.key, b.entry.name or b.key
 		if na == nb then return a.mapID < b.mapID end
-		return na < nb
+		return Before(na, nb)
 	end)
 	-- Kept for a zone whose stories have loaded; one with none of its own yet is asked again.
 	if own then sortedAreas[mapID] = list end

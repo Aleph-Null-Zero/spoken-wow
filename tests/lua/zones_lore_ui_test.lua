@@ -820,5 +820,16 @@ do
     body.text.GetStringHeight = stringHeight
 end
 
+-- Forever titles many areas "The ...": the lists file them under the word after it.
+Expect("a leading The is left out of the name the lists sort by", Z.SortName("The Barrens"), "Barrens")
+Expect("...only a leading one, as its own word", Z.SortName("Theramore Isle") .. "|" .. Z.SortName("Shrine of the Fallen"),
+    "Theramore Isle|Shrine of the Fallen")
+do
+    local names = { "The Crossroads", "Durotar", "Ashenvale", "The Barrens", "Desolace" }
+    table.sort(names, function(a, b) return Z.SortName(a) < Z.SortName(b) end)
+    Expect("...so The Barrens sorts between Ashenvale and The Crossroads", table.concat(names, "|"),
+        "Ashenvale|The Barrens|The Crossroads|Desolace|Durotar")
+end
+
 if Failures() > 0 then print(string.format("\n%d failure(s)", Failures())); os.exit(1) end
 print("\nAll zones lore window tests passed")
