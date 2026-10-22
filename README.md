@@ -49,11 +49,12 @@ on the Spoken settings page or in the welcome window on first login:
 - **Subtitles Only**, the default on Forever and the other modern clients: the speaker's name
   and the words low in the middle of the screen over a soft shadow, at most four lines at a
   time. A longer line turns its pages as the voice reaches them, one fading out before the
-  next fades in. The words type in letter by letter (or whole words, in the settings), a
-  little ahead of the voice. Stop or Replay, skip and Report appear on hover.
-- **Small Window** (Minimal Classic): a round portrait, the speaker's name, the title and a
-  slim progress bar, with the controls and the queue on interaction. See
-  [`docs/minimal-classic/`](docs/minimal-classic/README.md).
+  next fades in. The words show whole, with the word being read lit; Type Words Out in the
+  settings types them in instead, a little ahead of the voice. Stop or Replay, skip and Report
+  appear on hover.
+- **Small Window** (Minimal Classic): a round portrait, the speaker's name and the title (a
+  slim progress bar under them with Show Progress Bar on), with the controls and the queue on
+  interaction. See [`docs/minimal-classic/`](docs/minimal-classic/README.md).
 - **Large Window**: the game's Talking Head frame where the client has its art: a bigger
   portrait, with the speaker's name, the words, the controls and a count of the lines waiting
   beside it in one box.
@@ -63,7 +64,7 @@ on the Spoken settings page or in the welcome window on first login:
 - **Voice Only**: nothing on screen.
 
 The windows can show the words as caption lines too, with the words being read lit in gold
-(Highlight Words, off by default); see [caption controls](docs/spoken/CAPTIONS.md). Word
+(Highlight Words, on by default); see [caption controls](docs/spoken/CAPTIONS.md). Word
 timing is an estimate, because the recordings do not mark where each word falls. The
 subtitles light a word only while Highlight Words is on and Type Words Out is off, since a
 word lit as it is typed shows every miss.

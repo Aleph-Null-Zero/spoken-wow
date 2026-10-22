@@ -4,6 +4,8 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 
 ## Unreleased
 
+- **Highlight Words is on by default, and Type Words Out and Show Progress Bar are off.** The words of a
+  line show whole and the word being read is lit. *([Nucabe](https://github.com/Nucabe))*
 - **The AddOns list says what each part reads.** Hovering Spoken now says it reads quests, gossip,
   places and readables, with one queue, one narrator and one minimap button. The Places and
   Readables sound packs say what they hold and that they load with the game, and the Vanilla
