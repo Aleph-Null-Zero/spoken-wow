@@ -98,6 +98,12 @@ local shipped = SpokenQuestsCompendium.quests
 local linked = shipped[PIE].prev == NECKLACE and shipped[BACK].prev == PIE and shipped[GOLDTOOTH].prev == BACK
 -- Speak with Ruga, the breadcrumb Brutal Armor's chain starts with, names it after that quest.
 local namedByHand = shipped[1823] and shipped[1823].name == 1838
+-- Zephras Isle's story, which both sides take: every High Order Skyborne starts there.
+local zephrasOpen = true
+for _, id in ipairs({ 92517, 92528, 92529, 92550, 92640, 92642, 92643, 92644, 92645, 92880, 92881, 92947,
+                      93036, 93065, 93320, 93926, 93927, 93948, 93958, 94568 }) do
+    zephrasOpen = zephrasOpen and shipped[id] ~= nil and shipped[id].races == nil
+end
 for _, quest in pairs(shipped) do quest.prev, quest.name = nil, nil end
 SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
 SpokenQuestsCompendium.quests[BACK].prev = PIE
@@ -117,6 +123,7 @@ shipped[GOULASH].races, shipped[WATCHFUL].prev, shipped[FURTHER].prev = 2, GOULA
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
+Expect("...and Zephras Isle's shared quests open to both sides", zephrasOpen, true)
 local C = _G.SpokenCompendium
 
 Expect("no tab before the world is up", C:Tab("quests"), nil)
