@@ -133,6 +133,14 @@ make lint               # the repo-wide checks
 vendored libraries, the game text the corpus is built from, and the wiki lore and
 pictures the Places addon ships.
 
+## Credits
+
+Most of Forever's text that the world database lacks comes from players, through `/contribute`.
+The text of a few Forever quests that nobody has sent yet, some BroadcastText rows, and the quest
+data behind the Compendium come from Efficient Games (https://efficient.games), published as
+[EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf) under CC BY 4.0. The text
+itself is Blizzard's. `THIRD_PARTY.md` lists the rest.
+
 Read `AGENTS.md` before changing anything, and the section READMEs under `docs/`
 for what each section does. They are detailed, and they are the reference to check
 before inferring behaviour from the code.
