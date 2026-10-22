@@ -102,7 +102,7 @@ def test_the_excavation_site_is_the_wetlands_not_a_dungeon():
 
 
 def test_the_dungeons_are_the_table_every_pipeline_shares():
-    """pipelines/lib/dungeons.json, which the books' places and Spoken's Data/Dungeons.lua are
+    """pipelines/lib/dungeons.json, which the readables' places and Spoken's Data/Dungeons.lua are
     made from too: Forever's City of Dalaran in Alterac Mountains, Ruins of Lordaeron in
     Tirisfal Glades, whose surface ruins its entrance is in."""
     assert export_compendium.INSTANCE_ZONE[2959] == 1416 and 2959 in export_compendium.DUNGEONS

@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from export_compendium import db_races, playable_races, quest_classes, quest_line  # noqa: E402
+from export_compendium import db_races, playable_races, quest_classes, quest_line, race_mask  # noqa: E402
 
 HIGH_ORDER, WINDSHAPER = 1 << 32, 1 << 33
 ALLIANCE, HORDE = 1 | 4 | 8 | 64, 2 | 16 | 32 | 128
@@ -50,6 +50,22 @@ def test_a_mask_as_the_client_has_it_is_kept_as_it_is():
     for mask in (0, EVERYONE, ALLIANCE | HORDE | HIGH_ORDER | WINDSHAPER, 512):
         assert playable_races(mask) == 0
         assert "races" not in quest_line(1, "Anyone", races=mask)
+
+
+def test_forever_clients_own_limit_wins_over_the_dbs():
+    # 26 A Lesson to Learn: the DB's Night Elf, the client's Night Elf and High Order Skyborne.
+    assert race_mask(8, {"raceMask": "0000000100000008"}) == 8 | HIGH_ORDER
+    # 5634 Desperate Prayer: the DB's Human and Dwarf, the client's Dwarf only.
+    assert race_mask(5, {"raceMask": "0000000000000004"}) == 4
+    # A quest the DB opens to everyone takes the client's limit, as before.
+    assert race_mask(0, {"raceMask": "000000000000004d"}) == ALLIANCE
+
+
+def test_a_client_mask_of_anyone_or_none_leaves_the_dbs():
+    # 1470 Piercing the Veil: the DB's Orc and Undead, the client's anyone.
+    assert race_mask(18, {"raceMask": "ffffffffffffffff"}) == 18
+    assert race_mask(18, {}) == 18
+    assert race_mask(18, None) == 18
 
 
 def test_a_quest_filed_under_a_class_with_no_class_named_is_that_classs():

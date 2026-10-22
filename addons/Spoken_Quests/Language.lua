@@ -35,7 +35,7 @@ Language = {}
 -- declare. A code absent here is not a language: a pack declaring one is treated as
 -- undeclared (English), because the alternative is a pack that silently answers nothing.
 --
--- Kept deliberately in step with SpokenZones.LOCALES in addons/Spoken_Places/Language.lua:
+-- Kept deliberately in step with SpokenPlaces.LOCALES in addons/Spoken_Places/Language.lua:
 -- the two addons are installed side by side and a player who sets Portuguese in one and
 -- finds no such option in the other has found a bug.
 --
@@ -81,7 +81,7 @@ function Language:GetName(code)
 end
 
 --- The language's name for itself, as the language pickers list it -- the same names
---- SpokenBooks and SpokenZones show, so the three panels read alike.
+--- Spoken Readables and Spoken Places show, so the three panels read alike.
 ---@param code string|nil
 ---@return string name
 function Language:GetNativeName(code)

@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "zhTW" then
 	return
@@ -22,10 +22,8 @@ L.OPT_PLAY_BUTTON = "朗讀故事"
 L.OPT_AUTOPLAY = "自動朗讀"
 L.OPT_AUTOPLAY_SUB = "包含較小區域"
 L.OPT_AUTOPLAY_EXPLORED = "包含先前找到的地方"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "每個角色對每個地方朗讀一次，包括先前發現的地方。"
 L.OPT_LANG_RELOAD = "輸入 /reload 即可切換。"
 L.OPT_LANGUAGE = "文字語言"
-L.OPT_LANGUAGE_TIP = "故事文字的語言；語音跟隨語音語言。"
 L.OPT_LANG_AUTO_FMT = "自動（%1$s）"
 L.OPT_LANG_SET_FMT = "介面重新載入後，故事將以%1$s顯示。"
 L.OPT_LANG_PROFILE_FMT = "此設定檔將以%1$s朗讀故事。輸入 /reload 即可切換。"
@@ -94,4 +92,4 @@ L.OPT_DEV_PREVIEW = "提供未完成的翻譯"
 
 L.OPEN_IN_COMPENDIUM = "在艾澤拉斯百科中開啟"
 
-SpokenZones:RegisterStrings("zhTW", L)
+SpokenPlaces:RegisterStrings("zhTW", L)

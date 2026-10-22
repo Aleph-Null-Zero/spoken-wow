@@ -5,7 +5,7 @@ As of 2026-10-20. The lists come from `Data/Bosses.lua`, `Data/Creatures.lua` an
 Sources checked for every boss below:
 
 - the Forever repack's world database (port 3317), by exact name, by part of the name, and by the
-  ids in `pipelines/zones/tools/boss-sources.json`;
+  ids in `pipelines/places/tools/boss-sources.json`;
 - Efficient Games' data for every 1.60.1 build (`encounters`, `creature_details`, `creatures`), the
   set `export_compendium.py` pins. It holds 50 encounter records, so a boss missing from it proves
   nothing;
@@ -23,7 +23,7 @@ A boss with no creature id is still found when the player targets it in its dung
 - Portrait: the display Efficient Games' `creature_details` gives for that creature once a player has
   recorded the fight, or the repack's model once its database has the creature. Check that the client's
   CreatureDisplayInfo has it.
-- Then add the boss to `pipelines/zones/tools/boss-creatures-manual.json` with the evidence, and run
+- Then add the boss to `pipelines/places/tools/boss-creatures-manual.json` with the evidence, and run
   `boss_creatures.py` and `write-boss-creatures.mjs` (README, "Data").
 - Story: written from the wiki's lore, as the others are (`build-boss-stories.mjs`,
   `apply-boss-stories.mjs`), Classic-era events only.

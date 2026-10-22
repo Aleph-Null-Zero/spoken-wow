@@ -7,15 +7,15 @@
 -- leading "the " removed, apostrophes dropped, punctuation collapsed to
 -- single spaces. The client reports "The Bulwark" where the wiki titles the
 -- page "Bulwark", so both sides are reduced to the same key at lookup time
--- via SpokenZones:NormaliseAreaKey.
+-- via SpokenPlaces:NormaliseAreaKey.
 --
 -- Every language is keyed by the ENGLISH name: a place is one place whatever
 -- it is called, and a non-English client gets from its own name to this key
 -- through Data/<locale>/Aliases.lua.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("frFR") then
+if not SpokenPlaces:ShouldLoadLanguage("frFR") then
 	return
 end
 
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mers du sud",
 			short = "Les Mers du sud emplissent les eaux entre les continents connus, une partie de la Grande mer. Zandalar s'élève de ces eaux, antique berceau de l'empire troll.",
-			full = "Les Mers du sud emplissent les eaux entre les continents connus, une partie de la Grande mer. Zandalar s'élève de ces eaux, antique berceau de l'empire troll. Plus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et d'îlots, certains guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont disparu. Les Mers du sud longent les frontières de Strangleronce et de Tanaris.",
+			full = "Les Mers du sud emplissent les eaux entre les continents connus, une partie de la Grande mer. Zandalar s'élève de ces eaux, antique berceau de l'empire troll. Kezan se trouve aussi parmi elles, une île volcanique dont le peuple se tient à l'écart des puissances du continent. Plus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et d'îlots, certains guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont disparu. Les Mers du sud longent les frontières de Strangleronce et de Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mers du sud",
 			short = "Les eaux au sud des continents connus s'ouvrent sur une vaste étendue de la Grande mer, dont les courants passent devant des îles dont seuls les marins connaissent vraiment les noms.",
-			full = "Les eaux au sud des continents connus s'ouvrent sur une vaste étendue de la Grande mer, dont les courants passent devant des îles dont seuls les marins connaissent vraiment les noms. Zandalar s'élève de ces eaux, antique berceau de l'empire troll.\n\nPlus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et de criques cachées, le genre d'eaux où un capitaine connaît chaque rocher par son nom ou perd son navire. De petites îles parsèment cette étendue, certaines guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont depuis longtemps disparu sous les flots.\n\nCe qui rend cette mer digne d'être nommée, c'est moins une bataille qui s'y serait livrée que tout ce qu'elle a englouti puis à demi révélé de nouveau : temples engloutis, côtes noyées, ruines entrevues à travers l'eau claire à marée basse. C'est une mer de lisières et d'entre-deux, qui longe les frontières de Strangleronce et de Tanaris, portant ce que les marées choisissent d'apporter aux rivages qu'elle sépare.",
+			full = "Les eaux au sud des continents connus s'ouvrent sur une vaste étendue de la Grande mer, dont les courants passent devant des îles dont seuls les marins connaissent vraiment les noms. Zandalar s'élève de ces eaux, antique berceau de l'empire troll. Kezan se trouve aussi parmi elles, une île volcanique dont le peuple se tient à l'écart des puissances du continent.\n\nPlus près de la vallée de Strangleronce, la mer devient traîtresse, semée de récifs et de criques cachées, le genre d'eaux où un capitaine connaît chaque rocher par son nom ou perd son navire. De petites îles parsèment cette étendue, certaines guère plus qu'un banc de sable, d'autres abritant des ruines dont les bâtisseurs ont depuis longtemps disparu sous les flots.\n\nCe qui rend cette mer digne d'être nommée, c'est moins une bataille qui s'y serait livrée que tout ce qu'elle a englouti puis à demi révélé de nouveau : temples engloutis, côtes noyées, ruines entrevues à travers l'eau claire à marée basse. C'est une mer de lisières et d'entre-deux, qui longe les frontières de Strangleronce et de Tanaris, portant ce que les marées choisissent d'apporter aux rivages qu'elle sépare.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "Port Gentepression",
-			short = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers le large.",
-			full = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers le large. Il appartient au Cartel Gentepression, des gobelins qui traitent avec tous les venus tant que l'or est bon.\n\nParmi les résidents du port se trouve Yeh'kinya, dont les manigances contribuèrent au retour de Hakkar l'Écorcheur d'âmes.",
+			short = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers Kezan.",
+			full = "Port Gentepression se trouve sur la côte orientale de Tanaris, avec une route filant vers l'ouest jusqu'à sa ville mère, Gadgetzan, et un quai tendu vers Kezan. Il appartient au Cartel Gentepression, des gobelins qui traitent avec tous les venus tant que l'or est bon.\n\nParmi les résidents du port se trouve Yeh'kinya, dont les manigances contribuèrent au retour de Hakkar l'Écorcheur d'âmes.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4912,4 +4912,4 @@ local subzones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("frFR", "subzones", subzones)
+SpokenPlaces:RegisterLoreData("frFR", "subzones", subzones)

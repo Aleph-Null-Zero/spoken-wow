@@ -16,7 +16,7 @@
 --   4. nothing                          -- silently, because the alternative is reading the
 --                                          wrong page's words aloud
 
-local ADDON_NAME, SpokenBooks = ...
+local ADDON_NAME, SpokenReadables = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
@@ -26,7 +26,7 @@ local NotSecret = Spoken and Spoken.NotSecret or function(value) return value en
 --- Two tests, because they catch different things. A creator is a player's name, and only
 --- mail has one. And MailFrame being open is what catches a piece of mail with no creator
 --- at all -- a returned letter, or one the server sent.
-function SpokenBooks:IsMail()
+function SpokenReadables:IsMail()
 	if ItemTextGetCreator and NotSecret(ItemTextGetCreator()) then
 		return true
 	end
@@ -76,7 +76,7 @@ end
 
 --- The corpus pages that hold a token, each as the words between its tokens, once per side
 --- of its $g branches. Built once: Books.lua does not change while the game runs.
-function SpokenBooks:TokenPages()
+function SpokenReadables:TokenPages()
 	if self.tokenPages then
 		return self.tokenPages
 	end
@@ -126,7 +126,7 @@ end
 --- screen. The client writes the reader's name, class and gender word into a page, while the
 --- index is keyed on the page as stored, tokens and all, so no checksum finds it. Nil where no
 --- page or more than one fits.
-function SpokenBooks:TokenPageOf(text)
+function SpokenReadables:TokenPageOf(text)
 	local flat = Flat(text)
 	local found
 	for _, page in ipairs(self:TokenPages()) do
@@ -143,7 +143,7 @@ end
 --- A caption with its tokens filled in for this character, as the client fills them on the
 --- page: name, class, race, the side of a $g branch for the character's sex, $B as a line break.
 --- The same as FillPlayerTokens in Spoken_Quests/Utils.lua.
-function SpokenBooks:FillPlayerTokens(text)
+function SpokenReadables:FillPlayerTokens(text)
 	local name = UnitName and UnitName("player") or ""
 	local class = UnitClass and UnitClass("player") or ""
 	local race = UnitRace and UnitRace("player") or ""
@@ -166,7 +166,7 @@ local SAID = { n = "adventurer", c = "adventurer", r = "traveler" }
 --- A caption with its tokens as the narrator says them: the first side of a $g branch,
 --- "adventurer" for the name and class, "traveler" for the race, capitalised where a sentence
 --- starts. A token glued to a letter is left, as the site leaves it.
-function SpokenBooks:SaidTokens(text)
+function SpokenReadables:SaidTokens(text)
 	text = string.gsub(text, GENDER_TOKEN, function(male)
 		return (string.gsub(male, "^%s*(.-)%s*$", "%1"))
 	end)
@@ -185,7 +185,7 @@ function SpokenBooks:SaidTokens(text)
 end
 
 --- The page id the client is showing, or nil.
-function SpokenBooks:PageOnScreen()
+function SpokenReadables:PageOnScreen()
 	local data = self:Data()
 	if not data or self:IsMail() then
 		return nil
@@ -232,7 +232,7 @@ end
 -- identified as books, in the language of the matching index, for those packs.
 -- The title is the book's, so the pages queued after this one carry it too: the corpus has
 -- only the English one.
-function SpokenBooks:RememberPageText(pageId, language, text, title)
+function SpokenReadables:RememberPageText(pageId, language, text, title)
 	self.pageText = self.pageText or {}
 	self.pageText[language] = self.pageText[language] or {}
 	self.pageText[language][pageId] = text:gsub("\r\n?", "\n"):gsub("%$[Bb]", "\n")
@@ -247,7 +247,7 @@ end
 
 --- Where a page sits: its book and its number. The corpus module's place, or a pack's for a
 --- page only it has. Nil for a page nothing carries.
-function SpokenBooks:PlaceOf(pageId)
+function SpokenReadables:PlaceOf(pageId)
 	local data = self:Data()
 	local place = data and data.pages[pageId]
 	if not place then
@@ -264,7 +264,7 @@ end
 
 --- A book's title and its pages in reading order, by book id. A pack adds the pages Books.lua
 --- lacks, so the list merges both, ordered by page number; a book only a pack has is its own.
-function SpokenBooks:BookById(bookId)
+function SpokenReadables:BookById(bookId)
 	local data = self:Data()
 	local book = data and data.books[bookId]
 	local packs = self:GetAudioPacks()
@@ -308,7 +308,7 @@ function SpokenBooks:BookById(bookId)
 end
 
 --- The book a page belongs to: its title and its pages in reading order.
-function SpokenBooks:BookOf(pageId)
+function SpokenReadables:BookOf(pageId)
 	local book = self:PlaceOf(pageId)
 	return book and self:BookById(book) or nil
 end

@@ -7,7 +7,7 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
 - The quests are the corpus's (corpus/corpus.json.gz): the ones the voice packs were made from.
 - Where: the zone the quest belongs to, as the quest log files it (QuestSortID: an AreaTable
   zone, or a dungeon, which counts as the zone its entrance is in), else where its giver stands
-  (the corpus's spawns): the area the server's own map files put the point in, as the books'
+  (the corpus's spawns): the area the server's own map files put the point in, as the readables'
   places have it (area_reader; COMPENDIUM_MAPS, the repack's maps folder), else the smallest zone
   rectangle around it. A quest of a class, a profession or a season is filed under that
   instead (a negative QuestSortID), named as the client names it, in every language.
@@ -15,7 +15,8 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   quest_template_addon.AllowableClasses) are read from a TrinityCore world DB (the Forever
   repack's), which the vmangos extraction does not keep. Where the DB opens a quest to every
   race, it is one side's if corpus/factions.json says so, else if the quest before it in its
-  chain is (quest_races below).
+  chain is, else if the NPCs starting it (or, where none does, ending it) are hostile to the
+  other side only (quest_races, giver_sides below).
 - Chains: the quest before each one in its storyline (`prev`), from the same DB's
   quest_template_addon (chain_links below), so the tab can group a zone's quests into their chains.
 - Hand-in: who a quest is handed in to (`ender`, or `enderObject` for an object), from the same
@@ -26,7 +27,9 @@ title, where it is, and who can take it. Its words are Data/QuestText.lua's
   github.com/JIVESCORP/eg-link-output-wowf, CC BY 4.0; quests.enUS.json and npcs.json, the
   latest build's record of each quest, as the repository had them at EG_COMMIT, cached in
   cache/efficient-games/). Its zone or quest sort, race mask and nextQuestId fill in where the
-  DB has none, and change nothing it has. --without-efficient-games leaves it out.
+  DB has none; its zone wins where the DB's is another zone (place), and its race mask where
+  both limit who may take a quest (race_mask).
+  --without-efficient-games leaves it out.
 - The zones are uiMapIDs, from the client's own map tables (wago.tools, cached in cache/):
   Forever's, which add its zones and quest sorts to Era's (Mount Hyjal, Zephras Isle, Darkspear
   Islands, Riverglades, Camping, The High Order). Era's fill in anything Forever's lack.
@@ -420,11 +423,12 @@ def served_quests(npc_sets, objective_sets):
     return served
 
 
-def without_text(known, served, client, seen, maps, sorts, removed=()):
+def without_text(known, served, client, seen, maps, sorts, removed=(), dungeons=None):
     """{questID: record} for the quests Forever serves (`served`) that are not `known` (the corpus's)
     nor `removed`: listed with `notext`, since the corpus has no lines for them yet. Each is placed
     and limited as Forever's client has it (its Efficient Games record, `client`; `seen` where
-    players saw its giver), and follows the quest whose nextQuestId names it. A quest the client
+    players saw its giver), a dungeon's (`dungeons`, {map: Map row}) by its zoneAreaId as the
+    corpus's quests are, and follows the quest whose nextQuestId names it. A quest the client
     data has no title for is left out: there is nothing to list it by."""
     records = {}
     for qid in sorted(set(served) - set(known) - set(removed)):
@@ -432,7 +436,11 @@ def without_text(known, served, client, seen, maps, sorts, removed=()):
         if not eg.get("title"):
             continue
         zones, sort, _ = place(0, maps, sorts, eg, seen.get(qid, ()))
-        records[qid] = {"title": eg["title"], "zones": zones, "sort": sort, "dungeon": None,
+        area = eg.get("zoneAreaId") or 0
+        dungeon = maps.dungeon_of_area(area, dungeons) if dungeons and area > 0 else None
+        if dungeon:
+            zones, sort = [INSTANCE_ZONE[dungeon]], None
+        records[qid] = {"title": eg["title"], "zones": zones, "sort": sort, "dungeon": dungeon,
                         "races": playable_races(eg_races(eg)), "classes": quest_classes(0, sort),
                         "prev": None, "notext": True}
     opened_by = {}
@@ -450,11 +458,21 @@ def eg_races(q):
     return int(q.get("raceMask") or "0", 16)
 
 
+def race_mask(db_mask, eg=None):
+    """A quest's races: Forever's client's limit (`eg`, its Efficient Games record) where it has
+    one, else the DB's (db_races). The client's wins where both limit: it gives Skyborne druids
+    their class quests (26 A Lesson to Learn) and takes Desperate Prayer from human priests. A
+    client mask of anyone says nothing, since Blizzard gives that to many one-side quests too."""
+    return playable_races(eg_races(eg)) if eg and playable_races(eg_races(eg)) else db_mask
+
+
 def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
     """(zones, sort, which source placed it) for a quest, the first that has an answer:
 
     - the DB's QuestSortID: an area's zone (a battleground's, for an area named after one), or a
-      sort the client names (negative);
+      sort the client names (negative). Where the client's zoneAreaId is in another zone, neither
+      being a battleground's, the client's zone: Forever moved a few quests (952 Grove of the
+      Ancients to Darkshore);
     - Forever's client (`eg`, its Efficient Games record): its zoneAreaId's zone, or its
       categoryId's sort. A zoneAreaId of a Forever area no map shows (Ruins of Lordaeron, the
       Excavation Site in the Wetlands) is placed where players saw its giver (`seen`, uiMapIDs);
@@ -464,7 +482,12 @@ def place(sort, maps, sorts, eg=None, seen=(), giver_zones=lambda: []):
     places it nowhere.
     """
     if sort > 0:
-        zone = maps.battleground_of_area(sort) or maps.zone_of_area(sort)
+        battleground = maps.battleground_of_area(sort)
+        zone = battleground or maps.zone_of_area(sort)
+        live = (eg or {}).get("zoneAreaId") or 0
+        live_zone = live > 0 and not battleground and not maps.battleground_of_area(live) and maps.zone_of_area(live)
+        if zone and live_zone and live_zone != zone:
+            return [live_zone], None, "client"
         if zone:
             return [zone], None, "db"
     elif sort < 0 and -sort in sorts:
@@ -511,10 +534,26 @@ def battleground_follow_ups(records, givers):
                 changed = True
 
 
-def chain_links(rows, known, later=None):
+def quest_line_links(rows):
+    """{questID: the quest before it in its quest line}, from the client's QuestLineXQuest rows,
+    by OrderIndex. Forever's Toxic Soil (QuestLine 6026) is linked nowhere else."""
+    lines = {}
+    for r in rows:
+        lines.setdefault(int(r["QuestLineID"]), []).append((int(r["OrderIndex"]), int(r["QuestID"])))
+    links = {}
+    for _, steps in sorted(lines.items()):
+        quests = [qid for _, qid in sorted(steps)]
+        for before, qid in zip(quests, quests[1:]):
+            if before != qid:
+                links.setdefault(qid, before)
+    return links
+
+
+def chain_links(rows, known, later=None, lines=None):
     """{questID: the quest before it in its storyline}, for the quests in `known`.
 
-    `rows` is quest_template_addon as {questID: {"prev", "next", "group", "breadcrumb"}}:
+    `rows` is quest_template_addon as {questID: {"prev", "next", "group", "breadcrumb"}}, with
+    quest_template's RewardNextQuest as "reward":
     - PrevQuestID > 0: that quest must be handed in first, so it comes before. A negative one only
       has to be in the log at the time; that quest is not over yet, so it is not "before".
     - NextQuestID: this quest opens that one, which comes after it where it names no PrevQuestID
@@ -524,6 +563,10 @@ def chain_links(rows, known, later=None):
       else does.
     - `later` ({questID: the quest it opens}, Forever's client's nextQuestId) links a quest only
       where no link of the DB's reaches a quest the corpus has.
+    - `lines` ({questID: the quest before it}, the client's quest lines, quest_line_links) links a
+      quest only where neither of those does.
+    - RewardNextQuest (`reward`), the quest the server offers on handing this one in, links it
+      last, where this is the only quest of the corpus offering it.
     A quest the corpus lacks is passed through to the one before it, and a link that would close a
     loop is dropped, so every chain has a first quest.
     """
@@ -541,17 +584,28 @@ def chain_links(rows, known, later=None):
         for target, qid in opened.items():
             into.setdefault(target, qid)
 
+    line_before = lines or {}
+    # An offer is no prerequisite: the quest it offers has its own giver too. So it links only
+    # from a quest the corpus has, the only one offering it: Summon Felsteed, offered after each
+    # side's warlock quests, would otherwise follow the Horde's lowest.
+    offered_by = {}
+    for qid, row in rows.items():
+        target = row.get("reward") or 0
+        if target > 0 and target != qid and qid in known:
+            offered_by.setdefault(target, set()).add(qid)
+    offered_before = {target: min(qids) for target, qids in offered_by.items() if len(qids) == 1}
+
     # The DB's links first; the client's where the DB's lead to no quest the corpus has (a
     # breadcrumb it lacks, say) or to none at all.
     def known_before(qid):
-        for first in (before.get(qid), client_before.get(qid)):
+        for first in (before.get(qid), client_before.get(qid), line_before.get(qid), offered_before.get(qid)):
             seen, step = {qid}, first
             while step is not None and step not in known:
                 if step in seen:
                     step = None
                     break
                 seen.add(step)
-                step = before.get(step, client_before.get(step))
+                step = before.get(step, client_before.get(step, line_before.get(step, offered_before.get(step))))
             if step is not None:
                 return step
         return None
@@ -610,6 +664,35 @@ def side_of(races):
     return None
 
 
+# FactionTemplate's EnemyGroup bits, as export_factions.py reads the vmangos faction_template.
+ENEMY_ALLIANCE, ENEMY_HORDE = 2, 4
+
+
+def npc_side(enemy_group):
+    """The side an NPC stands on by its FactionTemplate's EnemyGroup: hostile to the Horde and not
+    to the Alliance is the Alliance's. None where it is hostile to both or neither, as Southshore's
+    magistrate (template 96) and Ruul Snowhoof (714) are, whose quests are open to both."""
+    if enemy_group & ENEMY_HORDE and not enemy_group & ENEMY_ALLIANCE:
+        return "alliance"
+    if enemy_group & ENEMY_ALLIANCE and not enemy_group & ENEMY_HORDE:
+        return "horde"
+    return None
+
+
+def giver_sides(starters, enders, side_of_npc):
+    """{questID: "alliance" or "horde"}: the side of the NPCs that start a quest, where all are one
+    side's, else, for a quest nothing starts (an item does), of those it is handed in to.
+    `starters` and `enders` are {questID: {"creature:id" or "gameobject:id"}}; `side_of_npc` gives
+    an NPC's side (npc_side) or None. A starter of no side leaves the quest to both."""
+    out = {}
+    for qid in set(starters) | set(enders):
+        npcs = starters.get(qid) or enders.get(qid) or set()
+        found = {side_of_npc(npc) for npc in npcs}
+        if len(found) == 1 and None not in found:
+            out[qid] = found.pop()
+    return out
+
+
 def gates(rows, later=None):
     """{questID: the quests that open it}, from quest_template_addon as chain_links reads it: its
     PrevQuestID, else every quest whose NextQuestID names it (an ExclusiveGroup's alternatives, or
@@ -629,7 +712,7 @@ def gates(rows, later=None):
     return out
 
 
-def quest_races(masks, sides, opened_by):
+def quest_races(masks, sides, opened_by, npc_sides=None):
     """{questID: the races that may take it, 0 for anyone}, for the quests of `masks`
     ({questID: its race mask as the client has it: db_races of the DB's AllowableRaces}).
 
@@ -640,7 +723,10 @@ def quest_races(masks, sides, opened_by):
       side's: a follow-up the DB opens to everyone is still reached only through them. A quest one
       side's quest and the other's both open (The Stone Watcher, after either Seeing What Happens)
       stays open to both. A quest the corpus lacks is passed through to the quests opening it.
+    - Else the side of its starters or enders (`npc_sides`, giver_sides): factions.json knows only
+      the vmangos DB's givers, not Forever's own (Elwynn's Book Inventory) nor the repack's.
     """
+    npc_sides = npc_sides or {}
     own = {qid: playable_races(mask) or SIDE_RACES.get(sides.get(str(qid)), 0) for qid, mask in masks.items()}
     races = {}
 
@@ -657,7 +743,8 @@ def quest_races(masks, sides, opened_by):
 
     def of(qid, seen=frozenset()):
         if qid not in races:
-            races[qid] = own[qid] or SIDE_RACES.get(side_before(qid, seen | {qid}), 0)
+            races[qid] = (own[qid] or SIDE_RACES.get(side_before(qid, seen | {qid}), 0)
+                          or SIDE_RACES.get(npc_sides.get(qid), 0))
         return races[qid]
 
     for qid in own:
@@ -997,12 +1084,23 @@ def read_existing(path):
     return quest_lines, sort_lines
 
 
+def refile_dungeon(line):
+    """A quest line filed under a dungeon, under the zone dungeons.json now gives its entrance."""
+    found = re.search(r"\bdungeon = (\d+)", line)
+    if not found or int(found.group(1)) not in INSTANCE_ZONE:
+        return line
+    return re.sub(r"zones = \{ [^}]* \}", "zones = { %d }" % INSTANCE_ZONE[int(found.group(1))], line, count=1)
+
+
 def without_db(args):
     quests, givers, spawns = corpus_quests()
     enders = quest_enders([], quests)
     quest_lines, sort_lines = read_existing(args.out)
     # Every hand correction, as the last run with the DB applied them and any written since.
     quest_lines = reapply_overrides(quest_lines, load_overrides()["quests"])
+    # A dungeon moved in dungeons.json takes its quests along: the test that checks them against
+    # Data/Dungeons.lua fails until the next run with the DB otherwise.
+    quest_lines = {qid: refile_dungeon(line) for qid, line in quest_lines.items()}
     # Listed without words last time: made again below, or now the corpus's.
     quest_lines = {qid: line for qid, line in quest_lines.items() if "notext = true" not in line}
     with open(FACTIONS, encoding="utf-8") as f:
@@ -1023,14 +1121,15 @@ def without_db(args):
         sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
                             for locale in ["enUS"] + LOCALES})
         served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
-        unvoiced = without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES))
+        dungeon_rows = {int(r["ID"]): r for r in table("Map") if int(r["ID"]) in DUNGEONS}
+        unvoiced = without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES), dungeon_rows)
         for sid in {rec["sort"] for rec in unvoiced.values() if isinstance(rec["sort"], int)} - set(sort_lines):
             sort_lines[sid] = sort_line(sid, sorts[sid])
         records.update(unvoiced)
     for qid, rec in records.items():
         quest_lines[qid] = quest_line(qid, rec["title"], rec["zones"], rec["sort"], rec["races"], rec["classes"],
                                       rec["prev"] if rec["prev"] in quest_lines or rec["prev"] in records else None,
-                                      ender=enders.get(qid), notext=rec.get("notext"))
+                                      dungeon=rec.get("dungeon"), ender=enders.get(qid), notext=rec.get("notext"))
     placed = sum(1 for rec in records.values() if rec["zones"])
     return quest_lines, sort_lines, (f"{len(records) - len(unvoiced)} quests added, "
                                                     f"{len(unvoiced)} listed without words, {placed} of them placed")
@@ -1069,11 +1168,38 @@ def with_db(args):
         rows = {int(qid): {"prev": int(prev or 0), "next": int(nxt or 0), "group": int(group or 0),
                            "breadcrumb": int(crumb or 0)}
                 for qid, prev, nxt, group, crumb in cur.fetchall()}
-        ender_rows = []
+        cur.execute("SELECT ID, RewardNextQuest FROM quest_template WHERE RewardNextQuest > 0")
+        for qid, reward in cur.fetchall():
+            rows.setdefault(int(qid), {"prev": 0, "next": 0, "group": 0, "breadcrumb": 0})["reward"] = int(reward)
+        ender_rows, starter_rows = [], []
         for kind in ("creature", "gameobject"):
             cur.execute(f"SELECT id, quest FROM {kind}_questender WHERE quest IN ({marks})", ids)
             ender_rows += [(kind, int(npc), int(qid)) for npc, qid in cur.fetchall()]
+            cur.execute(f"SELECT id, quest FROM {kind}_queststarter WHERE quest IN ({marks})", ids)
+            starter_rows += [(kind, int(npc), int(qid)) for npc, qid in cur.fetchall()]
+        # Who starts and ends each quest, the corpus's speaker where the DB names no one, for the
+        # side of a quest nothing else gives one. An item starting a quest has no side.
+        starting, ending = {}, {}
+        for into, db_rows, field in ((starting, starter_rows, "giver"), (ending, ender_rows, "handIn")):
+            for kind, npc, qid in db_rows:
+                into.setdefault(qid, set()).add(f"{kind}:{npc}")
+            for qid, quest in quests.items():
+                if qid not in into and quest.get(field, "").split(":")[0] in ("creature", "gameobject"):
+                    into[qid] = {quest[field]}
+        factions = {}
+        for kind, select in (("creature", "SELECT entry, faction FROM creature_template"),
+                             ("gameobject", "SELECT t.entry, COALESCE(a.faction, 0) FROM gameobject_template t"
+                                            " LEFT JOIN gameobject_template_addon a ON a.entry = t.entry")):
+            entries = sorted({int(npc.split(":")[1]) for npcs in list(starting.values()) + list(ending.values())
+                              for npc in npcs if npc.startswith(kind + ":")})
+            if entries:
+                cur.execute(f"{select} WHERE {'entry' if kind == 'creature' else 't.entry'} IN "
+                            f"({','.join(['%s'] * len(entries))})", entries)
+                factions.update({f"{kind}:{entry}": int(faction) for entry, faction in cur.fetchall()})
     db.close()
+    # One of Forever's own NPCs the repack lacks says nothing of a side: the quest's enders do.
+    starting, ending = ({qid: npcs & set(factions) for qid, npcs in into.items() if npcs & set(factions)}
+                        for into in (starting, ending))
     enders = quest_enders(ender_rows, quests)
     # Forever's client after the DB, which has almost none of Forever's own quests: it adds
     # links, races and places where the DB has none, and changes none the DB has.
@@ -1082,15 +1208,13 @@ def with_db(args):
     else:
         client, seen = forever_quests(eg_datasets("quests.enUS"), eg_datasets("npcs"))
     client_next = {qid: int(q["nextQuestId"]) for qid, q in client.items() if q.get("nextQuestId")}
-    links = chain_links(rows, set(ids), client_next)
+    links = chain_links(rows, set(ids), client_next, quest_line_links(table("QuestLineXQuest")))
     with open(FACTIONS, encoding="utf-8") as f:
         sides = json.load(f).get("sides", {})
-    masks = {}
-    for qid in ids:
-        masks[qid] = quests[qid].get("races", 0)
-        if not playable_races(masks[qid]) and qid in client:
-            masks[qid] = eg_races(client[qid])
-    races = quest_races(masks, sides, gates(rows, client_next))
+    masks = {qid: race_mask(quests[qid].get("races", 0), client.get(qid)) for qid in ids}
+    enemy_groups = {int(r["ID"]): int(r["EnemyGroup"]) for r in table("FactionTemplate")}
+    npc_sides = giver_sides(starting, ending, lambda npc: npc_side(enemy_groups.get(factions.get(npc, 0), 0)))
+    races = quest_races(masks, sides, gates(rows, client_next), npc_sides)
     leaks = side_leaks(races, links)
 
     sorts = sort_names({locale: [table("QuestSort", locale, build) for build in (BUILD, ERA_BUILD)]
@@ -1121,7 +1245,7 @@ def with_db(args):
 
     if not args.without_efficient_games:
         served = served_quests(eg_datasets("npcs"), eg_datasets("objectives"))
-        records.update(without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES)))
+        records.update(without_text(quests, served, client, seen, maps, sorts, removed_quests(OVERRIDES), dungeon_rows))
 
     battleground_follow_ups(records, givers)
     overrides = load_overrides()

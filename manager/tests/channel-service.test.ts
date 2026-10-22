@@ -18,7 +18,7 @@ afterEach(async () => {
 })
 
 const keys = channelKeys()
-const PACK = 'SpokenZonesAudio_deDE'
+const PACK = 'SpokenPlacesAudio_deDE'
 const spec: PackSpec = { packId: PACK, rev: '20261018T000000Z', files: { [`${PACK}.toc`]: 'toc', 'Sounds/1.ogg': 'one' }, requires: '3.0.0' }
 
 /** A fetch whose GitHub API answers with `releases` and whose other requests go through. */
@@ -62,16 +62,16 @@ function waitFor(sent: { channel: string; payload: unknown }[], jobId: string): 
 describe('the channel through the service', () => {
   it('offers, installs and removes a channel pack', async () => {
     const { svc, game, sent } = await setup({ spoken: '3.0.0' })
-    const before = (await svc.statuses(game.id)).find((s) => s.productId === 'zones-audio-deDE')
+    const before = (await svc.statuses(game.id)).find((s) => s.productId === 'places-audio-deDE')
     expect(before?.state).toBe('not-installed')
     expect(before?.latest?.tag).toBe(`channel/${spec.rev}`)
 
-    const done = await waitFor(sent, svc.install(game.id, 'zones-audio-deDE'))
+    const done = await waitFor(sent, svc.install(game.id, 'places-audio-deDE'))
     expect(done.phase).toBe('done')
     expect(fs.readFileSync(path.join(game.addOnsPath, PACK, 'Sounds', '1.ogg'), 'utf8')).toBe('one')
-    expect((await svc.statuses(game.id)).find((s) => s.productId === 'zones-audio-deDE')?.state).toBe('up-to-date')
+    expect((await svc.statuses(game.id)).find((s) => s.productId === 'places-audio-deDE')?.state).toBe('up-to-date')
 
-    const removed = await waitFor(sent, svc.uninstall(game.id, 'zones-audio-deDE'))
+    const removed = await waitFor(sent, svc.uninstall(game.id, 'places-audio-deDE'))
     expect(removed.phase).toBe('done')
     expect(loadPackState(game, PACK)).toBeNull()
   })
@@ -84,25 +84,25 @@ describe('the channel through the service', () => {
     extra = await startServer((req, res) => serveBuffer(req, res, zip))
     const releases = [
       {
-        tag_name: 'zones-audio-deDE/v1.0.0', draft: false, prerelease: false, published_at: '2026-10-01T00:00:00Z', body: '', html_url: '',
+        tag_name: 'places-audio-deDE/v1.0.0', draft: false, prerelease: false, published_at: '2026-10-01T00:00:00Z', body: '', html_url: '',
         assets: [{ name: `${PACK}-1.0.0.zip`, size: zip.length, browser_download_url: `${extra.url}/zones.zip`, digest: `sha256:${sha256(zip)}`, state: 'uploaded' }]
       }
     ]
     const { svc, game, sent } = await setup({ spoken: '3.0.0', releases })
-    expect((await waitFor(sent, svc.install(game.id, 'zones-audio-deDE'))).phase).toBe('done')
+    expect((await waitFor(sent, svc.install(game.id, 'places-audio-deDE'))).phase).toBe('done')
     expect(loadPackState(game, PACK)).not.toBeNull()
 
     // The channel stops carrying the pack, so the same product is installed from GitHub.
     svc.channel = null
-    expect((await waitFor(sent, svc.install(game.id, 'zones-audio-deDE', { version: '1.0.0' }))).phase).toBe('done')
+    expect((await waitFor(sent, svc.install(game.id, 'places-audio-deDE', { version: '1.0.0' }))).phase).toBe('done')
     expect(fs.readFileSync(path.join(game.addOnsPath, PACK, 'Sounds', '1.ogg'), 'utf8')).toBe('github')
     expect(loadPackState(game, PACK)).toBeNull()
   })
 
   it('says which Spoken a pack needs, and refuses when none is released', async () => {
     const { svc, game, sent } = await setup({ spoken: '3.0.0', requires: '3.1.0' })
-    expect((await svc.statuses(game.id)).find((s) => s.productId === 'zones-audio-deDE')?.needsSpoken).toBe('3.1.0')
-    const failed = await waitFor(sent, svc.install(game.id, 'zones-audio-deDE'))
+    expect((await svc.statuses(game.id)).find((s) => s.productId === 'places-audio-deDE')?.needsSpoken).toBe('3.1.0')
+    const failed = await waitFor(sent, svc.install(game.id, 'places-audio-deDE'))
     expect(failed.phase).toBe('error')
     expect(failed.message).toMatch(/needs Spoken 3.1.0/)
   })
@@ -136,13 +136,13 @@ describe('the channel through the service', () => {
     })
     await svc.init()
     await svc.refreshCatalog(true)
-    const jobId = svc.install(game.id, 'zones-audio-deDE')
+    const jobId = svc.install(game.id, 'places-audio-deDE')
     const done = await waitFor(sent, jobId)
     expect(done.phase).toBe('done')
     const events = sent.filter((e) => e.channel === CHANNELS.jobProgress && (e.payload as JobProgress).jobId === jobId).map((e) => e.payload as JobProgress)
     expect(events.filter((e) => e.phase === 'done')).toHaveLength(1)
     expect(events.at(-1)?.phase).toBe('done')
-    expect(events.every((e) => e.productId === 'zones-audio-deDE')).toBe(true)
+    expect(events.every((e) => e.productId === 'places-audio-deDE')).toBe(true)
     expect(fs.existsSync(clip)).toBe(true)
     expect(clipAtDone).toBe(true)
     expect(fs.readFileSync(path.join(game.addOnsPath, 'Spoken', 'Spoken.toc'), 'utf8')).toMatch(/3\.1\.0/)

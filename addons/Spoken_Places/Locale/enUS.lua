@@ -20,7 +20,7 @@
 --   Audio.lua            the player menu entries and settings link
 --   Core.lua             the /spp command list
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 local L = {}
 
@@ -82,13 +82,11 @@ L.REASON_VOICE = "Turn on Read Stories Aloud to use this."
 L.OPT_AUTOPLAY = "Read Automatically"
 L.OPT_AUTOPLAY_SUB = "Include Smaller Areas"
 L.OPT_AUTOPLAY_EXPLORED = "Include Places Found Before"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "Reads each place once per character, even one discovered before."
 L.OPT_FORGET_PLACES = "Forget Places Heard"
 L.OPT_FORGET_PLACES_DONE = "This character's list of places heard is cleared."
 L.OPT_DOWNLOAD_ADDRESS = "Copy this address into your web browser to download the voice pack."
 L.OPT_LANG_RELOAD = "Type /reload to switch to it."
 L.OPT_LANGUAGE = "Text Language"
-L.OPT_LANGUAGE_TIP = "The stories' text; the voice follows Voice Language."
 L.OPT_LANG_AUTO_FMT = "Auto (%1$s)"
 L.OPT_LANG_SET_FMT = "The stories will be in %1$s after the interface reloads."
 L.OPT_LANG_PROFILE_FMT = "This profile reads the stories in %1$s. Type /reload to switch to it."
@@ -155,4 +153,4 @@ L.OPT_DEV_PREVIEW = "Offer Unfinished Translations"
 
 L.OPEN_IN_COMPENDIUM = "Open in Azeroth's Compendium"
 
-SpokenZones:RegisterStrings("enUS", L)
+SpokenPlaces:RegisterStrings("enUS", L)

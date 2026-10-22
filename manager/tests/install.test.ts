@@ -232,7 +232,7 @@ describe('installProduct: refusals', () => {
 
   it('rejects a voice pack zip with a folder of Spoken in it, or with a missing folder', async () => {
     const env = await setup()
-    await expectRefused(env, [{ name: 'SpokenZonesAudio/a.ogg', data: 'x' }, { name: 'Spoken/Spoken.toc', data: toc('Spoken', '1') }], 'zones-audio')
+    await expectRefused(env, [{ name: 'SpokenPlacesAudio/a.ogg', data: 'x' }, { name: 'Spoken/Spoken.toc', data: toc('Spoken', '1') }], 'places-audio')
     await expectRefused(
       env,
       [{ name: 'SpokenQuestsAudioAlliance/a.ogg', data: 'x' }, { name: 'SpokenQuestsAudioHorde/a.ogg', data: 'x' }],
@@ -414,8 +414,8 @@ describe('uninstallProduct', () => {
     const z1 = await yazlZip(spokenEntries('3.5.0'))
     await installProduct(env.game, productById('spoken')!, release('spoken', '3.5.0', z1, await serveZip(z1)), ctx(env))
     await server!.close()
-    const z2 = await yazlZip([{ name: 'SpokenZonesAudio/SpokenZonesAudio.toc', data: toc('SpokenZonesAudio', '1.0.0') }, { name: 'SpokenZonesAudio/a.ogg', data: 'ogg' }])
-    await installProduct(env.game, productById('zones-audio')!, release('zones-audio', '1.0.0', z2, await serveZip(z2)), ctx(env))
+    const z2 = await yazlZip([{ name: 'SpokenPlacesAudio/SpokenPlacesAudio.toc', data: toc('SpokenPlacesAudio', '1.0.0') }, { name: 'SpokenPlacesAudio/a.ogg', data: 'ogg' }])
+    await installProduct(env.game, productById('places-audio')!, release('places-audio', '1.0.0', z2, await serveZip(z2)), ctx(env))
   }
 
   it('removes exactly the recorded folders, keeps a backup and leaves everything else alone', async () => {
@@ -427,10 +427,10 @@ describe('uninstallProduct', () => {
     const spokenBefore = snapshot(path.join(env.addOns, 'Spoken'))
 
     const c = ctx(env)
-    const result = await uninstallProduct(env.game, productById('zones-audio')!, c)
-    expect(result.folders).toEqual(['SpokenZonesAudio'])
-    expect(fs.existsSync(path.join(env.addOns, 'SpokenZonesAudio'))).toBe(false)
-    expect(fs.existsSync(path.join(backupDirFor(env.game, 'zones-audio'), 'SpokenZonesAudio', 'a.ogg'))).toBe(true)
+    const result = await uninstallProduct(env.game, productById('places-audio')!, c)
+    expect(result.folders).toEqual(['SpokenPlacesAudio'])
+    expect(fs.existsSync(path.join(env.addOns, 'SpokenPlacesAudio'))).toBe(false)
+    expect(fs.existsSync(path.join(backupDirFor(env.game, 'places-audio'), 'SpokenPlacesAudio', 'a.ogg'))).toBe(true)
     expect(snapshot(path.join(env.addOns, 'Spoken'))).toEqual(spokenBefore)
     expect(snapshot(path.join(env.addOns, 'OtherAddon'))).toEqual(otherBefore)
     expect(snapshot(env.wtf)).toEqual(wtfBefore)
@@ -443,7 +443,7 @@ describe('uninstallProduct', () => {
     await installBoth(env)
     write(path.join(env.addOns, 'OtherAddon', 'OtherAddon.toc'), toc('OtherAddon', '1'))
     await uninstallProduct(env.game, productById('spoken')!, ctx(env))
-    expect(listDir(env.addOns)).toEqual([WORK_DIR, 'OtherAddon', 'SpokenZonesAudio'].sort())
+    expect(listDir(env.addOns)).toEqual([WORK_DIR, 'OtherAddon', 'SpokenPlacesAudio'].sort())
   })
 
   it('without a record uses the product folders, only real folders and only its own names', async () => {
@@ -492,7 +492,7 @@ describe('uninstallProduct', () => {
   it('says so when there is nothing to remove, and clears the record', async () => {
     const env = await setup()
     const c = ctx(env)
-    const result = await uninstallProduct(env.game, productById('books-audio')!, c)
+    const result = await uninstallProduct(env.game, productById('readables-audio')!, c)
     expect(result.folders).toEqual([])
     expect(result.message).toMatch(/Nothing to remove/)
   })

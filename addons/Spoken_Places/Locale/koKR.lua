@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "koKR" then
 	return
@@ -22,10 +22,8 @@ L.OPT_PLAY_BUTTON = "이야기 소리 내어 읽기"
 L.OPT_AUTOPLAY = "자동으로 읽기"
 L.OPT_AUTOPLAY_SUB = "세부 지역 포함"
 L.OPT_AUTOPLAY_EXPLORED = "이전에 발견한 장소 포함"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "캐릭터마다 장소를 한 번씩 읽습니다. 이전에 발견한 장소도 포함됩니다."
 L.OPT_LANG_RELOAD = "전환하려면 /reload를 입력하세요."
 L.OPT_LANGUAGE = "텍스트 언어"
-L.OPT_LANGUAGE_TIP = "이야기의 글 언어입니다. 음성은 음성 언어를 따릅니다."
 L.OPT_LANG_AUTO_FMT = "자동 (%1$s)"
 L.OPT_LANG_SET_FMT = "UI를 다시 불러오면 이야기가 %1$s(으)로 표시됩니다."
 L.OPT_LANG_PROFILE_FMT = "이 프로필은 이야기를 %1$s(으)로 읽습니다. 전환하려면 /reload를 입력하세요."
@@ -94,4 +92,4 @@ L.OPT_DEV_PREVIEW = "미완성 번역 제공"
 
 L.OPEN_IN_COMPENDIUM = "아제로스 백과사전에서 열기"
 
-SpokenZones:RegisterStrings("koKR", L)
+SpokenPlaces:RegisterStrings("koKR", L)

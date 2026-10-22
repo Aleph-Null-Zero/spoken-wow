@@ -7,15 +7,15 @@
 -- leading "the " removed, apostrophes dropped, punctuation collapsed to
 -- single spaces. The client reports "The Bulwark" where the wiki titles the
 -- page "Bulwark", so both sides are reduced to the same key at lookup time
--- via SpokenZones:NormaliseAreaKey.
+-- via SpokenPlaces:NormaliseAreaKey.
 --
 -- Every language is keyed by the ENGLISH name: a place is one place whatever
 -- it is called, and a non-English client gets from its own name to this key
 -- through Data/<locale>/Aliases.lua.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("ptBR") then
+if not SpokenPlaces:ShouldLoadLanguage("ptBR") then
 	return
 end
 
@@ -1291,7 +1291,7 @@ local subzones = {
 		["quellithien lodge"] = {
 			name = "Abrigo Quel'Lithien",
 			short = "O Abrigo Quel'Lithien era um acampamento dos Andarilhos perto de Quel'Thalas, um lugar de calor e acolhida.",
-			full = "O Abrigo Quel'Lithien era um acampamento dos Andarilhos perto de Quel'Thalas, um lugar de calor e acolhida. Lor'themar Theron se lembrava dele assim de suas próprias visitas, recebido calorosamente pelos compatriotas que o chamavam de lar. O abrigo guardava vários documentos élficos, alguns relativos à família real e à General-patrulheira de Luaprata. Na época da Segunda Guerra, Renthar Lança-do-gavião liderava os caçadores de lá.",
+			full = "O Abrigo Quel'Lithien era um acampamento dos Andarilhos perto de Quel'Thalas, um lugar de calor e acolhida. O abrigo guardava vários documentos élficos, alguns relativos à família real e à General-patrulheira de Luaprata. Na época da Segunda Guerra, Renthar Lança-do-gavião liderava os caçadores de lá.",
 			source = "https://warcraft.wiki.gg/wiki/Quel'Lithien_Lodge",
 		},
 		["scarlet base camp"] = {
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares do Sul",
 			short = "Os Mares do Sul enchem as águas entre os continentes conhecidos, uma parte do Grande Mar. Zandalar se ergue destas águas, antigo lar do império troll.",
-			full = "Os Mares do Sul enchem as águas entre os continentes conhecidos, uma parte do Grande Mar. Zandalar se ergue destas águas, antigo lar do império troll. Mais perto da Selva do Espinhaço, o mar fica traiçoeiro, cheio de recifes e pequenas ilhas, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores já se foram. Os Mares do Sul banham as fronteiras do Espinhaço e de Tanaris.",
+			full = "Os Mares do Sul enchem as águas entre os continentes conhecidos, uma parte do Grande Mar. Zandalar se ergue destas águas, antigo lar do império troll. Kezan também fica entre elas, uma ilha vulcânica que mantém seu próprio povo afastado das potências do continente. Mais perto da Selva do Espinhaço, o mar fica traiçoeiro, cheio de recifes e pequenas ilhas, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores já se foram. Os Mares do Sul banham as fronteiras do Espinhaço e de Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares do Sul",
 			short = "As águas ao sul dos continentes conhecidos se abrem numa ampla extensão do Grande Mar, levando correntes para além de ilhas cujos nomes são conhecidos principalmente pelos marinheiros.",
-			full = "As águas ao sul dos continentes conhecidos se abrem numa ampla extensão do Grande Mar, levando correntes para além de ilhas cujos nomes são conhecidos principalmente pelos marinheiros. Zandalar se ergue destas águas, antigo lar do império troll.\n\nMais perto da Selva do Espinhaço, o mar fica traiçoeiro, com recifes e enseadas escondidas, o tipo de água em que um capitão ou conhece cada rocha pelo nome ou perde o navio. Pequenas ilhas pontilham este trecho, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores há muito desapareceram sob as ondas.\n\nO que torna este mar digno de nome é menos alguma batalha travada nele do que as coisas que ele engoliu e meio revelou de novo: templos submersos, costas afogadas, ruínas vistas através da água clara na maré baixa. É um mar de beiradas e de lugares intermediários, que banha as fronteiras do Espinhaço e de Tanaris, levando o que quer que as marés escolham trazer às praias que ele separa.",
+			full = "As águas ao sul dos continentes conhecidos se abrem numa ampla extensão do Grande Mar, levando correntes para além de ilhas cujos nomes são conhecidos principalmente pelos marinheiros. Zandalar se ergue destas águas, antigo lar do império troll. Kezan também fica entre elas, uma ilha vulcânica que mantém seu próprio povo afastado das potências do continente.\n\nMais perto da Selva do Espinhaço, o mar fica traiçoeiro, com recifes e enseadas escondidas, o tipo de água em que um capitão ou conhece cada rocha pelo nome ou perde o navio. Pequenas ilhas pontilham este trecho, algumas nada mais que um banco de areia, outras guardando ruínas cujos construtores há muito desapareceram sob as ondas.\n\nO que torna este mar digno de nome é menos alguma batalha travada nele do que as coisas que ele engoliu e meio revelou de novo: templos submersos, costas afogadas, ruínas vistas através da água clara na maré baixa. É um mar de beiradas e de lugares intermediários, que banha as fronteiras do Espinhaço e de Tanaris, levando o que quer que as marés escolham trazer às praias que ele separa.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4912,4 +4912,4 @@ local subzones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("ptBR", "subzones", subzones)
+SpokenPlaces:RegisterLoreData("ptBR", "subzones", subzones)

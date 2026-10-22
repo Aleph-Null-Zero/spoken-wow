@@ -7,15 +7,15 @@
 -- leading "the " removed, apostrophes dropped, punctuation collapsed to
 -- single spaces. The client reports "The Bulwark" where the wiki titles the
 -- page "Bulwark", so both sides are reduced to the same key at lookup time
--- via SpokenZones:NormaliseAreaKey.
+-- via SpokenPlaces:NormaliseAreaKey.
 --
 -- Every language is keyed by the ENGLISH name: a place is one place whatever
 -- it is called, and a non-English client gets from its own name to this key
 -- through Data/<locale>/Aliases.lua.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("deDE") then
+if not SpokenPlaces:ShouldLoadLanguage("deDE") then
 	return
 end
 
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Die südlichen Meere",
 			short = "Die südlichen Meere füllen das Wasser zwischen den bekannten Kontinenten, ein Teil des Großen Meeres. Zandalar erhebt sich aus diesen Wassern, die uralte Heimat des Trollreichs.",
-			full = "Die südlichen Meere füllen das Wasser zwischen den bekannten Kontinenten, ein Teil des Großen Meeres. Zandalar erhebt sich aus diesen Wassern, die uralte Heimat des Trollreichs. Näher am Schlingendorntal wird das Meer tückisch mit Riffen und kleinen Inseln, manche nicht mehr als eine Sandbank, andere mit Ruinen, deren Erbauer verschwunden sind. Die südlichen Meere erstrecken sich entlang der Grenzen des Schlingendorntals und von Tanaris.",
+			full = "Die südlichen Meere füllen das Wasser zwischen den bekannten Kontinenten, ein Teil des Großen Meeres. Zandalar erhebt sich aus diesen Wassern, die uralte Heimat des Trollreichs. Auch Kezan liegt in ihnen, eine Vulkaninsel, deren Volk sich von den Mächten des Festlands fernhält. Näher am Schlingendorntal wird das Meer tückisch mit Riffen und kleinen Inseln, manche nicht mehr als eine Sandbank, andere mit Ruinen, deren Erbauer verschwunden sind. Die südlichen Meere erstrecken sich entlang der Grenzen des Schlingendorntals und von Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Die südlichen Meere",
 			short = "Die Gewässer südlich der bekannten Kontinente öffnen sich zu einem weiten Teil des Großen Meeres und tragen Strömungen an Inseln vorbei, deren Namen vor allem Seeleuten bekannt sind.",
-			full = "Die Gewässer südlich der bekannten Kontinente öffnen sich zu einem weiten Teil des Großen Meeres und tragen Strömungen an Inseln vorbei, deren Namen vor allem Seeleuten bekannt sind. Zandalar erhebt sich aus diesen Wassern, die uralte Heimat des Trollreichs.\n\nNäher am Schlingendorntal wird das Meer tückisch mit Riffen und verborgenen Buchten, die Art von Gewässern, in denen ein Kapitän entweder jeden Felsen beim Namen kennt oder sein Schiff verliert. Kleine Inseln sprenkeln diesen Abschnitt, manche nicht mehr als eine Sandbank, andere mit Ruinen, deren Erbauer längst unter den Wellen verschwunden sind.\n\nWas dieses Meer nennenswert macht, ist weniger eine einzelne Schlacht, die auf ihm geschlagen wurde, als die Dinge, die es verschlungen und halb wieder preisgegeben hat: versunkene Tempel, ertrunkene Küsten, Ruinen, die man bei Ebbe durch klares Wasser erblickt. Es ist ein Meer der Ränder und Zwischenorte, das sich entlang der Grenzen des Schlingendorntals und von Tanaris erstreckt und an die Küsten, die es trennt, trägt, was immer die Gezeiten bringen wollen.",
+			full = "Die Gewässer südlich der bekannten Kontinente öffnen sich zu einem weiten Teil des Großen Meeres und tragen Strömungen an Inseln vorbei, deren Namen vor allem Seeleuten bekannt sind. Zandalar erhebt sich aus diesen Wassern, die uralte Heimat des Trollreichs. Auch Kezan liegt in ihnen, eine Vulkaninsel, deren Volk sich von den Mächten des Festlands fernhält.\n\nNäher am Schlingendorntal wird das Meer tückisch mit Riffen und verborgenen Buchten, die Art von Gewässern, in denen ein Kapitän entweder jeden Felsen beim Namen kennt oder sein Schiff verliert. Kleine Inseln sprenkeln diesen Abschnitt, manche nicht mehr als eine Sandbank, andere mit Ruinen, deren Erbauer längst unter den Wellen verschwunden sind.\n\nWas dieses Meer nennenswert macht, ist weniger eine einzelne Schlacht, die auf ihm geschlagen wurde, als die Dinge, die es verschlungen und halb wieder preisgegeben hat: versunkene Tempel, ertrunkene Küsten, Ruinen, die man bei Ebbe durch klares Wasser erblickt. Es ist ein Meer der Ränder und Zwischenorte, das sich entlang der Grenzen des Schlingendorntals und von Tanaris erstreckt und an die Küsten, die es trennt, trägt, was immer die Gezeiten bringen wollen.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "Steamwheedle",
-			short = "Der Hafen von Steamwheedle liegt an der Ostküste von Tanaris, eine Straße führt nach Westen zu seiner Mutterstadt Gadgetzan, und ein Anleger reicht aufs Meer hinaus.",
-			full = "Der Hafen von Steamwheedle liegt an der Ostküste von Tanaris, eine Straße führt nach Westen zu seiner Mutterstadt Gadgetzan, und ein Anleger reicht aufs Meer hinaus. Er gehört dem Steamwheedle-Kartell, Goblins, die mit jedem Geschäfte machen, solange das Gold stimmt.\n\nUnter den Bewohnern des Hafens ist Yeh'kinya, dessen Machenschaften die Rückkehr von Hakkar dem Seelenschinder in Gang setzten.",
+			short = "Der Hafen von Steamwheedle liegt an der Ostküste von Tanaris, eine Straße führt nach Westen zu seiner Mutterstadt Gadgetzan, und ein Anleger reicht in Richtung Kezan hinaus.",
+			full = "Der Hafen von Steamwheedle liegt an der Ostküste von Tanaris, eine Straße führt nach Westen zu seiner Mutterstadt Gadgetzan, und ein Anleger reicht in Richtung Kezan hinaus. Er gehört dem Steamwheedle-Kartell, Goblins, die mit jedem Geschäfte machen, solange das Gold stimmt.\n\nUnter den Bewohnern des Hafens ist Yeh'kinya, dessen Machenschaften die Rückkehr von Hakkar dem Seelenschinder in Gang setzten.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4912,4 +4912,4 @@ local subzones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("deDE", "subzones", subzones)
+SpokenPlaces:RegisterLoreData("deDE", "subzones", subzones)

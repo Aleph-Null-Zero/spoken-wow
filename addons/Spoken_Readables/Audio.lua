@@ -7,12 +7,12 @@
 -- substituting unrelated audio is worse than silence, because silence is honest about what
 -- is missing and a borrowed clip is not.
 
-local ADDON_NAME, SpokenBooks = ...
+local ADDON_NAME, SpokenReadables = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
 
-local L = SpokenBooks.L
+local L = SpokenReadables.L
 
 -- The pack table shape this version knows how to read. A pack declaring anything else is
 -- ignored with a warning: refusing to read it is recoverable, guessing at an unknown layout
@@ -33,7 +33,7 @@ local MATERIALS = {
 	Silver = [[Interface\Icons\INV_Misc_StoneTablet_11]],
 	Valentine = [[Interface\Icons\INV_Letter_15]],
 }
-SpokenBooks.MATERIALS = MATERIALS
+SpokenReadables.MATERIALS = MATERIALS
 
 -- What a kind of writing is written on where no page is open to ask the game (a readable played
 -- from Azeroth's Compendium): gravestones and tablets in stone, plaques and exhibits in bronze,
@@ -47,9 +47,9 @@ local function IsOpen(self, pageId)
 end
 
 --- What `pageId`'s readable is written on by its kind, or nil for paper.
-function SpokenBooks:KindMaterial(pageId)
+function SpokenReadables:KindMaterial(pageId)
 	local place = pageId and self:Data() and self:Data().pages[pageId]
-	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books
+	local places = _G.SpokenReadablesPlaces and SpokenReadablesPlaces.books
 	local entry = place and places and places[place.book]
 	return entry and KIND_MATERIAL[entry.type] or nil
 end
@@ -57,7 +57,7 @@ end
 --- Open is what the item text events say, not the game's frame, which DialogueUI hides. A page
 --- not open (of another book than the one open, or nothing open) takes what its kind is written
 --- on, else the book.
-function SpokenBooks:PagePicture(pageId)
+function SpokenReadables:PagePicture(pageId)
 	if IsOpen(self, pageId) then
 		local item = ItemTextGetItem and NotSecret(ItemTextGetItem())
 		local icon, crop
@@ -76,16 +76,16 @@ end
 
 --- What `pageId` is written on (ItemTextGetMaterial: Parchment, Stone, Marble...): the game's
 --- word for the page open, else its kind's (KindMaterial), else nil.
-function SpokenBooks:PageMaterial(pageId)
+function SpokenReadables:PageMaterial(pageId)
 	if IsOpen(self, pageId) then return ItemTextGetMaterial and NotSecret(ItemTextGetMaterial()) or nil end
 	return self:KindMaterial(pageId)
 end
 
 -- What a readable can be (Data/Places.lua's `type`), in the order the Compendium lists them,
 -- and the keys of its names: `one` of it, over its line in the queue, and `all`, the Compendium's.
-SpokenBooks.TYPES = { "book", "journal", "letter", "note", "scroll", "tablet", "plaque", "grave", "exhibit",
+SpokenReadables.TYPES = { "book", "journal", "letter", "note", "scroll", "tablet", "plaque", "grave", "exhibit",
 	"picture", "other" }
-SpokenBooks.TYPE_NAMES = {
+SpokenReadables.TYPE_NAMES = {
 	book = { one = "READABLE_BOOK", all = "TYPE_BOOK" },
 	journal = { one = "READABLE_JOURNAL", all = "TYPE_JOURNAL" },
 	letter = { one = "READABLE_LETTER", all = "TYPE_LETTER" },
@@ -100,32 +100,40 @@ SpokenBooks.TYPE_NAMES = {
 }
 
 --- What `book` is (a book, a letter, a gravestone...), as the Compendium sorts it.
-function SpokenBooks:KindOf(book)
-	local places = _G.SpokenBooksPlaces and SpokenBooksPlaces.books
+function SpokenReadables:KindOf(book)
+	local places = _G.SpokenReadablesPlaces and SpokenReadablesPlaces.books
 	local place = places and places[book]
 	return L[(self.TYPE_NAMES[place and place.type] or self.TYPE_NAMES.other).one]
 end
 
 --- Whether a book is one line in the queue (Read Book as One Line), rather than a line per page.
-function SpokenBooks:OneLine()
-	return not (SpokenBooksSettings and SpokenBooksSettings.bookAsOneLine == false)
+function SpokenReadables:OneLine()
+	return not (SpokenReadablesSettings and SpokenReadablesSettings.bookAsOneLine == false)
 end
 
---- Every installed pack this version can read, newest format first.
-function SpokenBooks:GetAudioPacks()
+--- Every installed pack this version can read, newest format first. Packs released as
+--- SpokenBooksAudio write SpokenBooksAudioPacks, and stay on players' disks, so it is read too; one
+--- whose SpokenReadablesAudio replacement is installed beside it is the same pack, one release older.
+function SpokenReadables:GetAudioPacks()
 	local packs = {}
-	for name, pack in pairs(_G.SpokenBooksAudioPacks or {}) do
-		if type(pack) == "table" and pack.version == PACK_FORMAT and type(pack.pages) == "table" then
-			pack.addon = pack.addon or name
-			table.insert(packs, pack)
+	local current = _G.SpokenReadablesAudioPacks or {}
+	local function Collect(registry, renamed)
+		for name, pack in pairs(registry or {}) do
+			if type(pack) == "table" and pack.version == PACK_FORMAT and type(pack.pages) == "table"
+				and not (renamed and current[(name:gsub("^SpokenBooksAudio", "SpokenReadablesAudio"))]) then
+				pack.addon = pack.addon or name
+				table.insert(packs, pack)
+			end
 		end
 	end
+	Collect(current)
+	Collect(_G.SpokenBooksAudioPacks, true)
 	table.sort(packs, function(a, b) return (a.addon or "") < (b.addon or "") end)
 	return packs
 end
 
 -- The buttons the player shows under a book clip: Report, and nothing else. There is no Read
--- button here, unlike the zones strip -- the page is already open on screen, and a button
+-- button here, unlike the places strip -- the page is already open on screen, and a button
 -- that re-read what the reader is looking at would answer a question nobody asked.
 --
 -- One table, shared by every clip. The player tells the button which clip it now stands
@@ -133,7 +141,7 @@ end
 local ACTIONS = {
 	{
 		id = "report",
-		-- An icon in the corner rather than a word beside the line, as the zones action is.
+		-- An icon in the corner rather than a word beside the line, as the places action is.
 		icon = [[Interface\HelpFrame\HelpIcon-Bug]],
 		label = L.REPORT_PROBLEM,
 		anchor = "topright",
@@ -145,14 +153,14 @@ local ACTIONS = {
 			if not clip then
 				return
 			end
-			SpokenBooks:ShowReport(clip.pageId)
+			SpokenReadables:ShowReport(clip.pageId)
 		end,
 	},
 }
 
 local function PageStopped(clip, finished)
 	if finished then
-		SpokenBooks:OnPageFinished(clip)
+		SpokenReadables:OnPageFinished(clip)
 	end
 end
 
@@ -167,7 +175,7 @@ local function Bare(text)
 end
 
 --- When each word of a book's first page is read. Its narration reads the title first, then a
---- pause, unless the page opens with it (pipelines/books/tools/lib/text.mjs, spokenWithTitle), so
+--- pause, unless the page opens with it (pipelines/readables/tools/lib/text.mjs, spokenWithTitle), so
 --- the words start after the title's share of the recording, each at its share of the rest as the
 --- captions estimate it. Nil where nothing comes before the words, or the length is not known.
 local function TitleFirstTimings(title, text, length)
@@ -185,7 +193,7 @@ local function TitleFirstTimings(title, text, length)
 	return timings
 end
 
-function SpokenBooks:ClipFor(pageId)
+function SpokenReadables:ClipFor(pageId)
 	local bookId, number = self:PlaceOf(pageId)
 	if not bookId then
 		return nil
@@ -254,7 +262,7 @@ end
 
 --- A page's length in seconds, from the pack ClipFor would read it from; nil where that pack
 --- recorded none.
-function SpokenBooks:PageLength(pageId)
+function SpokenReadables:PageLength(pageId)
 	local packs = self:GetAudioPacks()
 	for _, language in ipairs(self:LanguageOrder()) do
 		for _, pack in ipairs(packs) do
@@ -270,7 +278,7 @@ end
 --- Why there is no clip, phrased for the player. Distinguishes "you have no sound pack"
 --- from "your pack does not cover this page": the first is a download and the second is
 --- nothing they can do, and telling them apart is the point of saying anything at all.
-function SpokenBooks:DescribeMissingAudio()
+function SpokenReadables:DescribeMissingAudio()
 	if #self:GetAudioPacks() == 0 then
 		return L.OPT_NO_PACK_INSTALLED
 	end
@@ -278,7 +286,7 @@ function SpokenBooks:DescribeMissingAudio()
 end
 
 --- Whether ClipFor would find a clip, without building one.
-function SpokenBooks:HasAudio(pageId)
+function SpokenReadables:HasAudio(pageId)
 	if not self:PlaceOf(pageId) then
 		return false
 	end

@@ -9,13 +9,13 @@
  * viewer may not edit is answered the same as one that is not there, so a batch learns no more
  * about which ids exist than the single route does.
  *
- * Accepting books rows in bulk takes only those the matcher places in a page that exists or
+ * Accepting readables rows in bulk takes only those the matcher places in a page that exists or
  * will (bulkAcceptable): an ambiguous, known, correction or new-book row is left as it is and
  * answered with why, one corpus read for the lot. Each accept is held to the match checked here,
  * so a row another accept turned into a correction meanwhile is refused, not written.
  */
 import { mayIgnoreIn, requireCapability } from "@/lib/generation/authz";
-import { booksContributions, contributionLocales } from "@/lib/contributions/store";
+import { readablesContributions, contributionLocales } from "@/lib/contributions/store";
 import { BASE_LANG, isLang, type Lang } from "@/lib/lang";
 import { isStatus, RESOLVE_MANY_MAX, type ResolveManyResult } from "@/lib/contributions/contributions";
 import { bulkAcceptable, loadBookCorpus, matchBook, type BookMatchResult } from "@/lib/contributions/book-match";
@@ -70,10 +70,10 @@ export async function POST(request: Request) {
   const skipped = new Map<number, string>();
   const bookMatches = new Map<number, BookMatchResult>();
   if (body.status === "accepted" && permitted.length > 0) {
-    const books = await booksContributions(permitted);
-    if (books.length > 0) {
+    const readables = await readablesContributions(permitted);
+    if (readables.length > 0) {
       const corpus = await loadBookCorpus();
-      for (const row of books) {
+      for (const row of readables) {
         const match = matchBook(row, corpus);
         if (bulkAcceptable(match)) bookMatches.set(row.id, match);
         else skipped.set(row.id, SKIPPED[match.kind]);

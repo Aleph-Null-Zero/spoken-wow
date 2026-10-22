@@ -140,7 +140,7 @@ Each line is `<GetTime> <category> <text>`:
 ```
 1234.567 session start: Tata Throwaway, Spoken 3.0.1, Spoken Developer 0.1.0, client 1.60.1 build 70205
 1234.567 session wall clock 2026-10-06 21:14:03 at GetTime 1234.567
-1234.567 session modules: quests (Spoken_Quests), zones (Spoken_Places)
+1234.567 session modules: quests (Spoken_Quests), places (Spoken_Places)
 1237.570 diag login:
 1237.570 diag   Spoken 3.0.1, API 1, 0 queued, playing
 1240.090 quests quest-detail: QUEST_DETAIL raw quest ID 783, title "A Threat Within", NPC "Marshal McBride"

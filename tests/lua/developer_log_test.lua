@@ -170,7 +170,7 @@ Expect("...nor offer /reload", opened, nil)
 _G.InCombatLockdown = nil
 
 ---------------------------------------------------------------- a book open
--- Spoken Writings is not loaded here: a book opened says what it is, and that nothing reads it.
+-- Readables is not loaded here: a book opened says what it is, and that nothing reads it.
 stub.ShowPage({ title = "The Fall of Ameth'Aran", text = "Long ago, the night elves of Ameth'Aran\nkept vigil.", number = 2 })
 stub.FireEvent("ITEM_TEXT_READY")
 Expect("a book opened is in the log, with its title and page",

@@ -7,15 +7,15 @@
 -- leading "the " removed, apostrophes dropped, punctuation collapsed to
 -- single spaces. The client reports "The Bulwark" where the wiki titles the
 -- page "Bulwark", so both sides are reduced to the same key at lookup time
--- via SpokenZones:NormaliseAreaKey.
+-- via SpokenPlaces:NormaliseAreaKey.
 --
 -- Every language is keyed by the ENGLISH name: a place is one place whatever
 -- it is called, and a non-English client gets from its own name to this key
 -- through Data/<locale>/Aliases.lua.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("koKR") then
+if not SpokenPlaces:ShouldLoadLanguage("koKR") then
 	return
 end
 
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "남쪽 바다",
 			short = "남쪽 바다는 알려진 대륙들 사이의 바다를 채우고 있으며, 대해의 일부이다. 트롤 제국의 옛 고향인 잔달라가 이 바다에서 솟아 있다.",
-			full = "남쪽 바다는 알려진 대륙들 사이의 바다를 채우고 있으며, 대해의 일부이다. 트롤 제국의 옛 고향인 잔달라가 이 바다에서 솟아 있다. 가시덤불 골짜기에 가까워질수록 바다는 암초와 작은 섬들로 험해지는데, 어떤 섬은 모래톱에 지나지 않고, 어떤 섬은 세운 이들이 사라진 폐허를 품고 있다. 남쪽 바다는 가시덤불과 타나리스의 경계를 따라 펼쳐져 있다.",
+			full = "남쪽 바다는 알려진 대륙들 사이의 바다를 채우고 있으며, 대해의 일부이다. 트롤 제국의 옛 고향인 잔달라가 이 바다에서 솟아 있다. 본토의 세력들과 떨어져 자기 백성을 품고 있는 화산섬 케잔도 그 사이에 있다. 가시덤불 골짜기에 가까워질수록 바다는 암초와 작은 섬들로 험해지는데, 어떤 섬은 모래톱에 지나지 않고, 어떤 섬은 세운 이들이 사라진 폐허를 품고 있다. 남쪽 바다는 가시덤불과 타나리스의 경계를 따라 펼쳐져 있다.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "남쪽 바다",
 			short = "알려진 대륙들의 남쪽 바다는 대해의 넓은 구역으로 열리며, 그 이름을 주로 선원들만 아는 섬들을 지나 해류를 실어 나른다.",
-			full = "알려진 대륙들의 남쪽 바다는 대해의 넓은 구역으로 열리며, 그 이름을 주로 선원들만 아는 섬들을 지나 해류를 실어 나른다. 트롤 제국의 옛 고향인 잔달라가 이 바다에서 솟아 있다.\n\n가시덤불 골짜기에 가까워질수록 바다는 암초와 숨은 만으로 험해진다. 선장이 바위 하나하나의 이름을 알거나 아니면 배를 잃는, 그런 바다이다. 이 구간에는 작은 섬들이 점점이 흩어져 있는데, 어떤 섬은 모래톱에 지나지 않고, 어떤 섬은 세운 이들이 오래전에 파도 아래로 사라진 폐허를 품고 있다.\n\n이 바다에 이름을 붙일 만한 까닭은 그 위에서 벌어진 어떤 한 전투라기보다, 바다가 삼켰다가 반쯤 다시 드러낸 것들에 있다. 가라앉은 신전, 물에 잠긴 해안, 썰물 때 맑은 물 너머로 언뜻 보이는 폐허들이다. 이곳은 가장자리와 틈새의 바다로, 가시덤불과 타나리스의 경계를 따라 흐르며, 파도가 가져다주기로 한 것이면 무엇이든 자신이 가르는 해안으로 실어 나른다.",
+			full = "알려진 대륙들의 남쪽 바다는 대해의 넓은 구역으로 열리며, 그 이름을 주로 선원들만 아는 섬들을 지나 해류를 실어 나른다. 트롤 제국의 옛 고향인 잔달라가 이 바다에서 솟아 있다. 본토의 세력들과 떨어져 자기 백성을 품고 있는 화산섬 케잔도 그 사이에 있다.\n\n가시덤불 골짜기에 가까워질수록 바다는 암초와 숨은 만으로 험해진다. 선장이 바위 하나하나의 이름을 알거나 아니면 배를 잃는, 그런 바다이다. 이 구간에는 작은 섬들이 점점이 흩어져 있는데, 어떤 섬은 모래톱에 지나지 않고, 어떤 섬은 세운 이들이 오래전에 파도 아래로 사라진 폐허를 품고 있다.\n\n이 바다에 이름을 붙일 만한 까닭은 그 위에서 벌어진 어떤 한 전투라기보다, 바다가 삼켰다가 반쯤 다시 드러낸 것들에 있다. 가라앉은 신전, 물에 잠긴 해안, 썰물 때 맑은 물 너머로 언뜻 보이는 폐허들이다. 이곳은 가장자리와 틈새의 바다로, 가시덤불과 타나리스의 경계를 따라 흐르며, 파도가 가져다주기로 한 것이면 무엇이든 자신이 가르는 해안으로 실어 나른다.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "스팀휘들 항구",
-			short = "스팀휘들 항구는 타나리스의 동쪽 해안에 자리하며, 서쪽으로는 모도시 가젯잔으로 가는 길이, 바다 쪽으로는 부두가 뻗어 있다.",
-			full = "스팀휘들 항구는 타나리스의 동쪽 해안에 자리하며, 서쪽으로는 모도시 가젯잔으로 가는 길이, 바다 쪽으로는 부두가 뻗어 있다. 이곳은 금만 좋다면 찾아오는 누구와도 거래하는 고블린들, 스팀휘들 무역회사의 것이다.\n\n항구의 주민 가운데에는 예키냐가 있는데, 그의 거래가 영혼의 약탈자 학카르의 귀환을 부추겼다.",
+			short = "스팀휘들 항구는 타나리스의 동쪽 해안에 자리하며, 서쪽으로는 모도시 가젯잔으로 가는 길이, 바다 쪽으로는 케잔을 향한 부두가 뻗어 있다.",
+			full = "스팀휘들 항구는 타나리스의 동쪽 해안에 자리하며, 서쪽으로는 모도시 가젯잔으로 가는 길이, 바다 쪽으로는 케잔을 향한 부두가 뻗어 있다. 이곳은 금만 좋다면 찾아오는 누구와도 거래하는 고블린들, 스팀휘들 무역회사의 것이다.\n\n항구의 주민 가운데에는 예키냐가 있는데, 그의 거래가 영혼의 약탈자 학카르의 귀환을 부추겼다.",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4912,4 +4912,4 @@ local subzones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("koKR", "subzones", subzones)
+SpokenPlaces:RegisterLoreData("koKR", "subzones", subzones)

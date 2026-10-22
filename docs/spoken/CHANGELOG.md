@@ -9,6 +9,11 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
   Ribbly Screwspigot and Plugger Spazzring are listed in Blackrock Depths again. Blackfathom Deeps and
   Gnomeregan list their bosses in Forever's order, not the Season of Discovery raid's, and targeting any creature of a fight of several,
   such as Stalagg or one of the Four Horsemen, shows the fight's story. *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's quest list follows live Forever more closely.** Skyborne and other races
+  see the class quests Forever gives them, and human priests no longer see Desperate Prayer.
+  Quests whose only givers are one side's are listed for that side alone, three quests moved to
+  the zone Forever's quest log uses, Westfall's Toxic Soil quests and 30 follow-ups are linked into
+  their chains, and Dark Sacrifice has its new name. *([Nucabe](https://github.com/Nucabe))*
 - **The Places tab sorts names without a leading "The".** The Barrens is listed under B and
   The Crossroads under C, among the zones, areas and dungeons, as you would look for them. The
   names still read in full. *([rusty-key](https://github.com/rusty-key))*
@@ -219,6 +224,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - Names and tooltips were read again in every language: a part or control has one name wherever it appears,
   tooltips that still described old behaviour say what the control does now, and the voice packs are called
   voice packs in chat and in the missing-pack messages. *([Nucabe](https://github.com/Nucabe))*
+- Seven settings rows no longer carry a line of description under the name: Text Language, Include
+  Places Found Before, Keep Reading in Background, Collect Missing Lines, Original Thrall Speech, Mark
+  Words in DialogueUI and NPC Voice Before Reading. *([anon1231823](https://github.com/anon1231823))*
 
 ### Battlegrounds
 

@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "ptBR" then
 	return
@@ -22,10 +22,8 @@ L.OPT_PLAY_BUTTON = "Ler histórias em voz alta"
 L.OPT_AUTOPLAY = "Ler automaticamente"
 L.OPT_AUTOPLAY_SUB = "Incluir áreas menores"
 L.OPT_AUTOPLAY_EXPLORED = "Incluir lugares já encontrados"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "Lê cada lugar uma vez por personagem, mesmo um já descoberto."
 L.OPT_LANG_RELOAD = "Digite /reload para trocar para ele."
 L.OPT_LANGUAGE = "Idioma do texto"
-L.OPT_LANGUAGE_TIP = "O texto das histórias; a voz segue o idioma da voz."
 L.OPT_LANG_AUTO_FMT = "Automático (%1$s)"
 L.OPT_LANG_SET_FMT = "As histórias estarão em %1$s depois que a interface recarregar."
 L.OPT_LANG_PROFILE_FMT = "Este perfil lê as histórias em %1$s. Digite /reload para trocar."
@@ -94,4 +92,4 @@ L.OPT_DEV_PREVIEW = "Oferecer traduções inacabadas"
 
 L.OPEN_IN_COMPENDIUM = "Abrir no Compêndio de Azeroth"
 
-SpokenZones:RegisterStrings("ptBR", L)
+SpokenPlaces:RegisterStrings("ptBR", L)

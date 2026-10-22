@@ -6,9 +6,9 @@
 -- no source: that prose was written for this project.
 -- Page intros only, with post-vanilla sentences filtered out for Classic Era.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("enUS") then
+if not SpokenPlaces:ShouldLoadLanguage("enUS") then
 	return
 end
 
@@ -344,4 +344,4 @@ local zones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("enUS", "zones", zones)
+SpokenPlaces:RegisterLoreData("enUS", "zones", zones)

@@ -7,15 +7,15 @@
 -- leading "the " removed, apostrophes dropped, punctuation collapsed to
 -- single spaces. The client reports "The Bulwark" where the wiki titles the
 -- page "Bulwark", so both sides are reduced to the same key at lookup time
--- via SpokenZones:NormaliseAreaKey.
+-- via SpokenPlaces:NormaliseAreaKey.
 --
 -- Every language is keyed by the ENGLISH name: a place is one place whatever
 -- it is called, and a non-English client gets from its own name to this key
 -- through Data/<locale>/Aliases.lua.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("zhTW") then
+if not SpokenPlaces:ShouldLoadLanguage("zhTW") then
 	return
 end
 
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "南海",
 			short = "南海填滿了已知大陸之間的水域，是無盡之海的一部分。贊達拉從這片海域中升起，那是食人妖帝國古老的故鄉。",
-			full = "南海填滿了已知大陸之間的水域，是無盡之海的一部分。贊達拉從這片海域中升起，那是食人妖帝國古老的故鄉。靠近荊棘谷的海域，暗礁與小島密布，變得險惡難行，有些小島不過是一道沙洲，有些則保留著建造者早已消逝的廢墟。南海沿著荊棘谷與塔納利斯的邊界延伸。",
+			full = "南海填滿了已知大陸之間的水域，是無盡之海的一部分。贊達拉從這片海域中升起，那是食人妖帝國古老的故鄉。凱贊也位於其中，那是一座火山島，島上的居民與大陸上的強權保持著距離。靠近荊棘谷的海域，暗礁與小島密布，變得險惡難行，有些小島不過是一道沙洲，有些則保留著建造者早已消逝的廢墟。南海沿著荊棘谷與塔納利斯的邊界延伸。",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "南海",
 			short = "已知大陸以南的海域向外展開，成為無盡之海中廣闊的一片，洋流從一座座島嶼旁流過，而這些島嶼的名字大多只有水手才知道。",
-			full = "已知大陸以南的海域向外展開，成為無盡之海中廣闊的一片，洋流從一座座島嶼旁流過，而這些島嶼的名字大多只有水手才知道。贊達拉便從這片海域中升起，那是食人妖帝國古老的故鄉。\n\n越靠近荊棘谷，海面就因暗礁與隱蔽的海灣而越發險惡，在這樣的水域中，船長若不是對每一塊礁石都瞭若指掌，就會賠上整艘船。這片海域點綴著許多小島，有些不過是一道沙洲，有些則留有廢墟，而建造它們的人早已消失在浪濤之下。\n\n這片海之所以值得一提，與其說是因為曾在此發生過哪一場戰役，不如說是因為它吞沒了許多事物，又將它們半掩半露地重現：沉沒的神廟、淹沒的海岸，以及退潮時透過清澈海水隱約可見的廢墟。這是一片屬於邊界與夾縫之地的海，沿著荊棘谷與塔納利斯的邊境流淌，把潮水願意帶來的一切，送往它所分隔的海岸。",
+			full = "已知大陸以南的海域向外展開，成為無盡之海中廣闊的一片，洋流從一座座島嶼旁流過，而這些島嶼的名字大多只有水手才知道。贊達拉便從這片海域中升起，那是食人妖帝國古老的故鄉。凱贊也位於其中，那是一座火山島，島上的居民與大陸上的各方勢力保持著距離。\n\n越靠近荊棘谷，海面就因暗礁與隱蔽的海灣而越發險惡，在這樣的水域中，船長若不是對每一塊礁石都瞭若指掌，就會賠上整艘船。這片海域點綴著許多小島，有些不過是一道沙洲，有些則留有廢墟，而建造它們的人早已消失在浪濤之下。\n\n這片海之所以值得一提，與其說是因為曾在此發生過哪一場戰役，不如說是因為它吞沒了許多事物，又將它們半掩半露地重現：沉沒的神廟、淹沒的海岸，以及退潮時透過清澈海水隱約可見的廢墟。這是一片屬於邊界與夾縫之地的海，沿著荊棘谷與塔納利斯的邊境流淌，把潮水願意帶來的一切，送往它所分隔的海岸。",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4155,8 +4155,8 @@ local subzones = {
 		},
 		["steamwheedle port"] = {
 			name = "熱砂港",
-			short = "熱砂港坐落於塔納利斯的東岸，一條道路向西通往它的母城加基森，一座碼頭則伸向大海。",
-			full = "熱砂港坐落於塔納利斯的東岸，一條道路向西通往它的母城加基森，一座碼頭則伸向大海。它隸屬於熱砂企業，這些哥布林只要金子夠好，來者不拒。\n\n港口的居民中有一位葉基亞，正是他的所作所為，促成了靈魂掠奪者哈卡的回歸。",
+			short = "熱砂港坐落於塔納利斯的東岸，一條道路向西通往它的母城加基森，一座碼頭則伸向凱贊。",
+			full = "熱砂港坐落於塔納利斯的東岸，一條道路向西通往它的母城加基森，一座碼頭則伸向凱贊。它隸屬於熱砂企業，這些哥布林只要金子夠好，來者不拒。\n\n港口的居民中有一位葉基亞，正是他的所作所為，促成了靈魂掠奪者哈卡的回歸。",
 			source = "https://warcraft.wiki.gg/wiki/Steamwheedle_Port",
 		},
 		["thistleshrub valley"] = {
@@ -4912,4 +4912,4 @@ local subzones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("zhTW", "subzones", subzones)
+SpokenPlaces:RegisterLoreData("zhTW", "subzones", subzones)

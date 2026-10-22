@@ -1,5 +1,5 @@
 /**
- * Narrating one line in a section read by the single narrator: zones and books.
+ * Narrating one line in a section read by the single narrator: places and readables.
  *
  * Both sections voice every line with the one narrator, the generating collaborator's own
  * settings and the pronunciation lexicon, give every line a file of its own, and record a duration --
@@ -26,7 +26,7 @@ import { BASE_LANG } from "@/lib/lang";
 import "server-only";
 
 import { commitTake } from "@/lib/takes/commit";
-import { durationOf } from "@/lib/zones/tools";
+import { durationOf } from "@/lib/places/tools";
 
 import { busy, failure } from "./errors";
 import { BUSY, withTakeLock } from "./lock";
@@ -52,7 +52,7 @@ function asFailure(error: unknown) {
 }
 
 export async function regenerateNarrated(
-  source: "zones" | "books",
+  source: "places" | "readables",
   line: NarratedLine,
   createdBy: string,
   options: { speaker: Speaker; lang?: Lang; batchId?: string },

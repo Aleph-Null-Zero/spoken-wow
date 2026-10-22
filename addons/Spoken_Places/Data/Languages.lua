@@ -8,9 +8,9 @@
 --
 -- Measured against English: 841 lore lines, 73 interface strings.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-SpokenZones.Languages = {
+SpokenPlaces.Languages = {
 	{ code = "enUS", lore = { done = 841, total = 841 }, strings = { done = 73, total = 73 }, aliases = 0, audio = true, ready = true },
 	{ code = "deDE", lore = { done = 841, total = 841 }, strings = { done = 73, total = 73 }, aliases = 774, audio = true, ready = true },
 	{ code = "esES", lore = { done = 841, total = 841 }, strings = { done = 73, total = 73 }, aliases = 837, audio = true, ready = true },

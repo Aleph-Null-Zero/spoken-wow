@@ -1,11 +1,11 @@
--- SpokenZones -- detect clicks on a subzone of the displayed world map.
+-- SpokenPlaces -- detect clicks on a subzone of the displayed world map.
 --
 -- Subzones have no uiMapID, so C_Map.GetMapInfoAtPosition cannot see them; it
 -- only reports child *maps*. MapUtil.FindBestAreaNameAtMouse is the API that
 -- resolves a cursor position to an area name, and it is present on 11509
 -- (Leatrix_Maps calls it on this client).
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 -- Normalised-coordinate slop allowed between mouse-down and mouse-up before the
 -- gesture counts as a map drag rather than a click. IsPanning() is unreliable by
@@ -22,23 +22,23 @@ local function HandleClick(x, y)
 
 	-- On a continent or world map a click is navigation to a child zone; leave
 	-- that to Blizzard's own handlers rather than hijacking it.
-	if not SpokenZones:IsZoneMap(mapID) then
+	if not SpokenPlaces:IsZoneMap(mapID) then
 		return
 	end
 
-	-- The highlight lights what this finds (SpokenZones:AreaAt), so a lit area is one a click opens.
-	local areaName, entry, key, city = SpokenZones:AreaAt(mapID, x, y)
-	local debug = SpokenZones:Get("debug")
+	-- The highlight lights what this finds (SpokenPlaces:AreaAt), so a lit area is one a click opens.
+	local areaName, entry, key, city = SpokenPlaces:AreaAt(mapID, x, y)
+	local debug = SpokenPlaces:Get("debug")
 
 	if not areaName then
 		if debug then
-			SpokenZones:Print("no area under cursor on map %d", mapID)
+			SpokenPlaces:Print("no area under cursor on map %d", mapID)
 		end
 		return
 	end
 
 	if debug then
-		SpokenZones:Print(
+		SpokenPlaces:Print(
 			'area "%s" -> key "%s" -> %s',
 			areaName,
 			tostring(key),
@@ -50,30 +50,30 @@ local function HandleClick(x, y)
 		return
 	end
 	-- Clicked, so explored: found, whatever the map's samples say (Discovery.lua).
-	if key and SpokenZones.MarkFound then SpokenZones:MarkFound(mapID, key) end
+	if key and SpokenPlaces.MarkFound then SpokenPlaces:MarkFound(mapID, key) end
 	-- A city inside the zone (Stormwind City on Elwynn Forest's map) is a map of its own: the click
 	-- opens it, as one on a zone opens the zone from its continent, and the panel tells its story.
 	if city then
 		if WorldMapFrame.SetMapID then WorldMapFrame:SetMapID(city) end
 	else
-		SpokenZones:SelectSubzone(mapID, areaName, entry)
+		SpokenPlaces:SelectSubzone(mapID, areaName, entry)
 	end
 	-- Closed beside the map, the panel opens on what was clicked: the click asked for its story.
 	-- Not where the player turned the panel off in the settings.
-	if SpokenZones:Get("showMapPanel") and SpokenZones:Get("mapPanelCollapsed") then
-		SpokenZones:SetMapPanelCollapsed(false)
+	if SpokenPlaces:Get("showMapPanel") and SpokenPlaces:Get("mapPanelCollapsed") then
+		SpokenPlaces:SetMapPanelCollapsed(false)
 	end
 end
 
-function SpokenZones:SetupSubzoneClicks()
+function SpokenPlaces:SetupSubzoneClicks()
 	local container = WorldMapFrame and WorldMapFrame.ScrollContainer
 	if not container then
-		SpokenZones:Print("|cffffcc00WorldMapFrame.ScrollContainer missing; subzone clicks disabled|r")
+		SpokenPlaces:Print("|cffffcc00WorldMapFrame.ScrollContainer missing; subzone clicks disabled|r")
 		return
 	end
 
 	if not (MapUtil and MapUtil.FindBestAreaNameAtMouse) then
-		SpokenZones:Print("|cffffcc00MapUtil.FindBestAreaNameAtMouse missing; subzone clicks disabled|r")
+		SpokenPlaces:Print("|cffffcc00MapUtil.FindBestAreaNameAtMouse missing; subzone clicks disabled|r")
 		return
 	end
 
@@ -88,7 +88,7 @@ function SpokenZones:SetupSubzoneClicks()
 		if button ~= "LeftButton" then
 			return
 		end
-		if not SpokenZones:IsPartOn() then
+		if not SpokenPlaces:IsPartOn() then
 			downX, downY, downMap = nil, nil, nil
 			return
 		end

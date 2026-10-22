@@ -128,28 +128,28 @@ describe("setStatus", () => {
 /**
  * The reason the source is part of every read rather than a label on the row: both sides of
  * the site name lines and files by their own frozen rules, and nothing guarantees the two
- * namespaces stay apart. A read that forgot the source would hand a zones report to the
+ * namespaces stay apart. A read that forgot the source would hand a places report to the
  * quests triage view, where the line it names resolves to something else or to nothing.
  */
 describe("the two sources", () => {
   it("keeps a line's reports to the source that filed them", async () => {
     await createReport(submission({ lineId: "shared:1" }));
-    await createReport(submission({ source: "zones", lineId: "shared:1", target: null }));
+    await createReport(submission({ source: "places", lineId: "shared:1", target: null }));
 
     expect(await reportsForLine("quests", "shared:1")).toHaveLength(1);
-    expect(await reportsForLine("zones", "shared:1")).toHaveLength(1);
+    expect(await reportsForLine("places", "shared:1")).toHaveLength(1);
   });
 
   it("lists both by default and one when asked", async () => {
     await createReport(submission());
-    await createReport(submission({ source: "zones", target: null }));
+    await createReport(submission({ source: "places", target: null }));
 
     const mine = (reports: Awaited<ReturnType<typeof listReports>>) =>
       reports.filter((report) => report.body === "Said Thrall wrong.");
 
     expect(mine(await listReports("open"))).toHaveLength(2);
-    expect(mine(await listReports("open", "zones"))).toHaveLength(1);
-    expect(mine(await listReports("open", "zones"))[0]?.source).toBe("zones");
+    expect(mine(await listReports("open", "places"))).toHaveLength(1);
+    expect(mine(await listReports("open", "places"))[0]?.source).toBe("places");
   });
 
   it("narrows to one complaint, across sources", async () => {
@@ -158,7 +158,7 @@ describe("the two sources", () => {
     await createReport(submission({ body: `${ip} said it wrong` }));
     await createReport(submission({ category: "wrong_voice", body: `${ip} wrong voice` }));
     await createReport(
-      submission({ source: "zones", target: null, category: "wrong_voice", body: `${ip} zone` }),
+      submission({ source: "places", target: null, category: "wrong_voice", body: `${ip} zone` }),
     );
 
     const mine = (reports: Awaited<ReturnType<typeof listReports>>) =>
@@ -172,11 +172,11 @@ describe("the two sources", () => {
     expect(mine(await listReports("open", "all", "pronunciation"))).toHaveLength(1);
   });
 
-  /** The zones side reaches its report page with the line already known, so it has none. */
+  /** The places side reaches its report page with the line already known, so it has none. */
   it("stores a report with no target at all", async () => {
-    await createReport(submission({ source: "zones", lineId: "z:1411", target: null }));
+    await createReport(submission({ source: "places", lineId: "z:1411", target: null }));
 
-    const [report] = await reportsForLine("zones", "z:1411");
+    const [report] = await reportsForLine("places", "z:1411");
     expect(report.target).toBeNull();
   });
 });

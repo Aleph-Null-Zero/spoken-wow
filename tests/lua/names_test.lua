@@ -38,12 +38,16 @@ for _, addon in ipairs(ADDON_TITLES) do
 end
 
 ---------------------------------------------------------------- settings under new names
--- A name an older release used would bring its settings back. Every addon starts fresh.
+-- A name an older release used would bring its settings back. Every addon starts fresh, but for
+-- Places' and Readables' names before they were Places and Readables: listed after the new ones,
+-- read once and carried over (see their Language.lua and Core.lua).
 local SAVED = {
     { toc = "Spoken/Spoken.toc", vars = "SpokenSettings" },
     { toc = "Spoken_Quests/Spoken_Quests.toc", vars = "SpokenQuestsSettings" },
-    { toc = "Spoken_Readables/Spoken_Readables.toc", vars = "SpokenBooksSettings", char = "SpokenBooksCharacter" },
-    { toc = "Spoken_Places/Spoken_Places.toc", vars = "SpokenZonesSettings", char = "SpokenZonesCharacter" },
+    { toc = "Spoken_Readables/Spoken_Readables.toc", vars = "SpokenReadablesSettings, SpokenBooksSettings",
+        char = "SpokenReadablesCharacter, SpokenBooksCharacter" },
+    { toc = "Spoken_Places/Spoken_Places.toc", vars = "SpokenPlacesSettings, SpokenZonesSettings",
+        char = "SpokenPlacesCharacter, SpokenZonesCharacter" },
 }
 for _, addon in ipairs(SAVED) do
     Expect(addon.toc .. " saves " .. addon.vars, Field(ADDONS .. addon.toc, "SavedVariables"), addon.vars)
@@ -81,6 +85,17 @@ env.Addon:RetireOldFolders()
 Expect("retiring them switches every old folder off for the next login", table.concat(stub.disabledAddOns, " "),
     "SpokenPlayer VoiceOverRedux ZoneLore SpokenQuests SpokenZones SpokenBooks Spoken_Books Spoken_Zones Spoken_Writings")
 local popup = stub.popups[1]
+-- A sound pack under its module's old name is old only beside its renamed replacement.
+do
+    local addons, wasLoaded, wasDisabled = stub.addons, loaded, stub.disabledAddOns
+    stub.addons = { { folder = "SpokenZonesAudio_deDE" }, { folder = "SpokenPlacesAudio_deDE" },
+        { folder = "SpokenBooksAudio" }, { folder = "SpokenZonesAudioActed_frFR" }, { folder = "SpokenPlacesAudioActed_frFR" } }
+    loaded = { SpokenZonesAudio_deDE = true, SpokenPlacesAudio_deDE = true, SpokenBooksAudio = true,
+        SpokenZonesAudioActed_frFR = true, SpokenPlacesAudioActed_frFR = true }
+    Expect("an old pack beside its replacement is found, and one alone is not",
+        table.concat(env.Addon:FindOldFolders(), " "), "SpokenZonesAudio_deDE SpokenZonesAudioActed_frFR")
+    stub.addons, loaded, stub.disabledAddOns = addons, wasLoaded, wasDisabled
+end
 Expect("...names them in a popup", popup and popup.key, "SPOKEN_OLD_FOLDERS")
 Expect("...that offers the reload which finishes it", popup and popup.dialog.button1, "Reload Now")
 Expect("...listing them one to a line", string.find(popup.dialog.text, "\n\n• SpokenPlayer\n• VoiceOverRedux\n", 1, true) ~= nil, true)

@@ -339,7 +339,7 @@ endif
 # corpus/corpus.json.gz is still what the Python CLI and the addon build read, and still
 # committed -- producing audio and shipping a pack need no database, which is the promise
 # requirements.txt makes. What changed is that the file is an EXPORT of quest_line rather
-# than something maintained by hand, exactly as zones' manifest.json is an export of the
+# than something maintained by hand, exactly as places' manifest.json is an export of the
 # take table. The check that proves the table carries everything is that an import followed
 # by an export leaves the file byte-identical.
 

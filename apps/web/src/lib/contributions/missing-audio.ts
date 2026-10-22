@@ -95,7 +95,7 @@ export async function missingAudioRanking(packLang: string): Promise<MissingAudi
             ) as "text",
             -- "source" first, so take_line_idx is used; gossip lines are takes of quests.
             exists (select 1 from "take" t
-                     where t."source" in ('quests', 'books') and t."lang" = $1
+                     where t."source" in ('quests', 'readables') and t."lang" = $1
                        and t."lineId" = r."lineId" and t."isCurrent") as "voiced"
        from ranked r
       order by r."installs" desc, r."lastSeen" desc, r."lineId"`,

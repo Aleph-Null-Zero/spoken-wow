@@ -7,15 +7,15 @@
 -- leading "the " removed, apostrophes dropped, punctuation collapsed to
 -- single spaces. The client reports "The Bulwark" where the wiki titles the
 -- page "Bulwark", so both sides are reduced to the same key at lookup time
--- via SpokenZones:NormaliseAreaKey.
+-- via SpokenPlaces:NormaliseAreaKey.
 --
 -- Every language is keyed by the ENGLISH name: a place is one place whatever
 -- it is called, and a non-English client gets from its own name to this key
 -- through Data/<locale>/Aliases.lua.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadLanguage("esMX") then
+if not SpokenPlaces:ShouldLoadLanguage("esMX") then
 	return
 end
 
@@ -1291,7 +1291,7 @@ local subzones = {
 		["quellithien lodge"] = {
 			name = "Refugio Quel'Lithien",
 			short = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor.",
-			full = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor. Así lo recordaba Lor'themar Theron de sus propias visitas, cuando lo recibían con afecto los compatriotas que lo consideraban su hogar. El refugio albergó en otro tiempo varios documentos élficos, algunos relacionados con la familia real y con el general forestal de Lunargenta. Para la época de la Segunda Guerra, Renthar Lanzalcón dirigía allí a los cazadores.",
+			full = "El Refugio Quel'Lithien era un campamento de los Errantes cerca de Quel'Thalas, un lugar cálido y acogedor. El refugio albergó en otro tiempo varios documentos élficos, algunos relacionados con la familia real y con el general forestal de Lunargenta. Para la época de la Segunda Guerra, Renthar Lanzalcón dirigía allí a los cazadores.",
 			source = "https://warcraft.wiki.gg/wiki/Quel'Lithien_Lodge",
 		},
 		["scarlet base camp"] = {
@@ -2548,7 +2548,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares del Sur",
 			short = "Los Mares del Sur ocupan las aguas entre los continentes conocidos, una parte del Mare Magnum. De estas aguas surge Zandalar, antiguo hogar del imperio trol.",
-			full = "Los Mares del Sur ocupan las aguas entre los continentes conocidos, una parte del Mare Magnum. De estas aguas surge Zandalar, antiguo hogar del imperio trol. Más cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes e islotes, algunos no más que un banco de arena, otros con ruinas cuyos constructores ya no existen. Los Mares del Sur bañan las fronteras de Tuercespina y Tanaris.",
+			full = "Los Mares del Sur ocupan las aguas entre los continentes conocidos, una parte del Mare Magnum. De estas aguas surge Zandalar, antiguo hogar del imperio trol. Entre ellas se encuentra también Kezan, una isla volcánica cuyo pueblo se mantiene apartado de las potencias del continente. Más cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes e islotes, algunos no más que un banco de arena, otros con ruinas cuyos constructores ya no existen. Los Mares del Sur bañan las fronteras de Tuercespina y Tanaris.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southern savage coast"] = {
@@ -4138,7 +4138,7 @@ local subzones = {
 		["south seas"] = {
 			name = "Mares del Sur",
 			short = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Mare Magnum, con corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros.",
-			full = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Mare Magnum, con corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros. De estas aguas surge Zandalar, antiguo hogar del imperio trol.\n\nMás cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes y calas ocultas, el tipo de aguas donde un capitán o conoce cada roca por su nombre o pierde el barco. Pequeñas islas salpican este tramo, algunas no más que un banco de arena, otras con ruinas cuyos constructores desaparecieron hace mucho bajo las olas.\n\nLo que hace que este mar merezca un nombre no es tanto una batalla concreta librada en él como lo que se ha tragado y ha vuelto a revelar a medias: templos hundidos, costas anegadas, ruinas vislumbradas a través del agua clara con la marea baja. Es un mar de bordes y lugares intermedios, que recorre las fronteras de Tuercespina y Tanaris, y que lleva lo que las mareas decidan traer a las costas que separa.",
+			full = "Las aguas al sur de los continentes conocidos se abren a una amplia extensión del Mare Magnum, con corrientes que pasan junto a islas cuyos nombres conocen sobre todo los marineros. De estas aguas surge Zandalar, antiguo hogar del imperio trol. Entre ellas se encuentra también Kezan, una isla volcánica cuyo pueblo se mantiene apartado de las potencias del continente.\n\nMás cerca de la Vega de Tuercespina, el mar se vuelve traicionero, con arrecifes y calas ocultas, el tipo de aguas donde un capitán o conoce cada roca por su nombre o pierde el barco. Pequeñas islas salpican este tramo, algunas no más que un banco de arena, otras con ruinas cuyos constructores desaparecieron hace mucho bajo las olas.\n\nLo que hace que este mar merezca un nombre no es tanto una batalla concreta librada en él como lo que se ha tragado y ha vuelto a revelar a medias: templos hundidos, costas anegadas, ruinas vislumbradas a través del agua clara con la marea baja. Es un mar de bordes y lugares intermedios, que recorre las fronteras de Tuercespina y Tanaris, y que lleva lo que las mareas decidan traer a las costas que separa.",
 			source = "https://warcraft.wiki.gg/wiki/South_Seas",
 		},
 		["southbreak shore"] = {
@@ -4912,4 +4912,4 @@ local subzones = {
 	},
 }
 
-SpokenZones:RegisterLoreData("esMX", "subzones", subzones)
+SpokenPlaces:RegisterLoreData("esMX", "subzones", subzones)

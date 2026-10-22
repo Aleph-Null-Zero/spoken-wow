@@ -42,8 +42,8 @@ function route(rules: { source: string; destination: string }[], path: string): 
 /** The page file under src/app that serves a section's report address. */
 const PAGES = {
   quests: "[lang]/quests/r/[...target]/page.tsx",
-  zones: "[lang]/zones/r/[mapID]/[slug]/page.tsx",
-  books: "[lang]/books/r/[pageId]/page.tsx",
+  places: "[lang]/places/r/[mapID]/[slug]/page.tsx",
+  readables: "[lang]/readables/r/[pageId]/page.tsx",
 } as const;
 
 type Section = keyof typeof PAGES;
@@ -51,8 +51,8 @@ type Section = keyof typeof PAGES;
 /** What a section's page takes after /r/, or null for an address it would not open. */
 function kindOf(section: Section, rest: string): string | null {
   if (section === "quests") return parseTarget(rest.split("/"))?.kind ?? null;
-  if (section === "zones") return /^\d+\/[a-z0-9-]+$/.test(rest) ? "zones" : null;
-  return /^\d+$/.test(rest) ? "books" : null;
+  if (section === "places") return /^\d+\/[a-z0-9-]+$/.test(rest) ? "places" : null;
+  return /^\d+$/.test(rest) ? "readables" : null;
 }
 
 describe("the report addresses the addon builds", () => {
@@ -69,7 +69,7 @@ describe("the report addresses the addon builds", () => {
       // English goes bare; an /enUS/ prefix would be redirected first.
       expect(route(localeRedirects, path), url).toBeNull();
       const served = route(localeRewrites, path) ?? path;
-      const parts = served.match(/^\/([^/]+)\/(quests|zones|books)\/r\/(.+)$/);
+      const parts = served.match(/^\/([^/]+)\/(quests|places|readables)\/r\/(.+)$/);
       expect(parts, url).not.toBeNull();
       const [, lang, section, rest] = parts!;
       expect(isLang(lang), url).toBe(true);
@@ -81,7 +81,7 @@ describe("the report addresses the addon builds", () => {
       languages.add(lang);
     }
     // Every shape the addon sends is in the fixture, so the file cannot quietly lose one.
-    expect([...kinds].sort()).toEqual(["books", "npc", "object", "quest", "zones"]);
+    expect([...kinds].sort()).toEqual(["npc", "object", "places", "quest", "readables"]);
     expect(languages.has(BASE_LANG) && languages.size > 1).toBe(true);
   });
 });

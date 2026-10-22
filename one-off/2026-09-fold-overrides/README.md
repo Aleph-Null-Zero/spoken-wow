@@ -24,7 +24,7 @@ same fix would live in two places, and **clearing an override would leave the li
 it**, because the folded version is now the line's own text.
 
 So it runs as part of the change that moves the quests line editor onto `quest_line`
-versions (writing and restoring them like `lib/zones/lore.ts` does) and drops the reads of
+versions (writing and restoring them like `lib/places/lore.ts` does) and drops the reads of
 `line_override`. At that point, in order:
 
 1. deploy that change;

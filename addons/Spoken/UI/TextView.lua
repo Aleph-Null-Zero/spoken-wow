@@ -79,7 +79,7 @@ local function FontSize()
 end
 
 -- The file `fontObject`'s words are written in: where the view's owner reads a language other than
--- the client's (only Zones does, SpokenZones:FontFor), one that draws its script.
+-- the client's (only Places does, SpokenPlaces:FontFor), one that draws its script.
 local function FontFile(view, fontObject)
 	local owner = view.owner
 	return owner and owner.FontFor and owner:FontFor(fontObject)

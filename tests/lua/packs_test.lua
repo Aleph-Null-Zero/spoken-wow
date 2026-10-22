@@ -27,10 +27,10 @@ end
 local CODES = { "deDE", "esES", "esMX", "frFR", "itIT", "koKR", "ptBR", "ruRU", "zhCN", "zhTW" }
 local PAGES = {
     quests = function(code) return "quests/audio-" .. code:lower() .. ".md" end,
-    zones = function(code) return "zones/spoken-zones-audio-" .. code:lower() .. ".md" end,
-    books = function(code) return "books/spoken-books-audio-" .. code:lower() .. ".md" end,
+    places = function(code) return "places/spoken-places-audio-" .. code:lower() .. ".md" end,
+    readables = function(code) return "readables/spoken-readables-audio-" .. code:lower() .. ".md" end,
 }
-local FOLDERS = { quests = "SpokenQuestsAudio", zones = "SpokenZonesAudio", books = "SpokenBooksAudio" }
+local FOLDERS = { quests = "SpokenQuestsAudio", places = "SpokenPlacesAudio", readables = "SpokenReadablesAudio" }
 
 stub.SetClient("16001"); stub.ResetSound(); stub.ResetTimers(); stub.ResetFrames()
 stub.LoadSpoken(SPOKEN)

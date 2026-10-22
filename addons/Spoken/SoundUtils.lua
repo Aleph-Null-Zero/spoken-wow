@@ -10,7 +10,7 @@ SoundUtils = {}
 -- A channel this player switched off on a source's behalf: the quests addon mutes
 -- Dialog while its line speaks so the NPC's bark does not talk over it. The queue
 -- treats such a channel as audible at admission and lifts the mute before playing on
--- it -- the alternative is refusing every zones clip that arrives during a quest line.
+-- it -- the alternative is refusing every places clip that arrives during a quest line.
 local CHANNEL_CVARS = { SFX = "Sound_EnableSFX", Music = "Sound_EnableMusic", Ambience = "Sound_EnableAmbience", Dialog = "Sound_EnableDialog" }
 local mutedByPlayer = {}
 

@@ -22,7 +22,7 @@ import type { QuestSummary } from "./triage";
  *   more (one whose speakers are others makes the NPC one more, so it needs an answer);
  * - any other quests row needs a speaker whose type, gender and flavor a voice reads, whoever
  *   set them (accept.ts's speakerFor);
- * - zones and books rows have no speaker to check.
+ * - places and readables rows have no speaker to check.
  */
 export const BUCKETS = ["ready", "blocked"] as const;
 
@@ -46,7 +46,7 @@ export function bucketOf(
 export type { ClientFilter };
 
 /** A section of /contributions, which is the page's path: an envelope source. */
-export const SECTIONS = ["quests", "books", "zones"] as const satisfies readonly EnvelopeSource[];
+export const SECTIONS = ["quests", "readables", "places"] as const satisfies readonly EnvelopeSource[];
 
 export type Section = (typeof SECTIONS)[number];
 
@@ -86,7 +86,7 @@ export function stagesOf(value: unknown): Stage[] {
 
 /**
  * Whether one row's Quest column satisfies the Stage dropdown. Any narrowed view drops every
- * row with no quest concept at all (zones, books).
+ * row with no quest concept at all (places, readables).
  */
 export function matchesStage(quest: QuestSummary | null, filter: StageFilter): boolean {
   if (filter.length === 0) return true;

@@ -1,5 +1,5 @@
 /**
- * Which page a books contribution is, and what accepting it would do.
+ * Which page a readables contribution is, and what accepting it would do.
  *
  * The envelope names no page: its key is the checksum of the text on screen. So the page is
  * found the way a person would find it, most certain first -- the item or object the client
@@ -10,7 +10,7 @@
  * Computed against the corpus as it stands, never stored: once a new book's first page is
  * accepted, its other pages find it by title.
  */
-import { normaliseText } from "@books-tools/lib/text.mjs";
+import { normaliseText } from "@readables-tools/lib/text.mjs";
 
 import type { PoolClient } from "pg";
 
@@ -224,13 +224,13 @@ export function matchBook(row: BookMatchInput, corpus: BookCorpus): BookMatchRes
   return { kind: "new-book", title, pageNumber, via: "none" };
 }
 
-const corpusKey = Symbol.for("spoken.books-corpus");
+const corpusKey = Symbol.for("spoken.readables-corpus");
 
 /**
  * Every live page with each language's current words and the title its clients show.
  *
  * Kept while book_page, book_line and the owners' names stand still, validated rather than
- * invalidated as the books catalogue is. The stamp is read on `client`, so a caller in a
+ * invalidated as the readables catalogue is. The stamp is read on `client`, so a caller in a
  * transaction compares against what other transactions have committed by then.
  */
 export async function loadBookCorpus(client?: Pick<PoolClient, "query">): Promise<BookCorpus> {

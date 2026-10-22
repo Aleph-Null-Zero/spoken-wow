@@ -13,12 +13,12 @@
 -- page the corpus has; a page it has never seen has no id to be named by, and gets one only if
 -- triage accepts it.
 
-local ADDON_NAME, SpokenBooks = ...
+local ADDON_NAME, SpokenReadables = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
 
---- The fields every books envelope starts with: which addon, which client, which language.
+--- The fields every readables envelope starts with: which addon, which client, which language.
 local function BaseFields(self)
 	return
 	{
@@ -63,7 +63,7 @@ end
 --- Spoken_Quests/Contribute.lua's Detemplate does for quest text. The client writes them into
 --- a page, and a page sent as it was shown would carry the player's name to the site. $G
 --- cannot be undone: the other side of the branch is not on screen.
-function SpokenBooks:Detemplate(text)
+function SpokenReadables:Detemplate(text)
 	local swaps = {}
 	local function add(word, token)
 		if type(word) == "string" and word ~= "" then
@@ -108,7 +108,7 @@ function SpokenBooks:Detemplate(text)
 end
 
 --- The envelope for the page on screen, or nil when there is nothing to send.
-function SpokenBooks:CaptureContribution()
+function SpokenReadables:CaptureContribution()
 	if self:IsMail() then
 		return nil
 	end
@@ -130,14 +130,14 @@ function SpokenBooks:CaptureContribution()
 
 	-- The second value is what Gather keys the page on: its checksum, the same id the site
 	-- files it under, so reading a page twice keeps it once.
-	return Spoken.Contribute:Envelope("books", fields, text), format("b:%d", sum)
+	return Spoken.Contribute:Envelope("readables", fields, text), format("b:%d", sum)
 end
 
 --- What a report carries beside its address: this client, and the page as the player read it.
 ---
 --- `id`, the corpus page, not `page`: that field is a contribution's client checksum. The text
 --- is the open page's when it is the one reported, else the copy the reader kept of it.
-function SpokenBooks:ReportContext(pageId)
+function SpokenReadables:ReportContext(pageId)
 	if type(pageId) ~= "number" or self:IsMail() or not (_G.Spoken and Spoken.Contribute) then
 		return nil
 	end
@@ -153,7 +153,7 @@ function SpokenBooks:ReportContext(pageId)
 		local kept = self.pageText and self.pageText[self:GetClientLanguage()]
 		text = kept and kept[pageId]
 	end
-	return Spoken.Contribute:Envelope("books", fields, type(text) == "string" and self:Detemplate(text) or text)
+	return Spoken.Contribute:Envelope("readables", fields, type(text) == "string" and self:Detemplate(text) or text)
 end
 
 --- The report address for a page, with its context in the fragment. The bare address in the
@@ -161,7 +161,7 @@ end
 ---
 --- Filed under the voice language, not the language the page played in: a page missing from a
 --- German pack plays the English fallback, and "no German" belongs beside the German page.
-function SpokenBooks:ShowReport(pageId)
+function SpokenReadables:ShowReport(pageId)
 	local url = self:ReportURL(pageId, self:GetVoiceLanguage())
 	if not url then
 		return
@@ -178,7 +178,7 @@ end
 --- Keep the page on screen for later, if the player opted into gathering and the corpus has
 --- no id for it. Called on every ITEM_TEXT_READY, which fires for each page turned; the
 --- hide-buttons setting does not apply, and mail is refused by CaptureContribution itself.
-function SpokenBooks:GatherContribution()
+function SpokenReadables:GatherContribution()
 	if not (_G.Spoken and Spoken.Gather and Spoken.Gather:IsEnabled()) then
 		return false
 	end
@@ -190,7 +190,7 @@ function SpokenBooks:GatherContribution()
 end
 
 --- Whether the contribute button belongs on the page: text to send, and no page id for it.
-function SpokenBooks:HasContributionGap()
+function SpokenReadables:HasContributionGap()
 	if not (_G.Spoken and Spoken.Contribute and Spoken.ShowContribution) then
 		return false
 	end
@@ -208,7 +208,7 @@ end
 -- every page turn to decide whether the button belongs on screen, and paying deflate's cost
 -- there would tax every page the player merely reads, for a result thrown away unhandled on
 -- every one that isn't a gap. This runs once, on the click.
-function SpokenBooks:ShowContribution()
+function SpokenReadables:ShowContribution()
 	local envelope, key = self:CaptureContribution()
 	if not envelope then
 		return

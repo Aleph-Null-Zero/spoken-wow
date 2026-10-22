@@ -12,7 +12,7 @@ import type { Source } from "@/lib/sections";
 /** Which field a free-text query is matched against. Mirrors LineFilters["filter"]. */
 type Scope = "any" | "npc" | "quest" | "text";
 
-/** Mirrors zones' PageFilters["field"], and books' - two different sets under one name. */
+/** Mirrors places' PageFilters["field"], and readables' - two different sets under one name. */
 type ZoneScope = "any" | "name" | "zone" | "text";
 type BookScope = "any" | "title" | "text";
 
@@ -48,26 +48,26 @@ export function npcHref(npc: { npcId: number; npcType: string; gossip: boolean }
 }
 
 /**
- * The zones explorer, narrowed to one zone or to a search.
+ * The places explorer, narrowed to one zone or to a search.
  *
  * `field` is this section's name for what quests calls `filter`: three filter vocabularies,
  * three modules, and a link that used the other section's param name would render the whole
  * corpus and report no error at all.
  */
-export function zonesHref(options: { q?: string; mapID?: number; field?: ZoneScope } = {}): string {
+export function placesHref(options: { q?: string; mapID?: number; field?: ZoneScope } = {}): string {
   const params = new URLSearchParams();
   if (options.mapID !== undefined) params.set("zone", String(options.mapID));
   if (options.q !== undefined) params.set("q", options.q);
   if (options.field !== undefined) params.set("field", options.field);
-  return params.size ? `/zones?${params}` : "/zones";
+  return params.size ? `/places?${params}` : "/places";
 }
 
-/** The books explorer, narrowed. `field` as in zonesHref: books says `field` too. */
-export function booksHref(options: { q?: string; field?: BookScope } = {}): string {
+/** The readables explorer, narrowed. `field` as in placesHref: readables says `field` too. */
+export function readablesHref(options: { q?: string; field?: BookScope } = {}): string {
   const params = new URLSearchParams();
   if (options.q !== undefined) params.set("q", options.q);
   if (options.field !== undefined) params.set("field", options.field);
-  return params.size ? `/books?${params}` : "/books";
+  return params.size ? `/readables?${params}` : "/readables";
 }
 
 /**
@@ -75,12 +75,12 @@ export function booksHref(options: { q?: string; field?: BookScope } = {}): stri
  *
  * NOT the explorer with the line id in the search box, which is what this table used to
  * link to and which finds nothing: neither section's search matches an id. Quests matches
- * NPC names, quest titles, text and bare numbers; zones matches names, zones and text. The
+ * NPC names, quest titles, text and bare numbers; places matches names, zones and text. The
  * landing page is the better destination anyway - it is the line, its audio and the report
  * form, which is what a triager wants to see.
  *
  * `target` is stored as the addon produced it: 'quest/84/accept' or 'npc/5678' for quests,
- * '<mapID>/<slug>' for zones, and a bare page id for books. All three are already
+ * '<mapID>/<slug>' for places, and a bare page id for readables. All three are already
  * path-shaped, and each section's route takes exactly its own shape.
  */
 export function reportHref(source: Source, target: string): string {
@@ -118,7 +118,7 @@ export function explorerHref(source: Source, lineId: string): string {
  * lines it means, so the explorer can be narrowed by it even with no id to filter on.
  *
  * Null when the address names nothing an explorer can filter by, and the caller falls back
- * to reportHref: a books target is a bare page id, and neither books search field matches
+ * to reportHref: a readables target is a bare page id, and neither readables search field matches
  * ids.
  */
 export function targetExplorerHref(source: Source, target: string): string | null {
@@ -136,11 +136,11 @@ export function targetExplorerHref(source: Source, target: string): string | nul
     return null;
   }
 
-  if (source === "zones") {
+  if (source === "places") {
     // '<mapID>/<slug>': the zone filter takes the id, and the slug is the page within it,
     // which no filter addresses.
     if (segments.length === 2 && /^\d+$/.test(segments[0])) {
-      return zonesHref({ mapID: Number(segments[0]) });
+      return placesHref({ mapID: Number(segments[0]) });
     }
     return null;
   }

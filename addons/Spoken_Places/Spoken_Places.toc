@@ -12,20 +12,20 @@
 ## Notes-zhTW: 在世界地圖上透過 Spoken 朗讀地區和區域傳說。
 ## Version: 3.5.1
 ## Author: rusty
-## SavedVariables: SpokenZonesSettings
-## SavedVariablesPerCharacter: SpokenZonesCharacter
+## SavedVariables: SpokenPlacesSettings, SpokenZonesSettings
+## SavedVariablesPerCharacter: SpokenPlacesCharacter, SpokenZonesCharacter
 ## LoadSavedVariablesFirst: true
 # ^ load-bearing beyond convenience: the generated data files under Data/ ask
 # Language.lua which language to build a table for, and it can only answer that
-# early because SpokenZonesSettings is already populated. Without this line every player
+# early because SpokenPlacesSettings is already populated. Without this line every player
 # silently reads English.
 ## Dependencies: Spoken
 # Spoken is what this module runs on, and ships in the same zip.
-## OptionalDeps: SpokenZonesAudio, ZoneLoreAudio, ZoneLoreAudio64
+## OptionalDeps: SpokenPlacesAudio, ZoneLoreAudio, ZoneLoreAudio64
 # The packs are not a registration mechanism: they register themselves into
-# SpokenZonesAudioPacks and Audio.lua walks that on demand, so this list is load order only.
+# SpokenPlacesAudioPacks and Audio.lua walks that on demand, so this list is load order only.
 #
-# Both pack folder names are listed: SpokenZonesAudio is what ships now, ZoneLoreAudio
+# Both pack folder names are listed: SpokenPlacesAudio is what ships now, ZoneLoreAudio
 # what a player installed before the rename, and ZoneLoreAudio64 the retired smaller
 # tier. A name here that nobody has installed costs nothing.
 ## IconTexture: Interface\AddOns\Spoken_Places\Textures\AddonIcon.tga

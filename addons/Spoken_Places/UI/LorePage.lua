@@ -1,4 +1,4 @@
--- SpokenZones -- the page a story is written on, shared by the lore window and the map panel:
+-- SpokenPlaces -- the page a story is written on, shared by the lore window and the map panel:
 -- Azeroth's Compendium's page (SpokenCompendium.NewPage), with its Play, Report and layout, on the
 -- spellbook's parchment in the window and the quest log's beside the map.
 --
@@ -9,12 +9,12 @@
 -- Other art is looked up first (C_Texture.GetAtlasInfo), and a client without it gets a plainer
 -- piece in its place -- a missing atlas draws nothing at all, which is worse than plain.
 
-local ADDON_NAME, SpokenZones = ...
+local ADDON_NAME, SpokenPlaces = ...
 
-local L = SpokenZones.L
+local L = SpokenPlaces.L
 
 local Art = {}
-SpokenZones.Art = Art
+SpokenPlaces.Art = Art
 
 --------------------------------------------------------------------------------
 -- Art with a way out
@@ -149,9 +149,9 @@ local LOG_LOOK = { top = 28, right = 28, titleSize = 20, oneLine = true, backpla
 -- What Play does on a story's page: the story `target` ({ mapID, key }) where a pack reads it, Stop
 -- while it is read and Replay once stopped, as every Play of the Compendium's (SpokenCompendium.PlayState).
 local PLAY = {
-	has = function(target) return SpokenZones:IsVoiceEnabled() and SpokenZones:HasAudio(target[1], target[2]) end,
-	find = function(target) return SpokenZones:LoreClip(target[1], target[2]) end,
-	start = function(target) SpokenZones:PlayLore(target[1], target[2]) end,
+	has = function(target) return SpokenPlaces:IsVoiceEnabled() and SpokenPlaces:HasAudio(target[1], target[2]) end,
+	find = function(target) return SpokenPlaces:LoreClip(target[1], target[2]) end,
+	start = function(target) SpokenPlaces:PlayLore(target[1], target[2]) end,
 	tip = L.AUDIO_READ_TIP,
 }
 
@@ -160,7 +160,7 @@ local PLAY = {
 local REPORT = {
 	has = function() return true end,
 	open = function(target)
-		SpokenZones:ShowReport(target[1], target[2])
+		SpokenPlaces:ShowReport(target[1], target[2])
 	end,
 	title = L.OPT_REPORT_PROBLEM,
 	tip = L.OPT_REPORT_LINE_TIP,
@@ -180,7 +180,7 @@ end
 --- `style` picks the art: "book" for the lore window (the spellbook's page), "log" for the panel
 --- beside the map (the quest log's details page, as the quest beside it has), which also has Open in
 --- Azeroth's Compendium. A missing story is said with Contribute under it.
-function SpokenZones:CreateLorePage(parent, style)
+function SpokenPlaces:CreateLorePage(parent, style)
 	local parchment = style == "book" and BOOK_PAGE or LOG_PAGE
 	local info = COPIES[parchment]
 	local top = info.topTexCoord
@@ -190,16 +190,16 @@ function SpokenZones:CreateLorePage(parent, style)
 		for key, value in pairs(LOG_LOOK) do look[key] = value end
 	end
 	look.art = { file = info.file, coords = { info.leftTexCoord, info.rightTexCoord, top, info.bottomTexCoord } }
-	local inner = SpokenCompendium.NewPage(parent, SpokenZones, PLAY, REPORT, look)
+	local inner = SpokenCompendium.NewPage(parent, SpokenPlaces, PLAY, REPORT, look)
 	local page = setmetatable({ page = inner, style = style, parchment = parchment }, Page)
-	SpokenZones:OnAudioChanged(function() inner:RefreshPlay() end)
+	SpokenPlaces:OnAudioChanged(function() inner:RefreshPlay() end)
 
 	-- Beside the map, a third: this place in Azeroth's Compendium, with the window's own tome in the
 	-- same ring. The window has it open already, so not there.
 	if style ~= "book" and _G.Spoken and Spoken.CreateRoundButton then
 		local open = Spoken:CreateRoundButton(inner.frame, "icon", nil, SpokenCompendium.ICON)
 		open:SetScript("OnClick", function(self)
-			if self.mapID then SpokenZones:ShowLoreFor(self.mapID, self.areaKey) end
+			if self.mapID then SpokenPlaces:ShowLoreFor(self.mapID, self.areaKey) end
 		end)
 		open:HookScript("OnEnter", function(self)
 			GameTooltip:SetOwner(self, "ANCHOR_LEFT")
@@ -223,12 +223,12 @@ end
 function Page:Show(entry)
 	local story = entry.audio or entry.report
 	local picture, mask
-	if story then picture, mask = SpokenZones:Picture(story[1], story[2]) end
+	if story then picture, mask = SpokenPlaces:Picture(story[1], story[2]) end
 	local contribute = entry.contribute
 	self.page:Show({ title = entry.title, subtitle = entry.subtitle, onSubtitle = entry.onSubtitle, text = entry.text,
 		target = story, picture = picture and { file = picture, mask = mask } or nil, icon = entry.icon,
 		unwritten = contribute and function()
-			if SpokenZones:CanContribute() then SpokenZones:ShowContribution(contribute[1], contribute[2]) end
+			if SpokenPlaces:CanContribute() then SpokenPlaces:ShowContribution(contribute[1], contribute[2]) end
 		end or nil })
 	if self.open then
 		local lore = entry.lore

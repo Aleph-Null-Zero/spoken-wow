@@ -1,7 +1,7 @@
--- SpokenZones -- the places in Azeroth's Compendium (UI/Compendium.lua): every place's story, to
+-- SpokenPlaces -- the places in Azeroth's Compendium (UI/Compendium.lua): every place's story, to
 -- browse and listen to anywhere.
 --
--- Opened from the minimap menu, the Zones settings page or /spp window. Independent of
+-- Opened from the minimap menu, the Places settings page or /spp window. Independent of
 -- WorldMapFrame, so it works with the map closed.
 --
 -- The window, its list and its rows are the Compendium's; this is what goes in them. On the left,
@@ -18,12 +18,12 @@
 -- the player opened. A search opens every line with a match in it instead: one naming a zone or
 -- a city lists all its areas, and one naming a banner lists its lines as the player left them.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 -- A value the game hands over as a secret, in an instance or in combat, reads as nil.
 local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
 
-local L = SpokenZones.L
+local L = SpokenPlaces.L
 
 local panel, list, page
 -- The zones' and cities' lines open, by mapID: a city's keeps its state while its zone is closed.
@@ -50,7 +50,7 @@ local filter = ""   -- what the list's search box holds, lowered (UI/Compendium.
 --------------------------------------------------------------------------------
 
 local function ZoneName(mapID)
-	return SpokenZones:GetMapName(mapID) or (SpokenZones.Zones[mapID] and SpokenZones.Zones[mapID].name) or tostring(mapID)
+	return SpokenPlaces:GetMapName(mapID) or (SpokenPlaces.Zones[mapID] and SpokenPlaces.Zones[mapID].name) or tostring(mapID)
 end
 
 -- The world, its continents, the cities inside the zone around each, and which continent a zone is
@@ -58,14 +58,14 @@ end
 local C = SpokenCompendium
 local WORLD, CONTINENTS, CITY_IN = C.WORLD, C.CONTINENTS, C.CITY_IN
 local ContinentOf, IsContinent, IS_BATTLEGROUND = C.ContinentOf, C.IsContinent, C.IS_BATTLEGROUND
-SpokenZones.CityIn = CITY_IN
+SpokenPlaces.CityIn = CITY_IN
 
 -- A name as the lists order it: "The Barrens" files under B, as a reader looks for it. Only
 -- English's article: no other language's names start with "The ".
 local function SortName(name)
 	return (string.gsub(name, "^The ", "", 1))
 end
-SpokenZones.SortName = SortName
+SpokenPlaces.SortName = SortName
 
 -- Whether `na` comes before `nb`; a tie in sort names (one "The ") is settled by the whole name.
 local function Before(na, nb)
@@ -95,7 +95,7 @@ local function ZoneIDs()
 		return sortedZoneIDs
 	end
 	sortedZoneIDs = {}
-	for mapID in pairs(SpokenZones.Zones) do
+	for mapID in pairs(SpokenPlaces.Zones) do
 		if mapID ~= WORLD and not IsContinent(mapID) and not UnknownHere(mapID) then
 			table.insert(sortedZoneIDs, mapID)
 		end
@@ -109,7 +109,7 @@ end
 local function Continents()
 	local list = {}
 	for _, mapID in ipairs(CONTINENTS) do
-		if SpokenZones.Zones[mapID] then table.insert(list, mapID) end
+		if SpokenPlaces.Zones[mapID] then table.insert(list, mapID) end
 	end
 	table.sort(list, ByName)
 	return list
@@ -182,14 +182,14 @@ end
 local function OpenZone(mapID) C.OpenZone(mapID, openZones) end
 
 --- Open what holds the place `mapID`, or its area `key`: a dungeon's entrance zone and the line its
---- line is under, any other area's zone, the one the client puts it in (SpokenZones:AreaZone).
+--- line is under, any other area's zone, the one the client puts it in (SpokenPlaces:AreaZone).
 local function OpenPlace(mapID, key)
-	local entrance = SpokenZones:DungeonOf(mapID, key)
+	local entrance = SpokenPlaces:DungeonOf(mapID, key)
 	if entrance then
 		dungeonsOpen[entrance] = true
 		mapID = entrance
 	elseif key then
-		mapID = SpokenZones:AreaZone(mapID, key)
+		mapID = SpokenPlaces:AreaZone(mapID, key)
 	end
 	OpenZone(mapID)
 	Reveal(mapID)
@@ -204,12 +204,12 @@ local function OnForever()
 	return onForever
 end
 
--- The areas that are dungeons and raids (SpokenZones.Dungeons, from Spoken's Data/Dungeons.lua), by
+-- The areas that are dungeons and raids (SpokenPlaces.Dungeons, from Spoken's Data/Dungeons.lua), by
 -- where their story is kept: the zone of the entrance, whose line lists them, and the instance's map.
 local dungeonAt, dungeonsFrom = {}, nil
 local function DungeonIndex()
-	if dungeonsFrom ~= SpokenZones.Dungeons then
-		dungeonsFrom, dungeonAt = SpokenZones.Dungeons, {}
+	if dungeonsFrom ~= SpokenPlaces.Dungeons then
+		dungeonsFrom, dungeonAt = SpokenPlaces.Dungeons, {}
 		for zone, list in pairs(dungeonsFrom or {}) do
 			for _, dungeon in ipairs(list) do
 				dungeonAt[dungeon.mapID] = dungeonAt[dungeon.mapID] or {}
@@ -222,7 +222,7 @@ end
 
 --- For a dungeon's or a raid's area, the zone of its entrance, whose line lists it, and the
 --- instance's map; nil for any other area.
-function SpokenZones:DungeonOf(mapID, key)
+function SpokenPlaces:DungeonOf(mapID, key)
 	local at = key and DungeonIndex()[mapID]
 	local dungeon = at and at[key]
 	if dungeon then return dungeon.zone, dungeon.dungeon end
@@ -233,8 +233,8 @@ local dungeonsIn = {}
 local function DungeonsIn(zone)
 	if dungeonsIn[zone] then return dungeonsIn[zone] end
 	local list = {}
-	for _, dungeon in ipairs(SpokenZones.Dungeons and SpokenZones.Dungeons[zone] or {}) do
-		local entry = SpokenZones.Subzones[dungeon.mapID] and SpokenZones.Subzones[dungeon.mapID][dungeon.key]
+	for _, dungeon in ipairs(SpokenPlaces.Dungeons and SpokenPlaces.Dungeons[zone] or {}) do
+		local entry = SpokenPlaces.Subzones[dungeon.mapID] and SpokenPlaces.Subzones[dungeon.mapID][dungeon.key]
 		if entry then
 			table.insert(list, { mapID = dungeon.mapID, key = dungeon.key, name = entry.name or dungeon.key, entry = entry,
 				dungeon = dungeon.dungeon })
@@ -246,19 +246,19 @@ local function DungeonsIn(zone)
 end
 
 -- A zone's areas listed as rows, by name, each { mapID = the map its story is kept under, key =,
--- entry = }: those the client puts in the zone (SpokenZones:AreasIn), not its dungeons and raids,
+-- entry = }: those the client puts in the zone (SpokenPlaces:AreasIn), not its dungeons and raids,
 -- which are lines.
 local function Areas(mapID)
-	local own = SpokenZones.Subzones[mapID]
+	local own = SpokenPlaces.Subzones[mapID]
 	if own and sortedAreas[mapID] then return sortedAreas[mapID] end
 	local list = {}
-	for _, area in ipairs(SpokenZones:AreasIn(mapID)) do
+	for _, area in ipairs(SpokenPlaces:AreasIn(mapID)) do
 		-- Not the areas only Forever has (Data/ForeverAreas.lua) on another client, which can never
 		-- report them: listed, they would never be found.
-		local foreverOnly = not OnForever() and SpokenZones.ForeverOnlyAreas and SpokenZones.ForeverOnlyAreas[area.mapID]
+		local foreverOnly = not OnForever() and SpokenPlaces.ForeverOnlyAreas and SpokenPlaces.ForeverOnlyAreas[area.mapID]
 		local dungeons = DungeonIndex()[area.mapID]
 		if not (foreverOnly and foreverOnly[area.key]) and not (dungeons and dungeons[area.key]) then
-			table.insert(list, { mapID = area.mapID, key = area.key, entry = SpokenZones.Subzones[area.mapID][area.key] })
+			table.insert(list, { mapID = area.mapID, key = area.key, entry = SpokenPlaces.Subzones[area.mapID][area.key] })
 		end
 	end
 	table.sort(list, function(a, b)
@@ -305,20 +305,20 @@ end
 -- Whether this character has found a place (Discovery.lua), whatever Unlock Undiscovered Zones
 -- says: the counts and Discovered Only go by it.
 local function Found(mapID, key)
-	return SpokenZones:IsFound(mapID, key)
+	return SpokenPlaces:IsFound(mapID, key)
 end
 
 -- Whether an area's row opens: every area with Unlock Undiscovered Zones on, otherwise only those
 -- found. The rest are listed greyed out, with the padlock, as the Quests and Readables tabs list what
 -- is not found yet.
 local function Discovered(mapID, key)
-	return SpokenZones:ShowsUndiscovered() or Found(mapID, key)
+	return SpokenPlaces:ShowsUndiscovered() or Found(mapID, key)
 end
 
 --- Whether a place's story is locked for this character: not found yet, with Unlock Undiscovered
 --- Zones off. A continent is found through its zones; Azeroth always is. The page and the map's
 --- panel say so in its place rather than tell its story; the list still opens its banner or line.
-function SpokenZones:IsLocked(mapID, key)
+function SpokenPlaces:IsLocked(mapID, key)
 	if self:ShowsUndiscovered() or mapID == WORLD then return false end
 	if not key and IsContinent(mapID) then
 		for _, zone in ipairs(ZonesOf(mapID)) do
@@ -331,13 +331,13 @@ end
 
 -- Discovered Only, in the filter menu: the places not found are left out of the list.
 local function OnlyFound()
-	return SpokenZones:Get("loreDiscoveredOnly") == true
+	return SpokenPlaces:Get("loreDiscoveredOnly") == true
 end
 
 -- Voiced Only, under it: the places no installed voice pack reads are left out. A zone stays while
 -- it, an area in it or its city has a recording, so a voiced area is still reached through it.
 local function OnlyVoiced()
-	return SpokenZones:Get("loreVoicedOnly") == true
+	return SpokenPlaces:Get("loreVoicedOnly") == true
 end
 
 -- Asked of every row on every render: kept until the next render, when a pack may have come or gone.
@@ -345,7 +345,7 @@ local voiced = {}
 local function Voiced(mapID, key)
 	local at = mapID .. ":" .. (key or "")
 	if voiced[at] == nil then
-		voiced[at] = SpokenZones.HasAudio ~= nil and SpokenZones:HasAudio(mapID, key) and true or false
+		voiced[at] = SpokenPlaces.HasAudio ~= nil and SpokenPlaces:HasAudio(mapID, key) and true or false
 	end
 	return voiced[at]
 end
@@ -365,14 +365,14 @@ local function AnyVoiced(mapID)
 end
 
 local function Missing(mapID)
-	local entry = SpokenZones:GetLore(mapID)
-	return not entry or SpokenZones:IsPending(entry)
+	local entry = SpokenPlaces:GetLore(mapID)
+	return not entry or SpokenPlaces:IsPending(entry)
 end
 
 -- A place lacking anything: its story, a recording or its picture.
 local function Lacks(mapID, key, pending)
 	if pending then return true end
-	local pictures = SpokenZones.pictures and SpokenZones.pictures[mapID]
+	local pictures = SpokenPlaces.pictures and SpokenPlaces.pictures[mapID]
 	return not Voiced(mapID, key) or not (pictures and pictures[key or ""])
 end
 
@@ -439,7 +439,7 @@ local function DungeonRows(zone, nest, whole)
 			if (isFound or not OnlyFound()) and (filter == "" or whole or Matches(dungeon.name)) then
 				table.insert(dungeonRows, { leaf = true, kind = "dungeon", mapID = dungeon.mapID, key = dungeon.key,
 					label = dungeon.name, nest = several and nest + 1 or nest, done = isFound,
-					missing = Lacks(dungeon.mapID, dungeon.key, not isFound or SpokenZones:IsPending(dungeon.entry)) })
+					missing = Lacks(dungeon.mapID, dungeon.key, not isFound or SpokenPlaces:IsPending(dungeon.entry)) })
 			end
 		end
 	end
@@ -485,7 +485,7 @@ local function ZoneRows(mapID, nest, whole)
 			if (filter == "" or whole or Matches(name)) and (isFound or not OnlyFound())
 				and (not OnlyVoiced() or Voiced(area.mapID, area.key)) then
 				table.insert(inside, { kind = "subzone", leaf = true, mapID = area.mapID, key = area.key, label = name,
-					nest = nest + 1, missing = Lacks(area.mapID, area.key, SpokenZones:IsPending(area.entry)),
+					nest = nest + 1, missing = Lacks(area.mapID, area.key, SpokenPlaces:IsPending(area.entry)),
 					locked = not Discovered(area.mapID, area.key), done = isFound and true or false })
 			end
 		end
@@ -531,7 +531,7 @@ local function BuildRowList()
 
 	-- Azeroth first, a banner as its continents are, with nothing under it to open or count: a click
 	-- shows its page. Never locked, so Discovered Only keeps it.
-	if SpokenZones.Zones[WORLD] then
+	if SpokenPlaces.Zones[WORLD] then
 		local name = ZoneName(WORLD)
 		if (not searching or Matches(name)) and (not OnlyVoiced() or Voiced(WORLD)) then
 			table.insert(list, { style = "banner", kind = "world", mapID = WORLD, label = name, missing = Missing(WORLD) })
@@ -598,20 +598,20 @@ end
 -- C_Map.GetBestMapForUnit can return an indoor or micro map (an inn, a dungeon) that is not
 -- itself a key in Zones, so walk up to its parent.
 local function CurrentZoneID()
-	local playerMap = SpokenZones:GetPlayerMapID()
+	local playerMap = SpokenPlaces:GetPlayerMapID()
 	if not playerMap then
 		return nil
 	end
-	local _, resolved = SpokenZones:GetLoreWithFallback(playerMap)
+	local _, resolved = SpokenPlaces:GetLoreWithFallback(playerMap)
 	return resolved
 end
 
 -- The continent the player is on, else the first: where the tab lands when no zone of theirs has
 -- a story.
 local function PlayerContinent()
-	local map = SpokenZones:GetPlayerMapID()
+	local map = SpokenPlaces:GetPlayerMapID()
 	local continent = map and (IsContinent(map) and map or ContinentOf(map))
-	if continent and SpokenZones.Zones[continent] then return continent end
+	if continent and SpokenPlaces.Zones[continent] then return continent end
 	return Continents()[1]
 end
 
@@ -630,7 +630,7 @@ local function LandOnPlayer()
 	local subZone = NotSecret(GetSubZoneText())
 	local subEntry, subKey, storyMapID
 	if subZone and subZone ~= "" then
-		subEntry, subKey, storyMapID = SpokenZones:GetSubzoneLore(current, subZone)
+		subEntry, subKey, storyMapID = SpokenPlaces:GetSubzoneLore(current, subZone)
 	end
 	-- In an area whose story is kept under another zone (Razorfen Downs' entrance, Strahnbrad), its
 	-- line or row is chosen, by its story's keys.
@@ -650,7 +650,7 @@ end
 
 -- An area's portrait: a dungeon's key for a dungeon's, else its zone's.
 local function AreaIcon(mapID, key)
-	return SpokenCompendium.PlaceIcon(SpokenZones:AreaZone(mapID, key), select(2, SpokenZones:DungeonOf(mapID, key)))
+	return SpokenCompendium.PlaceIcon(SpokenPlaces:AreaZone(mapID, key), select(2, SpokenPlaces:DungeonOf(mapID, key)))
 end
 
 local function ShowEntry()
@@ -667,20 +667,20 @@ local function ShowEntry()
 	end
 	local mapID, key = selection.mapID, selection.key
 	-- Chosen from elsewhere (the map's panel), a place not found yet: named, and no more.
-	if SpokenZones:IsLocked(mapID, key) then
-		local entry = key and SpokenZones.Subzones[mapID] and SpokenZones.Subzones[mapID][key]
+	if SpokenPlaces:IsLocked(mapID, key) then
+		local entry = key and SpokenPlaces.Subzones[mapID] and SpokenPlaces.Subzones[mapID][key]
 		-- Where it sits: a zone's or a continent's line counts what is found in it, as every line's
 		-- page does.
-		page:Show({ title = entry and (entry.name or key) or ZoneName(mapID), subtitle = SpokenZones:PlaceLine(mapID, key),
+		page:Show({ title = entry and (entry.name or key) or ZoneName(mapID), subtitle = SpokenPlaces:PlaceLine(mapID, key),
 			text = L.NOT_DISCOVERED, icon = key and AreaIcon(mapID, key) or SpokenCompendium.PlaceIcon(mapID) })
 		return
 	end
 	if key then
-		local entry = SpokenZones.Subzones[mapID] and SpokenZones.Subzones[mapID][key]
+		local entry = SpokenPlaces.Subzones[mapID] and SpokenPlaces.Subzones[mapID][key]
 		if entry then
 			local name = entry.name or key
-			local line = SpokenZones:PlaceLine(mapID, key)
-			if SpokenZones:IsPending(entry) then
+			local line = SpokenPlaces:PlaceLine(mapID, key)
+			if SpokenPlaces:IsPending(entry) then
 				page:Show({ title = name, subtitle = line, icon = AreaIcon(mapID, key),
 					contribute = { mapID, name } })
 				return
@@ -693,10 +693,10 @@ local function ShowEntry()
 		end
 	end
 
-	local entry = SpokenZones:GetLore(mapID)
+	local entry = SpokenPlaces:GetLore(mapID)
 	local name = ZoneName(mapID)
-	local subtitle = SpokenZones:PlaceLine(mapID)
-	if not entry or SpokenZones:IsPending(entry) then
+	local subtitle = SpokenPlaces:PlaceLine(mapID)
+	if not entry or SpokenPlaces:IsPending(entry) then
 		page:Show({ title = name, subtitle = subtitle,
 			contribute = { mapID, nil }, icon = SpokenCompendium.PlaceIcon(mapID) })
 		return
@@ -708,9 +708,9 @@ end
 local function Count(n, many, one) return n == 1 and one or string.format(many, n) end
 
 --- The line under a place's name: where it sits and what its line or banner counts. An area sits in
---- the zone it is listed in (SpokenZones:AreaZone): a dungeon's entrance's, Strahnbrad's Alterac
+--- the zone it is listed in (SpokenPlaces:AreaZone): a dungeon's entrance's, Strahnbrad's Alterac
 --- Mountains. Azeroth sits in nothing, so its line says what it holds.
-function SpokenZones:PlaceLine(mapID, key)
+function SpokenPlaces:PlaceLine(mapID, key)
 	if key then return string.format(L.IN_ZONE_FMT, ZoneName(self:AreaZone(mapID, key))) end
 	if mapID == WORLD then
 		return Count(#Continents(), L.CONTINENT_COUNT_FMT, L.CONTINENT_COUNT_ONE) .. ", "
@@ -743,7 +743,7 @@ end
 local function OnRowClick(row)
 	-- Shift-click on a story's row queues it behind what is playing, as on Quests, and chooses nothing.
 	if (row.kind == "subzone" or row.kind == "dungeon") and IsShiftKeyDown and IsShiftKeyDown() then
-		SpokenZones:QueueLore(row.mapID, row.key)
+		SpokenPlaces:QueueLore(row.mapID, row.key)
 		return
 	end
 	-- While searching, a banner shows what the search found in it whatever is open: a toggle would
@@ -775,7 +775,7 @@ local function OnRowClick(row)
 	else
 		selection = { mapID = row.mapID, key = row.key }
 	end
-	SpokenZones:RefreshLoreWindow()
+	SpokenPlaces:RefreshLoreWindow()
 end
 
 -- What holds a selection, one level up the list, or nil for a continent or a banner: an area's or a
@@ -785,7 +785,7 @@ local function Holder(chosen)
 	if chosen.group then return nil end
 	if chosen.dungeons then return { mapID = chosen.dungeons } end
 	local mapID, key = chosen.mapID, chosen.key
-	if key then return { mapID = SpokenZones:DungeonOf(mapID, key) or SpokenZones:AreaZone(mapID, key) } end
+	if key then return { mapID = SpokenPlaces:DungeonOf(mapID, key) or SpokenPlaces:AreaZone(mapID, key) } end
 	if not mapID or mapID == WORLD or IsContinent(mapID) then return nil end
 	if CITY_IN[mapID] then return { mapID = CITY_IN[mapID] } end
 	if IS_BATTLEGROUND[mapID] then return { group = "battlegrounds" } end
@@ -814,10 +814,10 @@ local function OnHidden()
 	else
 		selection = nil
 	end
-	SpokenZones:RefreshLoreWindow(true)
+	SpokenPlaces:RefreshLoreWindow(true)
 end
 
-function SpokenZones:RefreshLoreWindow(scrollToSelection)
+function SpokenPlaces:RefreshLoreWindow(scrollToSelection)
 	if not list then
 		return
 	end
@@ -844,9 +844,9 @@ local function BuildPanel(p)
 		none = L.LORE_SEARCH_NONE,
 		only = L.LORE_DISCOVERED_ONLY,
 		onlyGet = OnlyFound,
-		onlySet = function(on) SpokenZones:Set("loreDiscoveredOnly", on) end,
+		onlySet = function(on) SpokenPlaces:Set("loreDiscoveredOnly", on) end,
 		checks = { { label = L.LORE_VOICED_ONLY, get = OnlyVoiced,
-			set = function(on) SpokenZones:Set("loreVoicedOnly", on) end } },
+			set = function(on) SpokenPlaces:Set("loreVoicedOnly", on) end } },
 		build = BuildRowList,
 		isSelected = IsSelected,
 		onClick = OnRowClick,
@@ -854,43 +854,43 @@ local function BuildPanel(p)
 		onHidden = OnHidden,
 		onSearch = function(text)
 			SetFilter(text)
-			SpokenZones:RefreshLoreWindow()
+			SpokenPlaces:RefreshLoreWindow()
 		end,
 		addScrollBar = function(scroll, child, inset) return SpokenTextView.AddScrollBar(scroll, child, inset) end,
 	})
-	p.Refresh = function() SpokenZones:RefreshLoreWindow() end
+	p.Refresh = function() SpokenPlaces:RefreshLoreWindow() end
 	p.inset, p.filterButton, p.filterMenu, p.noMatch, p.listBar = list.inset, list.filterButton, list.filterMenu, list.noMatch, list.bar
 
 	-- The story: the spellbook's page down the rest of the window.
-	page = SpokenZones:CreateLorePage(C.PageHolder(p, list), "book")
+	page = SpokenPlaces:CreateLorePage(C.PageHolder(p, list), "book")
 	p.page = page
 
 	-- Toggling "Hide Contribute Buttons" in Spoken's settings fires no game event.
 	if _G.Spoken and Spoken.RegisterCallback then
 		Spoken:RegisterCallback("CONTRIBUTE_SETTINGS_CHANGED", function()
-			SpokenZones:RefreshLoreWindow()
+			SpokenPlaces:RefreshLoreWindow()
 		end)
 		-- Nor does Hide Report Buttons.
 		Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
-			SpokenZones:RefreshLoreWindow()
+			SpokenPlaces:RefreshLoreWindow()
 		end)
 	end
 
-	SpokenZones.window = p
+	SpokenPlaces.window = p
 end
 
 --------------------------------------------------------------------------------
 -- Public
 --------------------------------------------------------------------------------
 
--- The tab's list, built now where Zones was off at login and has been switched on since; nil
--- while Zones is off.
+-- The tab's list, built now where Places was off at login and has been switched on since; nil
+-- while Places is off.
 local function Built()
 	if not list then SpokenCompendium:Select("places") end
 	return list
 end
 
-function SpokenZones:ToggleLoreWindow()
+function SpokenPlaces:ToggleLoreWindow()
 	if SpokenCompendium:IsOpen("places") then
 		SpokenCompendium:Hide()
 		return
@@ -908,13 +908,13 @@ function SpokenZones:ToggleLoreWindow()
 	SpokenCompendium:Open("places")
 	-- A window closed folded would reopen as the bare list.
 	SpokenCompendium:Expand()
-	SpokenZones:RefreshLoreWindow(true)
+	SpokenPlaces:RefreshLoreWindow(true)
 end
 
 -- Open on a named entry rather than on the player's location. Not routed through
 -- ToggleLoreWindow, which can land on where the player stands: narration outlives the zone you
 -- started it in.
-function SpokenZones:ShowLoreFor(mapID, areaKey)
+function SpokenPlaces:ShowLoreFor(mapID, areaKey)
 	if not mapID or not Built() then
 		return
 	end
@@ -925,11 +925,11 @@ function SpokenZones:ShowLoreFor(mapID, areaKey)
 	SpokenCompendium:Open("places")
 	-- Asked for an entry, so show it: a window closed collapsed would reopen as the bare list.
 	SpokenCompendium:Expand()
-	SpokenZones:RefreshLoreWindow(true)
+	SpokenPlaces:RefreshLoreWindow(true)
 end
 
 
-function SpokenZones:SetupLoreWindow()
+function SpokenPlaces:SetupLoreWindow()
 	if list then
 		return
 	end
@@ -940,19 +940,19 @@ function SpokenZones:SetupLoreWindow()
 		-- A place found since the window last opened is listed now. Come back to from another tab,
 		-- the tab is on where the player stands now, unless they chose a place here.
 		onShow = function()
-			if SpokenZones.RefreshFound then SpokenZones:RefreshFound() end
+			if SpokenPlaces.RefreshFound then SpokenPlaces:RefreshFound() end
 			if selection == landed then selection = nil end
 		end,
 		-- Opened from Spoken's menu and page on where the player stands, as from the map.
-		open = function() SpokenZones:ToggleLoreWindow() end,
-		enabled = function() return SpokenZones:IsPartOn() end,
+		open = function() SpokenPlaces:ToggleLoreWindow() end,
+		enabled = function() return SpokenPlaces:IsPartOn() end,
 		-- Unlock Undiscovered Zones, on Spoken's page.
 		unlock = {
-			get = function() return SpokenZones:Get("showUndiscovered") == true end,
+			get = function() return SpokenPlaces:Get("showUndiscovered") == true end,
 			set = function(value)
-				SpokenZones:Set("showUndiscovered", value)
-				if SpokenZones.ApplyPanelOptions then SpokenZones:ApplyPanelOptions() end
-				SpokenZones:RefreshLoreWindow()
+				SpokenPlaces:Set("showUndiscovered", value)
+				if SpokenPlaces.ApplyPanelOptions then SpokenPlaces:ApplyPanelOptions() end
+				SpokenPlaces:RefreshLoreWindow()
 			end,
 		},
 	})
@@ -960,15 +960,15 @@ function SpokenZones:SetupLoreWindow()
 	-- again at the new size.
 	if _G.Spoken and Spoken.RegisterCallback then
 		Spoken:RegisterCallback("COMPENDIUM_FONT_CHANGED", function()
-			if SpokenZones.ApplyPanelOptions then SpokenZones:ApplyPanelOptions() end
-			SpokenZones:RefreshLoreWindow()
+			if SpokenPlaces.ApplyPanelOptions then SpokenPlaces:ApplyPanelOptions() end
+			SpokenPlaces:RefreshLoreWindow()
 		end)
 	end
 	-- Built now, hidden, so the map's panel and the settings can open it at once, as the Compendium
 	-- builds a tab's panel. Not chosen: Select would make it the tab the window first opens on,
 	-- not the first tab.
 	local tab = SpokenCompendium:Tab("places")
-	if SpokenZones:IsPartOn() and not tab.panel then
+	if SpokenPlaces:IsPartOn() and not tab.panel then
 		local window = SpokenCompendium:Window()
 		local p = CreateFrame("Frame", nil, window)
 		p:SetAllPoints(window)

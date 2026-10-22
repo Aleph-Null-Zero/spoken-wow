@@ -77,7 +77,7 @@ const ADDONS: Addon[] = [
     description: "Narrates the lore of each zone as you enter it.",
     wago: true,
     release: "zones/",
-    section: "zones",
+    section: "places",
   },
   {
     slug: "spoken-books",
@@ -85,7 +85,7 @@ const ADDONS: Addon[] = [
     description: "Reads books, letters, notes and plaques aloud.",
     wago: true,
     release: "books/",
-    section: "books",
+    section: "readables",
   },
 ];
 
@@ -95,8 +95,8 @@ const ADDONS: Addon[] = [
  */
 const EXPLORERS = [
   { href: "/quests", icon: "/icons/quests.png", title: "Quests" },
-  { href: "/zones", icon: "/icons/zones.png", title: "Places" },
-  { href: "/books", icon: "/icons/books.png", title: "Readables" },
+  { href: "/places", icon: "/icons/places.png", title: "Places" },
+  { href: "/readables", icon: "/icons/readables.png", title: "Readables" },
 ];
 
 /** The languages with at least one pack, in the site's order: the table's columns. */

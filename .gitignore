@@ -8,7 +8,7 @@ RELEASE
 
 # Packaged addon zips and the data modules built into them. Both projects'
 # Makefiles write here from the repo root; `make quests-package` and
-# `make zones-package` do not yet partition it.
+# `make places-package` do not yet partition it.
 /dist/
 generated
 
@@ -78,41 +78,41 @@ superpowers/
 /docs/quests/specs/
 
 
-# --- zones --------------------------------------------------------------------
+# --- places -------------------------------------------------------------------
 
-# Raw MediaWiki API responses. Regenerate with `node pipelines/zones/tools/scrape.mjs`.
-/pipelines/zones/tools/cache/
+# Raw MediaWiki API responses. Regenerate with `node pipelines/places/tools/scrape.mjs`.
+/pipelines/places/tools/cache/
 
-# The client's map tables from wago.tools, for `make books-places`.
-/pipelines/books/tools/cache/
+# The client's map tables from wago.tools, for `make readables-places`.
+/pipelines/readables/tools/cache/
 
-# The pack's clips, assembled from the take archive by `make zones-sounds`.
+# The pack's clips, assembled from the take archive by `make places-sounds`.
 # No trailing slash: a test client is pointed at this pack by symlinking its audio in,
 # and a trailing slash matches only a real directory, leaving the link to be committed.
-/addons/SpokenZonesAudio/Sounds
+/addons/SpokenPlacesAudio/Sounds
 # Another language's pack, staged by `make <section>-sounds LOCALE=xx` and the lookups and
 # manifests built beside it. Build output, never committed: the pages under publishers/ are
 # what says a language has a pack.
 /build/
 
-# The books narration, in the pack folder the client loads. Same rule and same reason as
-# the zones pack above, including the missing trailing slash: a test client is pointed at
+# The readables narration, in the pack folder the client loads. Same rule and same reason as
+# the places pack above, including the missing trailing slash: a test client is pointed at
 # this pack by symlinking it, and a trailing slash matches only a real directory, leaving
-# the link to be committed. Filled by `make books-pull-history && make books-sounds`.
-/addons/SpokenBooksAudio/Sounds
+# the link to be committed. Filled by `make readables-pull-history && make readables-sounds`.
+/addons/SpokenReadablesAudio/Sounds
 
-# Every books take, pulled from the droplet.
-/pipelines/books/audio-history/
+# Every readables take, pulled from the droplet.
+/pipelines/readables/audio-history/
 
 # Transcoded sound-pack clips, keyed by the checksum of the master they came from.
-# A build cache: scripts/zones/package-audio.sh refills it, and prunes entries whose
+# A build cache: scripts/places/package-audio.sh refills it, and prunes entries whose
 # master has been re-cut. Outside dist/ so `make clean` does not cost a five-minute
 # re-encode. Roughly half the size of Sounds/ per tier.
-/pipelines/zones/audio-transcoded/
+/pipelines/places/audio-transcoded/
 
-# Every zones take, pulled from the droplet: the only zones audio there is. Grows without
+# Every places take, pulled from the droplet: the only places audio there is. Grows without
 # bound -- re-cutting the whole corpus adds ~700MB.
-/pipelines/zones/audio-history/
+/pipelines/places/audio-history/
 
 # --- apps ---------------------------------------------------------------------
 

@@ -2,7 +2,7 @@
  * Every take of every line, for all three sections, over one table and one archive rule.
  *
  * The `take` table has held all three since migration 0020, but only the quests side ever
- * had a history panel to read it with: zones could undo its newest take and books had no
+ * had a history panel to read it with: places could undo its newest take and readables had no
  * way back at all. The difference was never in the data. It was that each section reached
  * its own audio through its own module, so a panel written against one of them could not be
  * shown on the other two.
@@ -90,7 +90,7 @@ export type LiveTake = {
  * The live take of every file in a section, and how many takes each has.
  *
  * One query for all three sections, which each used to write for themselves -- quests in
- * generation/versions.ts, zones and books in their catalogues -- and all three as a count
+ * generation/versions.ts, places and readables in their catalogues -- and all three as a count
  * subquery per live row. Postgres does not flatten a scalar subquery in the select list,
  * so at eleven thousand quests files that was eleven thousand index scans on every
  * search.
@@ -104,7 +104,7 @@ export type LiveTake = {
  * window count avoids the join too, but reads every column of every take to do it and was
  * four times slower than either half.
  *
- * Counted by file, which is what take_current_idx is on. For zones and books a file and a
+ * Counted by file, which is what take_current_idx is on. For places and readables a file and a
  * line are the same thing; a quests file is shared by every NPC who speaks it.
  */
 export async function liveTakes(source: Source, lang: Lang = BASE_LANG): Promise<LiveTake[]> {
@@ -181,11 +181,11 @@ export async function setLiveTake(
     if (now.length === 0) {
       throw new Error(`no version ${version} of ${file} in ${source}`);
     }
-    // Books pages folded into one another have takes under two files; one stays live.
-    if (source === "books") {
+    // Readables pages folded into one another have takes under two files; one stays live.
+    if (source === "readables") {
       await client.query(
         `update "take" set "isCurrent" = false
-          where "source" = 'books' and "lineId" = $1 and "lang" = $2 and "isCurrent" and "file" <> $3`,
+          where "source" = 'readables' and "lineId" = $1 and "lang" = $2 and "isCurrent" and "file" <> $3`,
         [now[0].lineId, lang, file],
       );
     }

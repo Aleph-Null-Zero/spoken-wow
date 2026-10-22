@@ -1,4 +1,4 @@
--- SpokenZones -- the story docked to the side of the world map, drawn as the quest log is.
+-- SpokenPlaces -- the story docked to the side of the world map, drawn as the quest log is.
 --
 -- Shows lore for the zone the map is displaying, or for a subzone the player
 -- clicked (see UI/SubzoneClick.lua), with a link back to the zone.
@@ -8,10 +8,10 @@
 -- showing -- not where the player stands, since every place is known and what is missing is a
 -- description someone can write from anywhere.
 
-local _, SpokenZones = ...
-local L = SpokenZones.L
+local _, SpokenPlaces = ...
+local L = SpokenPlaces.L
 
-local Art = SpokenZones.Art
+local Art = SpokenPlaces.Art
 
 local panel, page, toggle
 
@@ -106,13 +106,13 @@ local SIDE_TAB_TOP = 30
 -- with it here. Once the client stops tainting a map with an addon's buttons in it (check on a
 -- newer build), Host can always answer the map.
 local function NewPanel()
-	local ok, frame = pcall(CreateFrame, "Frame", "SpokenZonesPanel", UIParent, "DefaultPanelFlatTemplate")
+	local ok, frame = pcall(CreateFrame, "Frame", "SpokenPlacesPanel", UIParent, "DefaultPanelFlatTemplate")
 	if ok and frame and frame.SetTitle then
 		frame:SetTitle(L.LORE_PANEL_TITLE)
 		frame.templated = true
 		return frame
 	end
-	frame = CreateFrame("Frame", "SpokenZonesPanel", UIParent, "BackdropTemplate")
+	frame = CreateFrame("Frame", "SpokenPlacesPanel", UIParent, "BackdropTemplate")
 	if frame.SetBackdrop then
 		frame:SetBackdrop({
 			bgFile = [[Interface\DialogFrame\UI-DialogBox-Background-Dark]],
@@ -125,7 +125,7 @@ local function NewPanel()
 end
 
 local function BuildPanel()
-	local width = SpokenZones:Get("panelWidth")
+	local width = SpokenPlaces:Get("panelWidth")
 
 	panel = NewPanel()
 	panel:SetWidth(width)
@@ -137,7 +137,7 @@ local function BuildPanel()
 		or "UIPanelCloseButton")
 	if not panel.templated then close:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -8, -8) end
 	close:SetScript("OnClick", function()
-		SpokenZones:SetMapPanelCollapsed(true)
+		SpokenPlaces:SetMapPanelCollapsed(true)
 	end)
 	panel.close = close
 
@@ -150,7 +150,7 @@ local function BuildPanel()
 		holder:SetPoint("TOPLEFT", panel, "TOPLEFT", 12, -32)
 		holder:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -12, 12)
 	end
-	page = SpokenZones:CreateLorePage(holder, "log")
+	page = SpokenPlaces:CreateLorePage(holder, "log")
 	panel.page = page
 
 	-- The rim on a frame of its own above the page: drawn on the panel itself it would sit under
@@ -168,7 +168,7 @@ local function BuildPanel()
 	rim.filigree = filigree
 	panel.rim = rim
 
-	SpokenZones.panel = panel
+	SpokenPlaces.panel = panel
 end
 
 -- The way back to a folded panel has to live on the map, not on the panel it reopens. Folding it
@@ -178,7 +178,7 @@ local function BuildToggle()
 	-- frame's, LargeSideTabButtonTemplate): its own tooltip, press and sound. The action slot's ring
 	-- where the client has not got it. Placed with the panel (Place): in the map, or beside it under
 	-- the gamepad UI.
-	local ok, tab = pcall(CreateFrame, "Frame", "SpokenZonesPanelToggle", UIParent, "LargeSideTabButtonTemplate")
+	local ok, tab = pcall(CreateFrame, "Frame", "SpokenPlacesPanelToggle", UIParent, "LargeSideTabButtonTemplate")
 	if ok and tab and type(tab.Icon) == "table" and tab.Icon.SetTexture and tab.SetCustomOnMouseUpHandler then
 		toggle = tab
 		toggle.fillToInterior = true
@@ -186,7 +186,7 @@ local function BuildToggle()
 		toggle.Icon:SetTexture(TOGGLE_ICON)
 		-- Never shown chosen: it only ever opens. SetChecked also fits the icon to the tab's inside.
 		if toggle.SetChecked then toggle:SetChecked(false) end
-		toggle:SetCustomOnMouseUpHandler(function() SpokenZones:SetMapPanelCollapsed(false) end)
+		toggle:SetCustomOnMouseUpHandler(function() SpokenPlaces:SetMapPanelCollapsed(false) end)
 		toggle:EnableMouse(true)
 		toggle:SetPoint("TOPLEFT", MapEdge(), "TOPRIGHT", 0, -SIDE_TAB_TOP)
 		toggle:SetScript("OnHide", function(self)
@@ -195,7 +195,7 @@ local function BuildToggle()
 		toggle:Hide()
 		return
 	end
-	toggle = CreateFrame("Button", "SpokenZonesPanelToggle", UIParent)
+	toggle = CreateFrame("Button", "SpokenPlacesPanelToggle", UIParent)
 	toggle:SetSize(ICON_SIZE, ICON_SIZE)
 	local icon = toggle:CreateTexture(nil, "ARTWORK")
 	icon:SetAllPoints()
@@ -209,7 +209,7 @@ local function BuildToggle()
 	toggle:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]], "ADD")
 	toggle:SetPoint("TOPLEFT", MapEdge(), "TOPRIGHT", -TOGGLE_TUCK, -ICON_SIZE)
 	toggle:SetScript("OnClick", function()
-		SpokenZones:SetMapPanelCollapsed(false)
+		SpokenPlaces:SetMapPanelCollapsed(false)
 	end)
 	toggle:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -289,10 +289,10 @@ local function Available()
 		return false
 	end
 	-- Switched off in Spoken's settings, the part puts nothing on the map.
-	if not SpokenZones:IsPartOn() then
+	if not SpokenPlaces:IsPartOn() then
 		return false
 	end
-	if not SpokenZones:Get("showMapPanel") then
+	if not SpokenPlaces:Get("showMapPanel") then
 		return false
 	end
 	if WorldMapFrame.IsMaximized and WorldMapFrame:IsMaximized() then
@@ -311,7 +311,7 @@ local function Refresh(mapID)
 	end
 
 	Place()
-	mapID = mapID or SpokenZones:GetDisplayedMapID()
+	mapID = mapID or SpokenPlaces:GetDisplayedMapID()
 	if not Available() or not mapID then
 		panel:Hide()
 		toggle:Hide()
@@ -319,21 +319,21 @@ local function Refresh(mapID)
 	end
 
 	FollowMap()
-	local collapsed = SpokenZones:Get("mapPanelCollapsed")
+	local collapsed = SpokenPlaces:Get("mapPanelCollapsed")
 	toggle:SetShown(collapsed)
 	panel:SetShown(not collapsed)
 	if collapsed then
 		return
 	end
 
-	local zoneName = SpokenZones:GetMapName(mapID) or ("uiMapID " .. tostring(mapID))
+	local zoneName = SpokenPlaces:GetMapName(mapID) or ("uiMapID " .. tostring(mapID))
 
 	-- A selection only applies to the map it was made on; navigating elsewhere drops it. Checking
 	-- here rather than on the map-changed callback keeps this independent of the order modules
 	-- register their callbacks.
-	local selected = SpokenZones.selected
+	local selected = SpokenPlaces.selected
 	if selected and selected.mapID ~= mapID then
-		SpokenZones.selected = nil
+		SpokenPlaces.selected = nil
 		selected = nil
 	end
 
@@ -345,19 +345,19 @@ local function Refresh(mapID)
 		-- the client reported. Resolve, not Normalise: on a localized client the reported name
 		-- reaches the corpus key only through the alias table, and normalising a non-Latin name
 		-- yields nil -- which would silently retarget the buttons at the zone's lore.
-		local key = SpokenZones:ResolveAreaKey(selected.areaName, mapID)
+		local key = SpokenPlaces:ResolveAreaKey(selected.areaName, mapID)
 		-- An area is told where its story is kept: Razorfen Downs, clicked on The Barrens' map,
 		-- under Thousand Needles, and Strahnbrad, clicked on Alterac Mountains', under Hillsbrad.
-		local story = SpokenZones:StoryPlace(mapID, key)
-		local line = SpokenZones:PlaceLine(story, key or name)
+		local story = SpokenPlaces:StoryPlace(mapID, key)
+		local line = SpokenPlaces:PlaceLine(story, key or name)
 		-- The line under an area's name returns to its zone's story: nothing else on the panel does.
-		local back = function() SpokenZones:ClearSubzone() end
+		local back = function() SpokenPlaces:ClearSubzone() end
 		-- Not found yet: named, and no more, as Azeroth's Compendium has it.
-		if SpokenZones.IsLocked and SpokenZones:IsLocked(story, key) then
+		if SpokenPlaces.IsLocked and SpokenPlaces:IsLocked(story, key) then
 			page:Show({ title = name, subtitle = line, onSubtitle = back, text = L.NOT_DISCOVERED })
 			return
 		end
-		if SpokenZones:IsPending(selected.entry) then
+		if SpokenPlaces:IsPending(selected.entry) then
 			-- Named, listed, and honest about the rest: nothing to play and nothing written to
 			-- report on. Azeroth's Compendium lists it all the same, so Open goes to its row there.
 			page:Show({ title = name, subtitle = line, onSubtitle = back,
@@ -369,7 +369,7 @@ local function Refresh(mapID)
 		return
 	end
 
-	local entry, foundOn = SpokenZones:GetLoreWithFallback(mapID)
+	local entry, foundOn = SpokenPlaces:GetLoreWithFallback(mapID)
 	-- No Open here: a map with no entry at all, not even a pending one, has no row in Lore of
 	-- Azeroth to open on.
 	if not entry then
@@ -382,15 +382,15 @@ local function Refresh(mapID)
 	-- than silently mislabelling the text.
 	local caption = ""
 	if foundOn ~= mapID then
-		caption = string.format(L.MAP_LORE_FOR_FMT, SpokenZones:GetMapName(foundOn) or "parent zone")
+		caption = string.format(L.MAP_LORE_FOR_FMT, SpokenPlaces:GetMapName(foundOn) or "parent zone")
 	else
-		caption = SpokenZones:PlaceLine(mapID)
+		caption = SpokenPlaces:PlaceLine(mapID)
 	end
-	if SpokenZones.IsLocked and SpokenZones:IsLocked(foundOn) then
+	if SpokenPlaces.IsLocked and SpokenPlaces:IsLocked(foundOn) then
 		page:Show({ title = zoneName, subtitle = caption, text = L.NOT_DISCOVERED })
 		return
 	end
-	if SpokenZones:IsPending(entry) then
+	if SpokenPlaces:IsPending(entry) then
 		page:Show({ title = zoneName, subtitle = caption,
 			contribute = { foundOn, nil }, lore = { foundOn, nil } })
 		return
@@ -401,31 +401,31 @@ local function Refresh(mapID)
 		audio = { foundOn, nil }, report = { foundOn, nil }, lore = { foundOn, nil } })
 end
 
-function SpokenZones:RefreshPanel()
-	Refresh(SpokenZones:GetDisplayedMapID())
+function SpokenPlaces:RefreshPanel()
+	Refresh(SpokenPlaces:GetDisplayedMapID())
 end
 
-function SpokenZones:SetMapPanelCollapsed(collapsed)
-	SpokenZones:Set("mapPanelCollapsed", collapsed)
+function SpokenPlaces:SetMapPanelCollapsed(collapsed)
+	SpokenPlaces:Set("mapPanelCollapsed", collapsed)
 	Refresh()
 end
 
 -- Re-apply width and font after an options change. TextView re-wraps itself
 -- when the width actually changes, via its OnSizeChanged.
-function SpokenZones:ApplyPanelOptions()
+function SpokenPlaces:ApplyPanelOptions()
 	if not panel then
 		return
 	end
-	panel:SetWidth(SpokenZones:Get("panelWidth"))
+	panel:SetWidth(SpokenPlaces:Get("panelWidth"))
 	ApplyAnchors()
-	Refresh(SpokenZones:GetDisplayedMapID())
+	Refresh(SpokenPlaces:GetDisplayedMapID())
 end
 
 --------------------------------------------------------------------------------
 -- Setup
 --------------------------------------------------------------------------------
 
-function SpokenZones:SetupMapPanel()
+function SpokenPlaces:SetupMapPanel()
 	if panel then
 		return
 	end
@@ -440,27 +440,27 @@ function SpokenZones:SetupMapPanel()
 	-- the Forever client's own Minimize as the map opens under the gamepad UI.
 	WorldMapFrame:HookScript("OnSizeChanged", function()
 		ApplyAnchors()
-		Refresh(SpokenZones:GetDisplayedMapID())
+		Refresh(SpokenPlaces:GetDisplayedMapID())
 	end)
 	WorldMapFrame:HookScript("OnHide", function()
 		panel:Hide()
 		toggle:Hide()
 	end)
 
-	SpokenZones:OnMapChanged(function(mapID)
+	SpokenPlaces:OnMapChanged(function(mapID)
 		Refresh(mapID)
 	end)
 
 	-- Toggling "Hide the Contribute buttons" in the Spoken settings fires no game event.
 	if _G.Spoken and Spoken.RegisterCallback then
 		Spoken:RegisterCallback("CONTRIBUTE_SETTINGS_CHANGED", function()
-			Refresh(SpokenZones:GetDisplayedMapID())
+			Refresh(SpokenPlaces:GetDisplayedMapID())
 		end)
 		-- Nor does Hide Report Buttons.
 		Spoken:RegisterCallback("REPORT_SETTINGS_CHANGED", function()
-			Refresh(SpokenZones:GetDisplayedMapID())
+			Refresh(SpokenPlaces:GetDisplayedMapID())
 		end)
 	end
 
-	Refresh(SpokenZones:GetDisplayedMapID())
+	Refresh(SpokenPlaces:GetDisplayedMapID())
 end
