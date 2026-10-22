@@ -545,6 +545,19 @@ NPCs:TargetChanged()
 Expect("...and Plugger Spazzring, with Targeting on", NPCs:IsBossFound(230, "plugger spazzring"), true)
 Clear()
 _G.GetInstanceInfo, _G.UnitName = instanceInfo, unitName
+-- Another creature of a fight of several shows the fight's story, in that fight's map only.
+_G.SpokenBossStories[469] = { nefarian = "He schemes beneath the mountain." }
+_G.UnitName = function() return "Lord Victor Nefarius" end
+world.npcGUID = "Creature-0-1-2-3-10162-0000ABCDEF"
+_G.GetInstanceInfo = function() return "Blackrock Spire", "party", 1, "", 5, 0, false, 229 end
+NPCs:TargetChanged()
+Expect("Lord Victor Nefarius in Blackrock Spire shows nothing", Showing(), "nothing")
+_G.GetInstanceInfo = function() return "Blackwing Lair", "raid", 9, "", 40, 0, false, 469 end
+NPCs:TargetChanged()
+Expect("...and in Blackwing Lair shows Nefarian's story", Showing(), "boss:469:nefarian")
+Expect("...without meeting Nefarian", NPCs:IsBossFound(469, "nefarian"), false)
+Clear()
+_G.GetInstanceInfo, _G.UnitName = instanceInfo, unitName
 Expect("a world boss is met on target as at its pull", tostring(NPCs:FoundTarget(2789, "lord kazzak")) .. "|"
     .. tostring(NPCs:FoundEncounter(Listed(2789, "lord kazzak").ids[1])), "true|false")
 
