@@ -56,10 +56,10 @@ function post(body: unknown): Request {
 
 describe("POST /api/contributions/resolve-many", () => {
   it("resolves every row it is sent and answers each by id", async () => {
-    // Books, not quests: the plain status flip (accept.test.ts covers quest lines in a batch).
+    // Readables, not quests: the plain status flip (accept.test.ts covers quest lines in a batch).
     const { rows } = await db().query<{ id: number }>(
       `insert into "contribution" ("source", "key", "raw", "dedup", "text", "ip")
-       values ('books', '1', 'raw', $2, 'Words.', $1), ('books', '2', 'raw', $3, 'More.', $1)
+       values ('readables', '1', 'raw', $2, 'Words.', $1), ('readables', '2', 'raw', $3, 'More.', $1)
        returning "id"`,
       [ip, `${dedup}-a`, `${dedup}-b`],
     );
@@ -78,7 +78,7 @@ describe("POST /api/contributions/resolve-many", () => {
     expect(statuses.map((row) => row.status)).toEqual(["rejected", "rejected"]);
   });
 
-  describe("accepting books rows", () => {
+  describe("accepting readables rows", () => {
     let base: number;
     let lineIds: string[] = [];
 
@@ -97,11 +97,11 @@ describe("POST /api/contributions/resolve-many", () => {
       }
     }
 
-    async function booksRow(locale: string, text: string, meta: Record<string, string>): Promise<number> {
+    async function readablesRow(locale: string, text: string, meta: Record<string, string>): Promise<number> {
       const key = `test-${Math.random().toString(36).slice(2, 10)}`;
       const { rows } = await db().query<{ id: number }>(
         `insert into "contribution" ("source", "key", "locale", "raw", "dedup", "text", "meta", "ip")
-         values ('books', $1, $2, 'raw', $1, $3, $4, $5) returning "id"`,
+         values ('readables', $1, $2, 'raw', $1, $3, $4, $5) returning "id"`,
         [key, locale, text, JSON.stringify({ page: key, ...meta }), ip],
       );
       return rows[0].id;
@@ -130,9 +130,9 @@ describe("POST /api/contributions/resolve-many", () => {
     });
 
     it("accepts a translation, and leaves an ambiguous row and a new book unaccepted", async () => {
-      const translation = await booksRow("esES", `Words one ${base}.`, { book: "Libro", number: "1" });
-      const ambiguous = await booksRow("enUS", `Unseen ${base}.`, { book: `Dusty ${base}`, number: "1" });
-      const fresh = await booksRow("esES", `Nueva ${base}.`, { book: `Brand New ${base}`, number: "1" });
+      const translation = await readablesRow("esES", `Words one ${base}.`, { book: "Libro", number: "1" });
+      const ambiguous = await readablesRow("enUS", `Unseen ${base}.`, { book: `Dusty ${base}`, number: "1" });
+      const fresh = await readablesRow("esES", `Nueva ${base}.`, { book: `Brand New ${base}`, number: "1" });
 
       const { results } = await (await POST(post({ ids: [translation, ambiguous, fresh], status: "accepted" }))).json();
       expect(results[translation]).toEqual({ ok: true });
@@ -149,8 +149,8 @@ describe("POST /api/contributions/resolve-many", () => {
     it("writes the first of two rows for one page and language, and refuses the second", async () => {
       await db().query(`update "book_page" set "ownerKind" = 'item', "ownerIds" = $2 where "lineId" = $1`, [`b:${base}`, [base]]);
       const meta = { book: "Libro", number: "1", item: String(base) };
-      const first = await booksRow("esES", `Palabras ${base}.`, meta);
-      const second = await booksRow("esES", `Otras palabras ${base}.`, meta);
+      const first = await readablesRow("esES", `Palabras ${base}.`, meta);
+      const second = await readablesRow("esES", `Otras palabras ${base}.`, meta);
 
       const { results } = await (await POST(post({ ids: [first, second], status: "accepted" }))).json();
       const outcomes = [results[first], results[second]];
@@ -165,9 +165,9 @@ describe("POST /api/contributions/resolve-many", () => {
     });
 
     it("accepts a row a moderator pointed at a page, and skips one the corpus already has", async () => {
-      const pointed = await booksRow("esES", `Otra cosa ${base}.`, { book: "Libro", number: "1" });
+      const pointed = await readablesRow("esES", `Otra cosa ${base}.`, { book: "Libro", number: "1" });
       await db().query(`update "contribution" set "matchLineId" = $2 where "id" = $1`, [pointed, `b:${base + 10}`]);
-      const known = await booksRow("enUS", `Words one ${base}.`, { book: `Tome ${base}`, number: "1" });
+      const known = await readablesRow("enUS", `Words one ${base}.`, { book: `Tome ${base}`, number: "1" });
 
       const { results } = await (await POST(post({ ids: [pointed, known], status: "accepted" }))).json();
       expect(results[pointed]).toEqual({ ok: true });
@@ -177,14 +177,14 @@ describe("POST /api/contributions/resolve-many", () => {
     });
 
     it("leaves a correction to the Corrections tab", async () => {
-      const correction = await booksRow("enUS", `Words won ${base}.`, { book: `Tome ${base}`, number: "1" });
+      const correction = await readablesRow("enUS", `Words won ${base}.`, { book: `Tome ${base}`, number: "1" });
       const { results } = await (await POST(post({ ids: [correction], status: "accepted" }))).json();
       expect(results[correction]).toMatchObject({ ok: false, error: expect.stringContaining("Corrections tab") });
       expect(await statusOf(correction)).toBe("new");
     });
 
     it("still rejects a new-book row", async () => {
-      const fresh = await booksRow("esES", `Nueva ${base}.`, { book: `Brand New ${base}`, number: "1" });
+      const fresh = await readablesRow("esES", `Nueva ${base}.`, { book: `Brand New ${base}`, number: "1" });
       const { results } = await (await POST(post({ ids: [fresh], status: "rejected" }))).json();
       expect(results[fresh]).toEqual({ ok: true });
     });

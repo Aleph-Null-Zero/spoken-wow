@@ -228,7 +228,7 @@ async function reportDrift(groups) {
 
 // --group=quests limits the run to one directory under publishers/. Only --drift uses it, and
 // only so that a release prints the pages that release is about: every project's pages are
-// tracked here now, and a zones upload listing five unpasted quests pages is noise at exactly
+// tracked here now, and a places upload listing five unpasted quests pages is noise at exactly
 // the moment somebody is working through a checklist.
 function groupFilter() {
   const arg = process.argv.find((a) => a.startsWith("--group="));
@@ -286,7 +286,7 @@ async function main() {
   if (write) {
     await mkdir(OUT_DIR, { recursive: true });
     await mkdir(WAGO_OUT_DIR, { recursive: true });
-    // Built from every page, not from the ones being written: --group=zones still has to know
+    // Built from every page, not from the ones being written: --group=places still has to know
     // that spoken-audio-quests-horde is a pack, or a zones-only run would link it to a Wago
     // page holding nothing.
     const urls = wagoUrls(all.flatMap((g) => g.pages));

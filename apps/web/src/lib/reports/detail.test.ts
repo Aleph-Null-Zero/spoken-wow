@@ -2,16 +2,16 @@
  * The triage table's view of a line, which has to be one shape across three corpora.
  *
  * Pure and tested here rather than read out inside the expanded row, because the three
- * ResultLine types agree on nothing: quests has `lineId` and `audioPath`, zones and books
+ * ResultLine types agree on nothing: quests has `lineId` and `audioPath`, places and readables
  * have `id` and `file`, and a row that read the wrong pair would render an empty panel
  * with no error to see.
  */
 import { describe, expect, it } from "vitest";
 
 import { detailOf, regeneratePath, reportTargetOf, searchPath } from "./detail";
-import type { ResultLine as BookLine } from "@/lib/books/search";
+import type { ResultLine as BookLine } from "@/lib/readables/search";
 import type { ResultLine as QuestLine } from "@/lib/search";
-import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+import type { ResultLine as ZoneLine } from "@/lib/places/search";
 
 const questLine = {
   lineId: "q:374:accept",
@@ -86,8 +86,8 @@ describe("detailOf", () => {
   it("says when the audio was made from text that has since changed", () => {
     expect(detailOf("quests", questLine).stale).toBe(false);
     expect(detailOf("quests", { ...questLine, stale: true } as QuestLine).stale).toBe(true);
-    expect(detailOf("zones", { ...zoneLine, state: "stale" } as ZoneLine).stale).toBe(true);
-    expect(detailOf("books", bookLine).stale).toBe(false);
+    expect(detailOf("places", { ...zoneLine, state: "stale" } as ZoneLine).stale).toBe(true);
+    expect(detailOf("readables", bookLine).stale).toBe(false);
   });
 
   it("carries a quest line's flavor, which is what picks one of that race's voices", () => {
@@ -96,22 +96,22 @@ describe("detailOf", () => {
   });
 
   it("places a zone line by zone and subzone", () => {
-    const detail = detailOf("zones", zoneLine);
+    const detail = detailOf("places", zoneLine);
     expect(detail.heading).toBe("Razor Hill");
     expect(detail.aside).toBe("Durotar");
     expect(detail.lineId).toBe("s:1411:razor hill");
-    expect(detail.audioSrc).toBe("/api/zones/audio/1411/razor-hill.mp3");
+    expect(detail.audioSrc).toBe("/api/places/audio/1411/razor-hill.mp3");
   });
 
   it("places a book page in its book", () => {
-    const detail = detailOf("books", bookLine);
+    const detail = detailOf("readables", bookLine);
     expect(detail.heading).toBe("The Dusty Tome");
     expect(detail.aside).toBe("page 2 of 4");
     expect(detail.lineId).toBe("b:261");
   });
 
   it("offers no audio for a line that has none, rather than a src that 404s", () => {
-    expect(detailOf("books", bookLine).audioSrc).toBeNull();
+    expect(detailOf("readables", bookLine).audioSrc).toBeNull();
     expect(detailOf("quests", { ...questLine, hasAudio: false } as QuestLine).audioSrc).toBeNull();
   });
 
@@ -121,7 +121,7 @@ describe("detailOf", () => {
   });
 
   it("busts the cache with the take a regeneration just wrote", () => {
-    expect(detailOf("zones", zoneLine, 7).audioSrc).toBe("/api/zones/audio/1411/razor-hill.mp3?v=7");
+    expect(detailOf("places", zoneLine, 7).audioSrc).toBe("/api/places/audio/1411/razor-hill.mp3?v=7");
   });
 });
 
@@ -130,11 +130,11 @@ describe("searchPath and regeneratePath", () => {
     expect(searchPath("quests", "q:374:accept")).toBe(
       "/api/quests/search?line=q%3A374%3Aaccept&limit=1",
     );
-    expect(searchPath("zones", "z:1411")).toBe("/api/zones/search?line=z%3A1411&limit=1");
+    expect(searchPath("places", "z:1411")).toBe("/api/places/search?line=z%3A1411&limit=1");
   });
 
   it("posts a regeneration to the section that owns the line", () => {
-    expect(regeneratePath("books")).toBe("/api/books/regenerate");
+    expect(regeneratePath("readables")).toBe("/api/readables/regenerate");
     expect(regeneratePath("quests")).toBe("/api/quests/regenerate");
   });
 });
@@ -164,10 +164,10 @@ describe("reportTargetOf", () => {
   });
 
   it("addresses a zone line by its audio path, which is what its report link is", () => {
-    expect(reportTargetOf("zones", zoneLine)).toBe("1411/razor-hill");
+    expect(reportTargetOf("places", zoneLine)).toBe("1411/razor-hill");
   });
 
   it("addresses a book page by the page id, which is all the addon has to build a link from", () => {
-    expect(reportTargetOf("books", bookLine)).toBe("261");
+    expect(reportTargetOf("readables", bookLine)).toBe("261");
   });
 });

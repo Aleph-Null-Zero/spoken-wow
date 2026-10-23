@@ -6,8 +6,8 @@ setfenv(1, SpokenEnv)
 -- here, so the face, the badge and the wait for a creature the client has not cached behave alike.
 Face = {}
 local ART = [[Interface\AddOns\Spoken\Textures\]]
--- Portrait badges by bullet id. Quests use trimmed copies of their own glyphs; books
--- and zones take native ones, since their registered bullet (or none) is not a badge.
+-- Portrait badges by bullet id. Quests use trimmed copies of their own glyphs; readables
+-- and places take native ones, since their registered bullet (or none) is not a badge.
 local BADGES = {
     ["quest-accept"] = ART .. "MinimalBulletAccept",
     ["quest-progress"] = ART .. "MinimalBulletProgress",
@@ -20,7 +20,7 @@ Face.BADGES = BADGES
 -- The smallest a ring face's badge is drawn, on a face smaller than the Small Window's.
 local BADGE_LEAST = 12
 
---- The badge for a bullet id: Spoken's own for quests, gossip, books and zones, else the texture
+--- The badge for a bullet id: Spoken's own for quests, gossip, readables and places, else the texture
 --- a module registered for it (Spoken:RegisterBullet), else nil.
 function Face.BadgeFor(id)
     if id == nil then return nil end

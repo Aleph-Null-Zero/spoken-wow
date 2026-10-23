@@ -22,13 +22,13 @@ import { changelogSection, isLanguageHeading, loadPacks } from "./packs.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
-const ADDONS = ["spoken", "quests", "zones", "books"];
+const ADDONS = ["spoken", "quests", "places", "readables"];
 
-// Which `## <version> ...` heading in docs/<section>/CHANGELOG.md is this release's. The addon
-// and its English audio share one file and, in zones and books, one heading shape, so the kind
-// words are what tell them apart: quests says `— player` / `— sound pack(s)` or `— Spoken Quests
-// Audio`, zones marks its audio `— audio` or `(sound packs)`. Books numbers its English audio with
-// the addon, so a books-audio tag takes whichever heading carries its version.
+// Which `## <version> ...` heading in the section's CHANGELOG.md is this release's. The addon
+// and its English audio share one file and, in places and readables, one heading shape, so the
+// kind words are what tell them apart: quests says `— player` / `— sound pack(s)` or `— Spoken
+// Quests Audio`, places marks its audio `— audio` or `(sound packs)`. Readables numbers its
+// English audio with the addon, so a readables-audio tag takes whichever heading carries its version.
 const AUDIO_WORDS = /\b(audio|sound packs?)\b/i;
 
 function addonHeading(section) {
@@ -37,7 +37,7 @@ function addonHeading(section) {
 }
 
 function englishAudioHeading(section) {
-  if (section === "quests" || section === "zones") return (l) => AUDIO_WORDS.test(l);
+  if (section === "quests" || section === "places") return (l) => AUDIO_WORDS.test(l);
   return () => true;
 }
 

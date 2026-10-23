@@ -21,7 +21,9 @@ export const COMMUNITY_PREFIX = 'community/'
 const MAX_PACKS = 500
 const MAX_BYTES = 2 * 1024 * 1024
 const MAX_ZIP = 8 * 1024 ** 3
-const SECTIONS: Section[] = ['quests', 'zones', 'books']
+const SECTIONS: Section[] = ['quests', 'places', 'readables']
+/** The keys the registry's format had before Places and Readables were renamed, still read. */
+const RENAMED_SECTIONS: Record<string, Section> = { zones: 'places', books: 'readables' }
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 // ---------------------------------------------------------------- validation
@@ -72,7 +74,8 @@ export function validatePack(raw: unknown): { pack: CommunityPack } | { reason: 
   const description = text(r.description, 400)
   if (!description) return { reason: 'bad description' }
   if (typeof r.lang !== 'string' || !LANGUAGES.some((l) => l.code === r.lang)) return { reason: 'unknown language' }
-  if (typeof r.section !== 'string' || !SECTIONS.includes(r.section as Section)) return { reason: 'unknown section' }
+  const section = typeof r.section === 'string' ? (RENAMED_SECTIONS[r.section] ?? r.section) : null
+  if (!section || !SECTIONS.includes(section as Section)) return { reason: 'unknown section' }
   const version = r.version
   if (typeof version !== 'string' || version.length > 40 || /\s/.test(version) || compareVersions(version, version) === null) {
     return { reason: 'bad version' }
@@ -102,7 +105,7 @@ export function validatePack(raw: unknown): { pack: CommunityPack } | { reason: 
       author,
       description,
       lang: r.lang,
-      section: r.section as Section,
+      section: section as Section,
       version,
       size,
       sha256: r.sha256.toLowerCase(),

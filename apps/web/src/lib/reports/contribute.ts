@@ -67,7 +67,7 @@ export type ContributeOutcome =
 /** The submission a report's context makes, or why it makes none. */
 export function reportSubmission(report: Report): Submission | string {
   const { context } = report;
-  if (report.source === "zones" || !context?.text?.trim()) {
+  if (report.source === "places" || !context?.text?.trim()) {
     return "This report carries no text from the game.";
   }
   const envelope = { source: report.source, fields: context.fields, text: context.text };

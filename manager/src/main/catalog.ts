@@ -10,8 +10,8 @@ export function emptyCatalog(): Catalog {
   return { fetchedAt: null, offline: false, releases: {} }
 }
 
-function pickAsset(release: GithubRelease, product: Product): GithubAsset | undefined {
-  const re = new RegExp(product.assetPattern)
+function pickAsset(release: GithubRelease, pattern: string): GithubAsset | undefined {
+  const re = new RegExp(pattern)
   return (release.assets ?? []).find(
     (a) =>
       a &&
@@ -29,9 +29,12 @@ function cleanDigest(d: unknown): string | undefined {
 
 function toInfo(release: GithubRelease, product: Product): ReleaseInfo | null {
   if (release.draft || typeof release.tag_name !== 'string') return null
-  const version = versionOfTag(release.tag_name, product.tagPrefix)
+  // A release tagged before the pack's section was renamed is still one of its releases.
+  const legacy = product.legacy
+  const current = versionOfTag(release.tag_name, product.tagPrefix)
+  const version = current ?? (legacy ? versionOfTag(release.tag_name, legacy.tagPrefix) : null)
   if (!version || compareVersions(version, version) === null) return null
-  const asset = pickAsset(release, product)
+  const asset = pickAsset(release, current !== null || !legacy ? product.assetPattern : legacy.assetPattern)
   if (!asset) return null
   const digest = cleanDigest(asset.digest)
   return {

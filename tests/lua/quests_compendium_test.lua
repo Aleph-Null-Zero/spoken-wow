@@ -98,6 +98,12 @@ local shipped = SpokenQuestsCompendium.quests
 local linked = shipped[PIE].prev == NECKLACE and shipped[BACK].prev == PIE and shipped[GOLDTOOTH].prev == BACK
 -- Speak with Ruga, the breadcrumb Brutal Armor's chain starts with, names it after that quest.
 local namedByHand = shipped[1823] and shipped[1823].name == 1838
+-- Zephras Isle's story, which both sides take: every High Order Skyborne starts there.
+local zephrasOpen = true
+for _, id in ipairs({ 92517, 92528, 92529, 92550, 92640, 92642, 92643, 92644, 92645, 92880, 92881, 92947,
+                      93036, 93065, 93320, 93926, 93927, 93948, 93958, 94568 }) do
+    zephrasOpen = zephrasOpen and shipped[id] ~= nil and shipped[id].races == nil
+end
 for _, quest in pairs(shipped) do quest.prev, quest.name = nil, nil end
 SpokenQuestsCompendium.quests[PIE].prev = NECKLACE
 SpokenQuestsCompendium.quests[BACK].prev = PIE
@@ -117,6 +123,7 @@ shipped[GOULASH].races, shipped[WATCHFUL].prev, shipped[FURTHER].prev = 2, GOULA
 local L, Tab = VO.L, VO.QuestsTab
 Expect("the shipped data has the quests' chains, from the world DB", linked, true)
 Expect("...and the names of chains given by hand, on their first quest", namedByHand, true)
+Expect("...and Zephras Isle's shared quests open to both sides", zephrasOpen, true)
 local C = _G.SpokenCompendium
 
 Expect("no tab before the world is up", C:Tab("quests"), nil)
@@ -156,7 +163,7 @@ Expect("...where the player's continent is not known, on the first continent, as
 MAPS[9998] = { "An inn in Kalimdor", 1414 }
 stub.world.playerMapID = 9998
 Tab:Open()
-Expect("...where the player is on a continent and in no zone with quests, on that continent, as Zones and Books land",
+Expect("...where the player is on a continent and in no zone with quests, on that continent, as Places and Readables land",
     page.title.text, "Kalimdor")
 
 -- The client's scroll frame: an offset only within the range it last measured, which it measures
@@ -463,6 +470,12 @@ Expect("...all its words, the hand-in too, though it is not completed",
 Expect("...its words filled for the player: the word for his sex", words:find("Hello, good sir!", 1, true) ~= nil, true)
 Expect("...and his name", words:find("Thanks for the candles, Tester,", 1, true) ~= nil, true)
 Expect("...and a line break for $B", words:find("moment?\n\nMy brother", 1, true) ~= nil, true)
+Expect("...$c and $r his class and race in lower case, as the client writes them, $C and $R capitalised",
+    Tab:Fill("Go, young $c. A $r like you; $C of the $R."), "Go, young mage. A human like you; Mage of the Human.")
+stub.SetLocale("deDE")
+Expect("...and in German capitalised either way, nouns keeping their capital",
+    Tab:Fill("young $c, $r"), "young Mage, Human")
+stub.SetLocale("enUS")
 stub.world.unitSex = 3
 Tab:Refresh()
 Expect("...and for hers", (PageWords() or ""):find("Hello, my lady!", 1, true) ~= nil, true)
@@ -1124,12 +1137,12 @@ Expect("Quests switched off while the window shows its tab, the window closes", 
 Expect("with Quests off, the tab is not offered", C:Select("quests"), nil)
 Spoken:SetPartOn("quests", true)
 
--- Quests is the first tab, before Zones and Books, and gives the window its title.
-C:Register("places", { label = "Zones", order = 1, build = function() end })
-C:Register("readables", { label = "Books", order = 2, build = function() end })
+-- Quests is the first tab, before Places and Readables, and gives the window its title.
+C:Register("places", { label = "Places", order = 1, build = function() end })
+C:Register("readables", { label = "Readables", order = 2, build = function() end })
 Expect("Quests is the first tab", _G.SpokenCompendiumWindowTab1:GetText(), L.COMPENDIUM_QUESTS)
-Expect("...Zones and Books after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
-    "Zones|Books")
+Expect("...Places and Readables after it", _G.SpokenCompendiumWindowTab2:GetText() .. "|" .. _G.SpokenCompendiumWindowTab3:GetText(),
+    "Places|Readables")
 Expect("...and the window has its title", C.window.title, SpokenEnv.L.OPT_COMPENDIUM_TITLE)
 -- Opened from the minimap menu, on the first tab until the player has chosen one with the tabs.
 C:Select("readables")
@@ -1204,12 +1217,12 @@ Expect("...a dungeon's page in the zone of its entrance, counting its quests", p
 do
     list = Shown()
     Click("Searing Gorge")
-    -- Zones' picture of the place above its page, where Zones has one.
-    Expect("a place's page has no picture while Zones has none", page.body.picture:IsShown(), false)
-    _G.SpokenZones = { Picture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end }
+    -- Places' picture of the place above its page, where Places has one.
+    Expect("a place's page has no picture while Places has none", page.body.picture:IsShown(), false)
+    _G.Spoken.PlacePicture = function(_, mapID, key) return "pic" .. mapID .. (key or ""), "mask" end
     Tab:Refresh()
-    Expect("...and Zones' picture of the place when it has", page.body.picture:IsShown() and page.body.picture:GetTexture(), "pic1427")
-    _G.SpokenZones = nil
+    Expect("...and Places' picture of the place when it has", page.body.picture:IsShown() and page.body.picture:GetTexture(), "pic1427")
+    _G.Spoken.PlacePicture = nil
     list = Shown()
     Click("Searing Gorge")
     list = Shown()

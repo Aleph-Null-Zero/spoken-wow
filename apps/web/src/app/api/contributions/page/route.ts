@@ -1,5 +1,5 @@
 /**
- * A moderator's answer to "which page is this?" for a books contribution: a page in any
+ * A moderator's answer to "which page is this?" for a readables contribution: a page in any
  * language, a place in a book, or a new book. Stored on the contribution; where there is no
  * answer, the matcher's own decision stands. Refused once the row's page is written, which is
  * one-way.
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
   const recorded = await setContributionMatch(id, answer, session.user.id);
   if (!recorded) {
-    return Response.json({ error: "no such books contribution, or its page is already written" }, { status: 409 });
+    return Response.json({ error: "no such readables contribution, or its page is already written" }, { status: 409 });
   }
   return Response.json({ ok: true, match: matchBook(recorded, corpus) });
 }

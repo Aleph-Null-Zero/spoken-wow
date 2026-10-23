@@ -19,9 +19,6 @@ local CONTINENTS, CITY_IN = C.CONTINENTS, C.CITY_IN
 local MapName, ContinentOf = C.MapName, C.ContinentOf
 local Dungeon, DungeonName = C.Dungeon, C.DungeonName
 
--- A value the game hands over as a secret, in an instance or in combat, reads as nil.
-local NotSecret = Spoken and Spoken.NotSecret or function(value) return value end
-
 local list, page
 local selection          -- { boss = true, map = map, key = key } | { mapID = zone, dungeon = map }
                          -- | { mapID = zone or continent } | { lands = true } | nil
@@ -324,8 +321,8 @@ end
 --- The boss named `name`, in the client's language or English, of the dungeon or raid the player
 --- is in: { map, key }, or nil.
 function NPCs:BossNamed(name)
-	if type(name) ~= "string" or not GetInstanceInfo then return nil end
-	local map = NotSecret((select(8, GetInstanceInfo())))
+	if type(name) ~= "string" then return nil end
+	local map = NPCs:InstanceMap()
 	for _, boss in ipairs(map and Index().all[map] or {}) do
 		if Name(boss) == name or boss[1] == name then return { map = map, key = boss.key } end
 	end
@@ -537,7 +534,7 @@ end
 local function ShowEntry()
 	if not page then return end
 	if not selection then
-		page:Show({ title = L.COMPENDIUM_BOSSES, subtitle = Count(Tally(AllZones())), empty = true })
+		page:Show({ title = L.COMPENDIUM_BOSSES, subtitle = Count(Tally(AllZones())) })
 		return
 	end
 	if selection.boss then
@@ -561,22 +558,22 @@ local function ShowEntry()
 	if selection.dungeon then
 		page:Show({ title = DungeonName(selection.dungeon),
 			subtitle = CountLine(MapName(selection.mapID), TallyOf(selection.dungeon)),
-			empty = true, icon = C.PlaceIcon(nil, selection.dungeon),
+			icon = C.PlaceIcon(nil, selection.dungeon),
 			picture = C.PlacePicture({ mapID = selection.mapID, dungeon = selection.dungeon }) })
 		return
 	end
 	if selection.lands then
-		page:Show({ title = L.GROUP_LANDS, subtitle = Count(Tally(ZonesOn(nil))), empty = true })
+		page:Show({ title = L.GROUP_LANDS, subtitle = Count(Tally(ZonesOn(nil))) })
 		return
 	end
 	if C.IsContinent(selection.mapID) then
 		page:Show({ title = MapName(selection.mapID),
-			subtitle = Count(Tally(ZonesOn(selection.mapID))), empty = true, icon = C.PlaceIcon(selection.mapID) })
+			subtitle = Count(Tally(ZonesOn(selection.mapID))), icon = C.PlaceIcon(selection.mapID) })
 		return
 	end
 	page:Show({ title = MapName(selection.mapID),
 		subtitle = CountLine(MapName(ContinentOf(selection.mapID) or C.WORLD), Tally({ selection.mapID })),
-		empty = true, icon = C.PlaceIcon(selection.mapID), picture = C.PlacePicture({ mapID = selection.mapID }) })
+		icon = C.PlaceIcon(selection.mapID), picture = C.PlacePicture({ mapID = selection.mapID }) })
 end
 
 --------------------------------------------------------------------------------
@@ -593,8 +590,7 @@ end
 
 -- The dungeon or raid the player is in, and the zone it is filed under.
 local function PlayerDungeon()
-	if not GetInstanceInfo then return nil end
-	local map = NotSecret((select(8, GetInstanceInfo())))
+	local map = NPCs:InstanceMap()
 	local zone = map and Index().zoneOf[map]
 	if zone then return map, zone end
 end
@@ -664,7 +660,6 @@ local function Build(panel)
 		onlyGet = OnlyFound,
 		onlySet = function(on) if SpokenNPCsSettings then SpokenNPCsSettings.compendiumFoundOnly = on end end,
 		locked = function() return SpokenCompendium.LockedReason("OPT_UNLOCK_BOSSES") end,
-		unlocked = Unlocked,
 		-- Found Only left the chosen row out: back to where the player stands.
 		onHidden = function()
 			selection = nil

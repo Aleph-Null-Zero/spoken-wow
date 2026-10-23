@@ -13,7 +13,7 @@ Spoken.ADDON_VERSION = AddonVersion
 -- already installed.
 Spoken.SITE_URL = "https://spoken.rusty.one"
 
---- The page for reporting one line: `section` is "quests", "zones" or "books", `path` the
+--- The page for reporting one line: `section` is "quests", "places" or "readables", `path` the
 --- line's address under it, `language` the language the line was read in. English goes
 --- unprefixed, the address the site serves it at; any other language keeps its prefix, so the
 --- report lands beside that language's line. tests/lua/report_url_contract_test.lua holds
@@ -38,7 +38,7 @@ end
 -- Sources: how a feature addon joins the player. See Sources.lua for the info shape.
 --------------------------------------------------------------------------------
 
----@param key string  "quests" | "zones" | "books"
+---@param key string  "quests" | "places" | "readables"
 ---@param info SpokenSourceInfo
 ---@return table source  Carries Enqueue, Continue, PlayNow, Remove, StopAll, AddGate, RecheckGates,
 ---                      Retry, CanPlay, SetQueueLimit and SetInterClipGap.
@@ -108,7 +108,7 @@ function Spoken:RegisterOptionalAction(id, label)
     return Actions:RegisterOptional(id, label)
 end
 
---- A row bullet, registered once by a feature addon so SpokenBooks needs no change to
+--- A row bullet, registered once by a feature addon so SpokenReadables needs no change to
 --- the player to have one of its own.
 function Spoken:RegisterBullet(id, texture, size)
     Bullets[id] = { texture = texture, size = size }
@@ -278,7 +278,7 @@ end
 -- are each module's own to list. tests/lua/packs_test.lua keeps this in step with the pages.
 local CURSEFORGE = "https://www.curseforge.com/wow/addons/"
 local RELEASES = "https://github.com/rusty-key/spoken-wow/releases?q="
-local PACK_FOLDERS = { quests = "SpokenQuestsAudio", zones = "SpokenZonesAudio", books = "SpokenBooksAudio" }
+local PACK_FOLDERS = { quests = "SpokenQuestsAudio", places = "SpokenPlacesAudio", readables = "SpokenReadablesAudio" }
 local PACK_PAGES = {
     -- Quests in one folder per language is a GitHub download: on CurseForge a language's quests
     -- are split into packs under other folders.
@@ -287,15 +287,15 @@ local PACK_PAGES = {
         itIT = { github = "quests-audio-itIT" }, koKR = { github = "quests-audio-koKR" },
         ptBR = { github = "quests-audio-ptBR" }, ruRU = { github = "quests-audio-ruRU" },
         zhCN = { github = "quests-audio-zhCN" }, zhTW = { github = "quests-audio-zhTW" } },
-    zones = { deDE = "spoken-german-audio-places", esES = "spoken-spanish-eu-audio-places", esMX = "spoken-spanish-al-audio-places",
+    places = { deDE = "spoken-german-audio-places", esES = "spoken-spanish-eu-audio-places", esMX = "spoken-spanish-al-audio-places",
         frFR = "spoken-french-audio-places", koKR = "spoken-korean-audio-places", ptBR = "spoken-portuguese-audio-places",
         ruRU = "spoken-russian-audio-places", zhCN = "spoken-chinese-simplified-audio-places", zhTW = "spoken-chinese-traditional-audio-places" },
-    books = { deDE = "spoken-german-audio-readables", esES = "spoken-spanish-eu-audio-readables", esMX = "spoken-spanish-al-audio-readables",
+    readables = { deDE = "spoken-german-audio-readables", esES = "spoken-spanish-eu-audio-readables", esMX = "spoken-spanish-al-audio-readables",
         frFR = "spoken-french-audio-readables", koKR = "spoken-korean-audio-readables", ptBR = "spoken-portuguese-audio-readables",
         ruRU = "spoken-russian-audio-readables", zhCN = "spoken-chinese-simplified-audio-readables", zhTW = "spoken-chinese-traditional-audio-readables" },
 }
 
---- The voice pack `module` ("quests", "zones" or "books") has in `lang`, English's aside: the folder
+--- The voice pack `module` ("quests", "places" or "readables") has in `lang`, English's aside: the folder
 --- it installs as and the address to get it, or nil where that language has none.
 function Spoken:VoicePack(module, lang)
     local page = PACK_PAGES[module] and PACK_PAGES[module][lang]
@@ -308,7 +308,7 @@ end
 -- drawn for it; a map not listed takes its parent's.
 local ZONE_ART = [[Interface\AddOns\Spoken\Textures\Zones\]]
 local ZONE_ICONS = {
-    [1414] = "Kalimdor", [1415] = "EasternKingdoms",
+    [947] = "Azeroth", [1414] = "Kalimdor", [1415] = "EasternKingdoms",
     [1411] = "Durotar", [1412] = "Mulgore", [1413] = "Barrens", [1416] = "AlteracMountains",
     [1417] = "ArathiHighlands", [1418] = "Badlands", [1419] = "BlastedLands", [1420] = "TirisfalGlades",
     [1421] = "Silverpine", [1422] = "WesternPlaguelands", [1423] = "EasternPlaguelands",
@@ -326,8 +326,9 @@ local ZONE_ICONS = {
     -- Forever's own zones, drawn for Spoken.
     [2521] = "ZephrasIsle", [2524] = "DarkspearIslands", [2548] = "Riverglades", [2652] = "Shendralas",
 }
--- Trims the icons' bevelled border, as the game does in a round frame.
+-- Trims the icons' bevelled border, as the game does in a round frame. The globe needs none.
 local ICON_CROP = { 0.08, 0.92, 0.08, 0.92 }
+local WHOLE = { 0, 1, 0, 1 }
 Spoken.ZONE_ICONS = ZONE_ICONS
 
 --- The icon for `mapID` or its nearest ancestor that has one, with its crop.
@@ -335,7 +336,7 @@ function Spoken:ZoneIcon(mapID)
     local depth = 0
     while mapID and depth < 6 do
         local icon = ZONE_ICONS[mapID]
-        if icon then return ZONE_ART .. icon, ICON_CROP end
+        if icon then return ZONE_ART .. icon, icon == "Azeroth" and WHOLE or ICON_CROP end
         local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
         mapID = info and info.parentMapID
         depth = depth + 1
@@ -468,7 +469,7 @@ function Spoken:VoiceLanguage()
 end
 
 --- What a module's page says under its voice packs when nothing can be heard: no pack in the voice
---- language exists for `module` ("quests", "zones" or "books"), and If a Voice Is Missing is Stay
+--- language exists for `module` ("quests", "places" or "readables"), and If a Voice Is Missing is Stay
 --- Silent. Nil otherwise.
 function Spoken:SilentNote(module)
     local voice = self:VoiceLanguage()
@@ -498,10 +499,10 @@ end
 
 --- The Text Size of the words of stories, books and quests in Azeroth's Compendium and beside the
 --- map, from the Compendium section of Spoken's page. Until the player sets it there, the size
---- they set on the Zones page, where it was before; 12 with neither.
+--- they set on the Places page, where it was before; 12 with neither.
 function Spoken:CompendiumFontSize()
     local size = Addon.db and Addon.db.profile.CompendiumFontSize
-    if size == nil and type(SpokenZonesSettings) == "table" then size = SpokenZonesSettings.fontSize end
+    if size == nil and type(SpokenPlacesSettings) == "table" then size = SpokenPlacesSettings.fontSize end
     return tonumber(size) or 12
 end
 

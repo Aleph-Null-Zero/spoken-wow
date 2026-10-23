@@ -4,7 +4,7 @@ The site edits lines, records who changed them and keeps what they used to say. 
 that could live in corpus/corpus.json.gz, so it lived in line_override instead: a patch
 table keyed by file, with no history. This moves the corpus itself into Postgres beside
 lore_line and book_line, and turns the committed file into an EXPORT of that table -- the
-same arrangement zones has with tools/voice/manifest.json.
+same arrangement places has with tools/voice/manifest.json.
 
 WHAT DOES NOT CHANGE: producing audio and building a sound pack still need no database.
 tts_cli.build reads the committed file exactly as it always has,
@@ -498,7 +498,7 @@ def import_corpus_data(corpus, verbose=True):
     fresh extract of the world database.
 
     Rerunnable by construction, and the rule for a line that already exists is the one
-    pipelines/books/tools/lib/promote.mjs states: unchanged text is skipped, changed text
+    pipelines/readables/tools/lib/promote.mjs states: unchanged text is skipped, changed text
     is promoted UNLESS somebody has edited it here, in which case the extract's version is
     recorded but not promoted. An import that could overwrite a correction is an import
     nobody dares run, and an import nobody runs means the corpus stops tracking the dump.
@@ -1074,9 +1074,10 @@ def export_giver_names(corpus_path, out_dir, verbose=True):
     """
     from tts_cli.giver_names import (KINDS, givers, localized_names, write_giver_names,
                                    write_names_xml)
-    from tts_cli.ignores import ignored_line_ids
+    from tts_cli.ignores import load_pack_ignored
 
-    found = givers(load_corpus(corpus_path), ignored_line_ids())
+    corpus = load_corpus(corpus_path)
+    found = givers(corpus, load_pack_ignored(corpus))
     conn = connect()
     try:
         with conn, conn.cursor() as cur:

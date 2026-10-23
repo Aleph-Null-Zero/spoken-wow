@@ -8,7 +8,7 @@ import { makeGame, sha256, tmpDir, write } from './helpers'
 
 const f = (p: string, text: string) => ({ path: p, sha256: sha256(Buffer.from(text)), size: Buffer.byteLength(text) })
 const manifest = (files: ReturnType<typeof f>[]): ChannelManifest => ({
-  packId: 'SpokenZonesAudio_deDE', rev: '20261018T000000Z', requires: { Spoken: '>=3.0.0' },
+  packId: 'SpokenPlacesAudio_deDE', rev: '20261018T000000Z', requires: { Spoken: '>=3.0.0' },
   fileCount: files.length, totalSize: files.reduce((n, x) => n + x.size, 0), files
 })
 const local = (entries: [string, LocalFile][]) => new Map(entries)
@@ -72,9 +72,9 @@ describe('estimatePack', () => {
 describe('pack state and listLocal', () => {
   it('round-trips and ignores a state for another pack', async () => {
     const game = await makeGame(tmpDir())
-    savePackState(game, { packId: 'SpokenZonesAudio_deDE', rev: 'r', files: { a: { sha256: 'x', size: 1, mtimeMs: 2 } } })
-    expect(loadPackState(game, 'SpokenZonesAudio_deDE')?.files.a?.size).toBe(1)
-    expect(loadPackState(game, 'SpokenZonesAudio_frFR')).toBeNull()
+    savePackState(game, { packId: 'SpokenPlacesAudio_deDE', rev: 'r', files: { a: { sha256: 'x', size: 1, mtimeMs: 2 } } })
+    expect(loadPackState(game, 'SpokenPlacesAudio_deDE')?.files.a?.size).toBe(1)
+    expect(loadPackState(game, 'SpokenPlacesAudio_frFR')).toBeNull()
   })
 
   it('lists files by / path and skips symlinks', async () => {

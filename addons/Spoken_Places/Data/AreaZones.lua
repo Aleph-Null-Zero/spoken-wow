@@ -1,7 +1,7 @@
 -- The areas whose story is kept under another zone than the one the client puts them in. The
 -- stories follow warcraft.wiki.gg, which files some areas by the map after the Cataclysm; their
 -- ids (s:<mapID>:<key>), recordings, pictures and reports stay keyed by the zone they are kept
--- under, and the addon lists, finds and tells each where the client has it (SpokenZones:StoryPlace).
+-- under, and the addon lists, finds and tells each where the client has it (SpokenPlaces:StoryPlace).
 --
 -- Keyed as Subzones.lua is: the zone the story is kept under, then the area's key.
 --   zone  the zone the client puts the area in (its AreaTable parent): Azeroth's Compendium lists
@@ -11,12 +11,12 @@
 --         too, and listed only once, where `zone` (or else its story) is.
 --
 -- Spoken's Data/Dungeons.lua does the same for a dungeon kept under another zone than its
--- entrance's (Razorfen Downs), which needs no entry here. Kept by hand; tests/lua/zones_area_zones_test.lua
+-- entrance's (Razorfen Downs), which needs no entry here. Kept by hand; tests/lua/places_area_zones_test.lua
 -- checks every entry against the stories.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-SpokenZones.AreaZones = {
+SpokenPlaces.AreaZones = {
 	-- Hillsbrad Foothills: the wiki's since the Cataclysm, Alterac Mountains' in Classic.
 	[1424] = {
 		["chillwind point"] = { zone = 1416 },

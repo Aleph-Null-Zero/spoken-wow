@@ -10,7 +10,7 @@
  * forty thousand lines is a small request and the server decides what is in the batch -- a
  * client that sent the list could send a different one from the one it was quoted for.
  *
- * The zones half sends line ids instead, and that is not an inconsistency worth removing.
+ * The places half sends line ids instead, and that is not an inconsistency worth removing.
  * Its whole corpus is ~1,400 lines, its filtering is a pure function over a catalogue held
  * in memory rather than a query, and its explorer already selects lines by hand -- so ids
  * ARE what the user picked, where on the quests side a filter is.
@@ -33,12 +33,12 @@ import { batchJobs, matchingLines } from "@/lib/search";
 import { filtersFromParams, needsStale } from "@/lib/search-request";
 import { recordingsFor } from "@/lib/recordings/store";
 import { ensureQueueRunning, queueWorker } from "@/lib/generation/boot";
-import { catalogue as bookCatalogue } from "@/lib/books/catalogue";
+import { catalogue as bookCatalogue } from "@/lib/readables/catalogue";
 import type { Lang } from "@/lib/lang";
 import { isAdmin } from "@/lib/permissions";
 import type { Provider } from "@/lib/generation/speakers/speaker";
 import { pinnedVoices } from "@/lib/voices/references";
-import { catalogue as zoneCatalogue } from "@/lib/zones/catalogue";
+import { catalogue as zoneCatalogue } from "@/lib/places/catalogue";
 
 export const dynamic = "force-dynamic";
 
@@ -70,15 +70,15 @@ export async function POST(request: NextRequest) {
   const source = body.source === undefined ? "quests" : body.source;
   if (!isSource(source)) {
     return NextResponse.json(
-      { error: "source must be 'quests', 'zones' or 'books'", kind: "bad-request" },
+      { error: "source must be 'quests', 'places' or 'readables'", kind: "bad-request" },
       { status: 400 },
     );
   }
 
   const label = typeof body.label === "string" && body.label ? body.label : "a search";
 
-  if (source === "zones") return queueZones(body.lineIds, label, session.user.id, lang, provider);
-  if (source === "books") return queueBooks(body.lineIds, label, session.user.id, lang, provider);
+  if (source === "places") return queuePlaces(body.lineIds, label, session.user.id, lang, provider);
+  if (source === "readables") return queueReadables(body.lineIds, label, session.user.id, lang, provider);
 
   if (typeof body.filters !== "string") {
     return NextResponse.json(
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * A zones batch, from the ids the explorer selected.
+ * A places batch, from the ids the explorer selected.
  *
  * The entries are looked up in the catalogue rather than trusted from the body, which is
  * the same protection the quests half gets by re-deriving from filters: what is queued is
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
  * only fail. A line with no text is dropped too -- an untranslated line has nothing to
  * narrate, and paying to find that out once per line is what the quote exists to prevent.
  */
-async function queueZones(
+async function queuePlaces(
   lineIds: unknown,
   label: string,
   userId: string,
@@ -185,9 +185,9 @@ async function queueZones(
     );
   }
 
-  const batchId = await createBatch(label, userId, "zones", lang);
-  const { queued, skipped } = await enqueue(batchId, jobs, "zones", lang, provider);
-  await recordQueued(batchId, label, userId, "zones", lang, queued);
+  const batchId = await createBatch(label, userId, "places", lang);
+  const { queued, skipped } = await enqueue(batchId, jobs, "places", lang, provider);
+  await recordQueued(batchId, label, userId, "places", lang, queued);
 
   queueWorker()?.nudge();
 
@@ -195,15 +195,15 @@ async function queueZones(
 }
 
 /**
- * A books batch, from the ids the explorer selected.
+ * A readables batch, from the ids the explorer selected.
  *
  * The pages are looked up in the corpus rather than trusted from the body, exactly as the
- * zones half does: what is queued is what exists, and an id nobody recognises is dropped
+ * places half does: what is queued is what exists, and an id nobody recognises is dropped
  * rather than becoming a job that can only fail. The 88 unvoiceable pages are dropped for
  * the same reason -- they are in the corpus because the game has them, not because anyone
  * can narrate them.
  */
-async function queueBooks(
+async function queueReadables(
   lineIds: unknown,
   label: string,
   userId: string,
@@ -237,9 +237,9 @@ async function queueBooks(
     );
   }
 
-  const batchId = await createBatch(label, userId, "books", lang);
-  const { queued, skipped } = await enqueue(batchId, jobs, "books", lang, provider);
-  await recordQueued(batchId, label, userId, "books", lang, queued);
+  const batchId = await createBatch(label, userId, "readables", lang);
+  const { queued, skipped } = await enqueue(batchId, jobs, "readables", lang, provider);
+  await recordQueued(batchId, label, userId, "readables", lang, queued);
 
   queueWorker()?.nudge();
 

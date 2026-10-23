@@ -26,8 +26,8 @@ describe("parseEnvelope", () => {
     expect(result.value.text).toBe("Убей шестерых.\n\nПотом возвращайся.");
   });
 
-  it("reads a zones envelope, which carries no text", () => {
-    const result = parseEnvelope(fixture("zones-subzone.txt"));
+  it("reads a places envelope, which carries no text", () => {
+    const result = parseEnvelope(fixture("places-subzone.txt"));
     expect(result.ok && result.value.text).toBe(null);
     expect(result.ok && result.value.fields.subzone).toBe("A Nook With No Lore");
   });
@@ -35,7 +35,7 @@ describe("parseEnvelope", () => {
   it("reads the open-part-of-a-zone envelope's subzone field as empty, not absent", () => {
     // The addon always writes the field (Contribute.lua never omits it the way it omits
     // x/y); this is the shape checkEnvelope's bare-map branch has to treat as "no subzone".
-    const result = parseEnvelope(fixture("zones-zone.txt"));
+    const result = parseEnvelope(fixture("places-zone.txt"));
     expect(result.ok && result.value.fields.subzone).toBe("");
   });
 
@@ -50,17 +50,17 @@ describe("parseEnvelope", () => {
   });
 
   it("refuses a truncated paste", () => {
-    const half = fixture("books-page.txt").slice(0, 120);
+    const half = fixture("readables-page.txt").slice(0, 120);
     expect(parseEnvelope(half).ok).toBe(false);
   });
 
   it("refuses a version it does not know", () => {
-    const future = fixture("books-page.txt").replace("!SPOKEN1", "!SPOKEN2");
+    const future = fixture("readables-page.txt").replace("!SPOKEN1", "!SPOKEN2");
     expect(parseEnvelope(future)).toEqual({ ok: false, error: "version" });
   });
 
   it("refuses a source it does not know", () => {
-    const wrong = fixture("books-page.txt").replace("!SPOKEN1 books", "!SPOKEN1 mail");
+    const wrong = fixture("readables-page.txt").replace("!SPOKEN1 readables", "!SPOKEN1 mail");
     expect(parseEnvelope(wrong)).toEqual({ ok: false, error: "source" });
   });
 
@@ -72,7 +72,7 @@ describe("parseEnvelope", () => {
   });
 
   it("tolerates the whitespace a paste picks up", () => {
-    expect(parseEnvelope(`\n  \n${fixture("books-page.txt")}\n\n`).ok).toBe(true);
+    expect(parseEnvelope(`\n  \n${fixture("readables-page.txt")}\n\n`).ok).toBe(true);
   });
 
   it("parses a paste whose newlines came from a Windows client", () => {
@@ -124,23 +124,23 @@ describe("envelopes the addon captured", () => {
   });
 
   it("reads a zone with a subzone, and one without, which leaves the field out", () => {
-    expect(captured("zones-subzone").fields).toMatchObject({ map: "1537", subzone: "A Nook With No Lore" });
-    const zone = captured("zones-zone");
+    expect(captured("places-subzone").fields).toMatchObject({ map: "1537", subzone: "A Nook With No Lore" });
+    const zone = captured("places-zone");
     expect(zone.fields.map).toBe("1537");
     expect(zone.fields.subzone).toBeUndefined();
   });
 
   it("reads a book page with its packs' language", () => {
-    const page = captured("books-page");
+    const page = captured("readables-page");
     expect(page.fields).toMatchObject({ book: "Ledger of Nothing", number: "2", pack: "enUS" });
   });
 });
 
 describe("decodeFragment", () => {
   it("decodes the fixture Contribute:Encode wrote into the byte-identical plaintext envelope", async () => {
-    const encoded = fixture("books-page.e1.txt").trim();
+    const encoded = fixture("readables-page.e1.txt").trim();
     const result = await decodeFragment(encoded);
-    expect(result).toEqual({ ok: true, text: fixture("books-page.txt") });
+    expect(result).toEqual({ ok: true, text: fixture("readables-page.txt") });
   });
 
   it("refuses an empty fragment", async () => {
@@ -152,7 +152,7 @@ describe("decodeFragment", () => {
   });
 
   it("refuses a truncated fragment (valid base64url, broken deflate)", async () => {
-    const encoded = fixture("books-page.e1.txt").trim();
+    const encoded = fixture("readables-page.e1.txt").trim();
     const result = await decodeFragment(encoded.slice(0, Math.floor(encoded.length / 2)));
     expect(result).toEqual({ ok: false, error: "corrupt" });
   });
@@ -180,7 +180,7 @@ describe("checksum", () => {
 });
 
 describe("formatEnvelope", () => {
-  it.each(["quests-accept.txt", "quests-fenced.txt", "books-page.txt", "zones-zone.txt"])(
+  it.each(["quests-accept.txt", "quests-fenced.txt", "readables-page.txt", "places-zone.txt"])(
     "writes %s back byte for byte, as the addon wrote it",
     (name) => {
       const raw = fixture(name);
@@ -190,4 +190,16 @@ describe("formatEnvelope", () => {
       expect(formatEnvelope(parsed.value)).toBe(raw);
     },
   );
+
+  it.each([
+    ["legacy-books-page.txt", "readables"],
+    ["legacy-zones-zone.txt", "places"],
+  ])("writes %s, as a released addon wrote it, back under its section's new key", (name, source) => {
+    const parsed = parseEnvelope(fixture(name));
+    expect(parsed.ok && parsed.value.source).toBe(source);
+    if (!parsed.ok) return;
+    const written = formatEnvelope(parsed.value);
+    expect(written.startsWith(`!SPOKEN1 ${source}\n`)).toBe(true);
+    expect(parseEnvelope(written)).toEqual(parsed);
+  });
 });

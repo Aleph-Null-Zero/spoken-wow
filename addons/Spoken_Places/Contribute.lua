@@ -1,18 +1,18 @@
 -- A place this addon has no lore for, as something a player can describe.
 --
--- No text, unlike the quests and books envelopes: zone lore is wiki-sourced rather than
+-- No text, unlike the quests and readables envelopes: zone lore is wiki-sourced rather than
 -- client-sourced, so the client has nothing to hand over. What this sends names the place --
 -- the map, the zone, the subzone -- and the contribute page asks the player for the part that
 -- is actually missing: a description of it.
 --
 -- It travels the same format for one reason: one triage queue for three addons.
 
-local ADDON_NAME, SpokenZones = ...
+local ADDON_NAME, SpokenPlaces = ...
 
 
 --- Whether this client can offer Contribute at all: a player that carries contributing (an
 --- older bundled one does not), and the buttons not hidden in its settings.
-function SpokenZones:CanContribute()
+function SpokenPlaces:CanContribute()
     if not (_G.Spoken and Spoken.Contribute and Spoken.ShowContribution) then
         return false
     end
@@ -22,14 +22,14 @@ function SpokenZones:CanContribute()
     return true
 end
 
---- The fields every zones envelope starts with: which addon, which client, which language.
+--- The fields every places envelope starts with: which addon, which client, which language.
 local function BaseFields(self)
     return
     {
-        -- SpokenZones.VERSION does not exist -- Core.lua computes the real .toc version into
-        -- the lowercase SpokenZones.version; "dev" is what a source checkout with no .toc
+        -- SpokenPlaces.VERSION does not exist -- Core.lua computes the real .toc version into
+        -- the lowercase SpokenPlaces.version; "dev" is what a source checkout with no .toc
         -- metadata at all reads back as.
-        { "addon", format("SpokenZones/%s", self.version or "dev") },
+        { "addon", format("%s/%s", ADDON_NAME, self.version or "dev") },
         { "build", format("%s/%s", (GetBuildInfo and select(1, GetBuildInfo())) or "?",
                                    (GetBuildInfo and select(2, GetBuildInfo())) or "?") },
         { "locale", (GetLocale and GetLocale()) or "enUS" },
@@ -56,7 +56,7 @@ end
 --- known, what is missing is what to say about it, and a player reading the map of a zone they
 --- have been to can describe it from anywhere. The description itself is written on the
 --- contribute page, which asks for it -- the client has nothing to hand over.
-function SpokenZones:CaptureContribution(mapID, subzone)
+function SpokenPlaces:CaptureContribution(mapID, subzone)
     if not mapID then
         return nil
     end
@@ -69,11 +69,11 @@ function SpokenZones:CaptureContribution(mapID, subzone)
         fields[#fields + 1] = { "subzone", subzone }
     end
 
-    return Spoken.Contribute:Envelope("zones", fields, nil)
+    return Spoken.Contribute:Envelope("places", fields, nil)
 end
 
 -- Compression belongs here, not in CaptureContribution: this runs once, on the click.
-function SpokenZones:ShowContribution(mapID, subzone)
+function SpokenPlaces:ShowContribution(mapID, subzone)
     local envelope = self:CaptureContribution(mapID, subzone)
     if not envelope then
         return
@@ -93,7 +93,7 @@ end
 ---
 --- `key`, not `subzone`: a subzone field is what a contribution is keyed on, and a report is
 --- about lore that exists. The lore itself is ours, so it is not sent back.
-function SpokenZones:ReportContext(mapID, areaKey)
+function SpokenPlaces:ReportContext(mapID, areaKey)
     if not (mapID and _G.Spoken and Spoken.Contribute) then
         return nil
     end
@@ -101,12 +101,12 @@ function SpokenZones:ReportContext(mapID, areaKey)
     if areaKey then
         fields[#fields + 1] = { "key", areaKey }
     end
-    return Spoken.Contribute:Envelope("zones", fields, nil)
+    return Spoken.Contribute:Envelope("places", fields, nil)
 end
 
 --- The report address for a place, with its context in the fragment. The bare address in the
 --- popup under a Spoken too old to say more.
-function SpokenZones:ShowReport(mapID, areaKey, language)
+function SpokenPlaces:ShowReport(mapID, areaKey, language)
     local url = self:ReportURL(mapID, areaKey, language)
     if not url then
         return

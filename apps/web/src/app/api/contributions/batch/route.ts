@@ -13,7 +13,7 @@
  * (lib/contributions/missing-audio.ts) rather than dropped, and the install has an allowance of
  * its own beside the IP's. Without one, as from /contribute, known lines are dropped as before.
  *
- * Places are refused here. A zones contribution is the description the player writes on the
+ * Places are refused here. A places contribution is the description the player writes on the
  * page, and a file has none; the addon never gathers them, so one arriving is a hand-built file.
  */
 import { headers } from "next/headers";
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       refuse(parsed.error);
       continue;
     }
-    if (parsed.value.source === "zones") {
+    if (parsed.value.source === "places") {
       refuse("describe");
       continue;
     }

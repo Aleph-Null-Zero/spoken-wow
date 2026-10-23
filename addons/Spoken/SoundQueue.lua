@@ -1,6 +1,6 @@
 setfenv(1, SpokenEnv)
 
--- The one queue every source speaks through. What is specific to a domain (quests, zones) lives
+-- The one queue every source speaks through. What is specific to a domain (quests, places) lives
 -- in its source, never here.
 --
 -- The policy, in one place:

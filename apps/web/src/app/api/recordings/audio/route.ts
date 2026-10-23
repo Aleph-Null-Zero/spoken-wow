@@ -1,5 +1,5 @@
 /**
- * Playing one recording: /api/recordings/audio?lang=deDE&source=zones&file=1411/razor-hill&version=2
+ * Playing one recording: /api/recordings/audio?lang=deDE&source=places&file=1411/razor-hill&version=2
  *
  * Shaped like /api/takes/audio and answered by the same serveTake: query parameters, a
  * whitelisted file, the archived name read from the row and never from the caller, and an

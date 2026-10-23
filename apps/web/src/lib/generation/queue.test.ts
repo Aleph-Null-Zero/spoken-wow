@@ -93,27 +93,27 @@ describe("enqueue", () => {
   /**
    * The reason the credit guard is keyed on the source and not the file alone. The two
    * sections name files by their own frozen rules and nothing keeps the namespaces apart, so
-   * without this a zones job would silently block a quests one -- which reads as "nothing
+   * without this a places job would silently block a quests one -- which reads as "nothing
    * happened when I pressed Regenerate", with nothing anywhere saying why.
    */
   it("does not let one section's queued file block the other's", async () => {
     const quests = await newBatch();
     expect(await enqueue(quests, [line(1)], "quests")).toEqual({ queued: 1, skipped: 0 });
 
-    const zones = await newBatch("zones");
-    expect(await enqueue(zones, [line(1)], "zones")).toEqual({ queued: 1, skipped: 0 });
+    const places = await newBatch("places");
+    expect(await enqueue(places, [line(1)], "places")).toEqual({ queued: 1, skipped: 0 });
 
     // Still one job per file within a source, which is what the guard is actually for.
-    const again = await newBatch("zones");
-    expect(await enqueue(again, [line(1)], "zones")).toEqual({ queued: 0, skipped: 1 });
+    const again = await newBatch("places");
+    expect(await enqueue(again, [line(1)], "places")).toEqual({ queued: 0, skipped: 1 });
   });
 
   it("tells the worker which generator a claimed job wants", async () => {
-    const zones = await newBatch("zones");
-    await enqueue(zones, [line(7)], "zones");
+    const places = await newBatch("places");
+    await enqueue(places, [line(7)], "places");
 
     const claimed = await claimNext();
-    expect(claimed!.source).toBe("zones");
+    expect(claimed!.source).toBe("places");
   });
 });
 

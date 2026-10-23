@@ -4,12 +4,12 @@
 -- corpus is stored under. Built by joining AreaTable's localized and English
 -- strings on their shared ID, from client builds 1.60.1.70338 (Forever), then 1.15.9.69109 (Era).
 --
--- Keyed by the raw client name: SpokenZones:NormaliseAreaKey reduces a name to
+-- Keyed by the raw client name: SpokenPlaces:NormaliseAreaKey reduces a name to
 -- [a-z0-9 ], which erases a Cyrillic or Chinese name entirely.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
-if not SpokenZones:ShouldLoadAliases("zhTW") then
+if not SpokenPlaces:ShouldLoadAliases("zhTW") then
 	return
 end
 
@@ -884,4 +884,4 @@ local aliases = {
 	["龍翼小徑"] = "terror wing path",
 }
 
-SpokenZones:RegisterAliases("zhTW", aliases)
+SpokenPlaces:RegisterAliases("zhTW", aliases)

@@ -425,7 +425,7 @@ NPCs:SetupStories()
 local storySource = Spoken:GetSource("bosses")
 Expect("the bosses' stories are a part of Spoken's, as words with no voice", storySource ~= nil and storySource.textOnly, true)
 _G.SpokenBossStories[36]["edwin vancleef"] = "He led the Brotherhood."
-_G.SpokenBossCreatures = { [36] = { ["edwin vancleef"] = { creature = 639, display = 1305, spells = {} } } }
+_G.SpokenBossCreatures = creatures
 local clip = NPCs:StoryClip(36, "edwin vancleef")
 Expect("a boss's story is a line with no recording", clip.path, nil)
 Expect("...headed by its dungeon, named for the boss", clip.present.header .. "|" .. clip.present.label, "Deadmines|Edwin VanCleef")
@@ -514,6 +514,60 @@ for _, queued in ipairs(Q.sounds) do keys[#keys + 1] = queued.key end
 Expect("...and an encounter of two bosses shows both stories", table.concat(keys, "|"),
     "boss:" .. sunkenMap .. ":weaver|boss:" .. sunkenMap .. ":dreamscythe")
 Clear()
+
+-- A boss whose fight may start no encounter is met when targeted, whichever trigger shows stories.
+local function Listed(map, key)
+    for _, boss in ipairs(SpokenBosses.maps[map] or {}) do
+        if boss.key == key then return boss end
+    end
+end
+Expect("Ribbly Screwspigot and Plugger Spazzring are listed in Blackrock Depths",
+    tostring(Listed(230, "ribbly screwspigot") ~= nil) .. "|" .. tostring(Listed(230, "plugger spazzring") ~= nil), "true|true")
+Expect("Baron Aquanis, the world bosses, Ribbly and Plugger are met on target; Edwin VanCleef is not",
+    tostring(Listed(48, "baron aquanis").onTarget) .. "|" .. tostring(Listed(2789, "lord kazzak").onTarget) .. "|"
+        .. tostring(Listed(2832, "ysondre").onTarget) .. "|" .. tostring(Listed(230, "ribbly screwspigot").onTarget) .. "|"
+        .. tostring(Listed(36, "edwin vancleef").onTarget),
+    "true|true|true|true|nil")
+SpokenNPCsCharacter.found = {}
+world.npcGUID = "Creature-0-1-2-3-639-0000ABCDEF"
+NPCs:TargetChanged()
+Expect("targeting a boss whose fight starts an encounter does not meet it", NPCs:IsBossFound(36, "edwin vancleef"), false)
+_G.GetInstanceInfo = function() return "Blackrock Depths", "party", 1, "", 5, 0, false, 230 end
+_G.UnitName = function() return "Ribbly Screwspigot" end
+world.npcGUID = "Creature-0-1-2-3-9543-0000ABCDEF"
+NPCs:TargetChanged()
+Expect("targeting Ribbly Screwspigot meets him, with When Killed on", NPCs:IsBossFound(230, "ribbly screwspigot"), true)
+Expect("...and shows no story", Showing(), "nothing")
 SpokenNPCsSettings.storyTrigger = "target"
+_G.UnitName = function() return "Plugger Spazzring" end
+world.npcGUID = "Creature-0-1-2-3-9499-0000ABCDEF"
+world.npcFriendly = true
+NPCs:TargetChanged()
+Expect("Plugger Spazzring selling ale is not met", NPCs:IsBossFound(230, "plugger spazzring"), false)
+world.npcFriendly = false
+NPCs:TargetChanged()
+Expect("...and is once he can be fought, with Targeting on", NPCs:IsBossFound(230, "plugger spazzring"), true)
+Clear()
+_G.GetInstanceInfo, _G.UnitName = instanceInfo, unitName
+-- Another creature of a fight of several shows the fight's story, in that fight's map only.
+_G.SpokenBossStories[469] = { nefarian = "He schemes beneath the mountain." }
+_G.UnitName = function() return "Lord Victor Nefarius" end
+world.npcGUID = "Creature-0-1-2-3-10162-0000ABCDEF"
+_G.GetInstanceInfo = function() return "Blackrock Spire", "party", 1, "", 5, 0, false, 229 end
+NPCs:TargetChanged()
+Expect("Lord Victor Nefarius in Blackrock Spire shows nothing", Showing(), "nothing")
+_G.GetInstanceInfo = function() return "Blackwing Lair", "raid", 9, "", 40, 0, false, 469 end
+NPCs:TargetChanged()
+Expect("...and in Blackwing Lair shows Nefarian's story", Showing(), "boss:469:nefarian")
+Expect("...without meeting Nefarian", NPCs:IsBossFound(469, "nefarian"), false)
+Clear()
+_G.UnitName = unitName
+_G.GetInstanceInfo = function() return "Eastern Kingdoms", "none", 0, "", 0, 0, false, 0 end
+world.npcGUID = "Creature-0-1-2-3-12397-0000ABCDEF"
+NPCs:TargetChanged()
+Clear()
+_G.GetInstanceInfo = instanceInfo
+Expect("a world boss is met when targeted in the open world, as at its pull", tostring(NPCs:IsBossFound(2789, "lord kazzak")) .. "|"
+    .. tostring(NPCs:FoundEncounter(Listed(2789, "lord kazzak").ids[1])), "true|false")
 
 if Failures() > 0 then os.exit(1) end

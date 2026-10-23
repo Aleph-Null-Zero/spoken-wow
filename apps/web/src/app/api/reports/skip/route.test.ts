@@ -27,7 +27,7 @@ function post(ids: unknown): Request {
   });
 }
 
-async function file(source: "quests" | "zones", lang: string, status = "open"): Promise<number> {
+async function file(source: "quests" | "places", lang: string, status = "open"): Promise<number> {
   await createReport({
     source,
     lang: lang as "enUS",
@@ -85,7 +85,7 @@ describe("/api/reports/skip", () => {
 
   it("resets one section and leaves the others", async () => {
     const quest = await file("quests", "enUS");
-    const zone = await file("zones", "enUS");
+    const zone = await file("places", "enUS");
     authorise.mockResolvedValueOnce(allowed());
     await POST(post([quest, zone]));
 

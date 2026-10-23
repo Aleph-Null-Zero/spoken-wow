@@ -50,9 +50,9 @@ export default async function Page({
   searchParams: Promise<{ status?: string; client?: string; stage?: string; q?: string; filter?: string }>;
 }) {
   const lang = await pageLang(params);
-  // Only quests and books have text a contribution can disagree with word for word.
+  // Only quests and readables have text a contribution can disagree with word for word.
   const source = (await params).source;
-  if (source !== "quests" && source !== "books") notFound();
+  if (source !== "quests" && source !== "readables") notFound();
   const session = await auth.api.getSession({ headers: await headers() });
   const viewer = await viewerOf(session);
   if (!session || !can(viewer, "edit", lang)) notFound();
@@ -93,7 +93,7 @@ export default async function Page({
         wordings,
         closest: state.closest,
         quest: quest === "gossip" ? null : quest,
-        title: source === "books" ? bookTitleOf(row.meta) : null,
+        title: source === "readables" ? bookTitleOf(row.meta) : null,
         client: clientOf(row.build),
         locale: row.locale,
         count: row.count,
@@ -111,7 +111,7 @@ export default async function Page({
       <Contained>
         <h1 className="text-xl font-semibold">Contributions</h1>
         <p className="text-muted-foreground mt-1 mb-5 text-sm">
-          {source === "books"
+          {source === "readables"
             ? "Pages the corpus already has in this language, sent back with different words -- usually the game showing a page differently from the extract. Accept a correction to save the player's words as the page's new version; reject one that is wrong."
             : "Lines the corpus already has, sent back with different text -- usually the game rewording a quest since the corpus was extracted. Accept a correction to make the player's text what the line speaks; reject one that is wrong."}
         </p>

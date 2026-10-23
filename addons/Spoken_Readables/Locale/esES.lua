@@ -1,11 +1,11 @@
-local _, SpokenBooks = ...
+local _, SpokenReadables = ...
 
 -- Spanish interface strings for Spoken Readables.
 -- Covers both esES and esMX: nothing in these strings varies by region.
 --
 -- Keyed exactly as in Locale/enUS.lua; anything missing falls back to English.
 
-local L = SpokenBooks.L
+local L = SpokenReadables.L
 
 if GetLocale() ~= "esES" and GetLocale() ~= "esMX" then
 	return

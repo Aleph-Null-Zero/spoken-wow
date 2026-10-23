@@ -154,7 +154,7 @@ Expect("...and stores that", db.Audio.GossipFrequency, VO.Enums.GossipFrequency.
 Expect("...with the ticked entry moved", stub.OpenDropdown(greetings)[4].checked, true)
 
 ---------------------------------------------------------------- the gather switch stays in the player's settings
--- The switch is the player's alone: quests and books both feed the one store, so a
+-- The switch is the player's alone: quests and readables both feed the one store, so a
 -- mirror here could only ever repeat it -- a player cannot have quests off and pages on.
 local gather
 for _, child in ipairs(SettingsPanel.panel.content.children) do
@@ -216,7 +216,7 @@ Expect("...and the player's settings with it", _G.SpokenEnv.Addon.db:GetCurrentP
 _G.SpokenEnv.Options:SetProfile("Default")
 
 ---------------------------------------------------------------- the language choices
--- On the panel, as in SpokenBooks, rather than only in the /spq window; Auto is named with
+-- On the panel, as in SpokenReadables, rather than only in the /spq window; Auto is named with
 -- the language it follows, the same way all three addons name it.
 -- The voice language is chosen once, on Spoken's page, for every module; this page has none.
 local function Dropdown(content, label)

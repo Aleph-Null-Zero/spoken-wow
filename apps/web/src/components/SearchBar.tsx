@@ -230,7 +230,7 @@ const SearchBar = forwardRef<HTMLInputElement, Props>(function SearchBar(
             ignored only
           </Label>
         </div>
-        {/* Triagers only, as in the zones and books bars: the count on a row is public, but
+        {/* Triagers only, as in the places and readables bars: the count on a row is public, but
             a list of what people have complained about is a worklist. */}
         {canTriage && (
           <div className="flex items-center gap-2 whitespace-nowrap">

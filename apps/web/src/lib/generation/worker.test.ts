@@ -309,12 +309,12 @@ describe("startWorker", () => {
   });
 
   /**
-   * The dispatch, which is what the source column is for. Handing a zones job to the quests
+   * The dispatch, which is what the source column is for. Handing a places job to the quests
    * generator would ask that corpus for a line id it has never heard of, and it would
    * answer "no line" once per job for the length of the batch.
    */
   it("sends a job to the generator for its own section", async () => {
-    const batch = await seed(2, "zones");
+    const batch = await seed(2, "places");
     const seen: string[] = [];
 
     const worker = startWorker(() => true, {
@@ -325,8 +325,8 @@ describe("startWorker", () => {
           seen.push(`quests:${lineId}`);
           return OK;
         },
-        zones: async (lineId) => {
-          seen.push(`zones:${lineId}`);
+        places: async (lineId) => {
+          seen.push(`places:${lineId}`);
           return OK;
         },
       },
@@ -336,7 +336,7 @@ describe("startWorker", () => {
     await worker.stop();
 
     expect(seen).toHaveLength(2);
-    expect(seen.every((entry) => entry.startsWith("zones:"))).toBe(true);
+    expect(seen.every((entry) => entry.startsWith("places:"))).toBe(true);
   });
 
   it("keeps going after a failure that is not fatal", async () => {

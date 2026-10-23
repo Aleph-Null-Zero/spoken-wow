@@ -128,7 +128,7 @@ esac; }
 #
 # The packs were VoiceOverReduxHQAudio* until the rename and moved with it. A pack's folder can
 # be renamed because nothing stores a path built from it: DataModules composes one from the
-# folder the client reports at play time, and the zones packs read their own name out of the
+# folder the client reports at play time, and the places packs read their own name out of the
 # loader. The cost is that every player re-downloads the pack, which the next release makes them
 # do regardless.
 target_zip_name() { case "$1" in
@@ -184,7 +184,7 @@ esac; }
 # being approved, above all - is truest after they have just been uploaded. It costs nothing to
 # order it this way and it removes a class of first-release surprise.
 ALL_TARGETS="spoken audio-alliance audio-horde audio-shared audio-gossip audio-all"
-# Accepted by name, never in a bare run: it depends on the zones and books projects too, which
+# Accepted by name, never in a bare run: it depends on the places and readables projects too, which
 # this script does not release, and its version moves on its own schedule.
 EXTRA_TARGETS="spoken-all"
 
@@ -205,7 +205,7 @@ done
 
 # A language has no addon project of its own -- spoken and audio-all are each
 # one project for every language -- so --lang refuses anything but the four packs, the same way
-# books' and zones' release.sh do, and the language's meta addon, spoken-all, which is.
+# readables' and places' release.sh do, and the language's meta addon, spoken-all, which is.
 if ! english; then
   # Checked once, before the per-target validation below: an unregistered language has no
   # pack pages at all, and letting each of the four audio-* targets discover that separately

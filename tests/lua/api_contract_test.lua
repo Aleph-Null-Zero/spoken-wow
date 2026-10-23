@@ -47,7 +47,7 @@ local METHODS = {
     -- frame, settings
     "GetPlayerFrame", "GetSettingsCategory", "OpenSettings", "RefreshPlayer",
     "GetPlayerStyle", "SetPlayerHost", "AddDialogueUISettings",
-    -- Azeroth's Compendium's Text Size, which Zones, Books and Quests draw their words at
+    -- Azeroth's Compendium's Text Size, which Places, Readables and Quests draw their words at
     "CompendiumFontSize", "SetCompendiumFontSize",
     -- captions
     "GetCaption", "GetCaptionOptions", "SplitCaption", "CaptionWords",
