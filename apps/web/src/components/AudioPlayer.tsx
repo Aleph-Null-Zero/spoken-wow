@@ -29,7 +29,7 @@ import { Contained } from "./Width";
  * and the bar at 0:00 with no explanation.
  *
  * WHAT IT DOES NOT KNOW. Not what a line is, not how its URL is built, not which section it
- * belongs to. Quests names files by NPC and event, zones by map id and slug, and zones adds a
+ * belongs to. Quests names files by NPC and event, places by map id and slug, and places adds a
  * language the path itself does not carry -- so each section keeps a small adapter that turns
  * its own line into these props. That seam is the whole reason this is one component: the two
  * were the same 200 lines written twice, and they had already drifted to different playback
@@ -38,7 +38,7 @@ import { Contained } from "./Width";
 const RATES = [0.75, 1, 1.25, 1.5, 2];
 
 // The volume outlives the page: every explorer mounts its own element, and a level set on
-// quests should still be the level on zones. Storage can be absent or throw (private windows,
+// quests should still be the level on places. Storage can be absent or throw (private windows,
 // blocked site data), in which case the element's own default of full volume stands.
 const VOLUME_KEY = "spoken:volume";
 
@@ -74,7 +74,7 @@ type Props = {
   /**
    * A duration known before the file loads, in seconds.
    *
-   * Zones records it on the take, so the total can be shown immediately rather than after
+   * Places records it on the take, so the total can be shown immediately rather than after
    * the first byte arrives. Quests does not, and passes nothing.
    */
   totalHint?: number;

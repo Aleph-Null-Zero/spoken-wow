@@ -1,5 +1,6 @@
 """Forever's client data in the Compendium's export (export_compendium.py): Efficient Games'
-quests.enUS.json and npcs.json, read after the DB, adding to it and changing nothing it has."""
+quests.enUS.json and npcs.json, read after the DB, adding to it, its zone and race limit winning
+over the DB's."""
 import json
 import sys
 from pathlib import Path
@@ -39,9 +40,18 @@ def _place(sort=0, eg=None, seen=(), givers=()):
     return zones, group, source
 
 
-def test_the_dbs_place_stands_whatever_the_client_says():
-    assert _place(12, {"zoneAreaId": 15912}) == ([1429], None, "db")
+def test_the_clients_zone_wins_over_the_dbs_other_zone():
+    # 545 Dalaran Patrols: the DB files it in Hillsbrad Foothills, Forever's quest log in Alterac
+    # Mountains.
+    assert _place(12, {"zoneAreaId": 15912}) == ([2521], None, "client")
+    assert _place(12, {"zoneAreaId": 12}) == ([1429], None, "db")
+
+
+def test_the_dbs_sort_or_battleground_stands_whatever_the_clients_zone():
     assert _place(-141, {"zoneAreaId": 15912}) == ([], 141, "db")
+    assert _place(2839, {"zoneAreaId": 36}) == ([1459], None, "db")
+    assert _place(36, {"zoneAreaId": 2839}) == ([1416], None, "db")
+    assert _place(12, {"zoneAreaId": 16611}) == ([1429], None, "db")
 
 
 def test_a_quest_the_db_does_not_place_takes_the_clients_zone_or_sort():
@@ -202,3 +212,18 @@ def test_a_served_quest_the_corpus_lacks_is_listed_without_words():
     assert records[96261]["prev"] == 96259
     assert quest_line(96261, "The Broodmother", [1412], prev=96259, notext=True) == \
         '\t\t[96261] = { "The Broodmother", zones = { 1412 }, prev = 96259, notext = true },'
+
+
+class DungeonMaps(FakeMaps):
+    """Area 16544 is in the City of Dalaran (map 2959), whose entrance is in Alterac Mountains."""
+
+    def dungeon_of_area(self, area, dungeons):
+        return 2959 if area == 16544 and 2959 in dungeons else None
+
+
+def test_a_served_quest_of_a_dungeon_is_filed_under_it_as_the_corpuss_are():
+    # 96987 Opportunistic Education, beside 96986 and 96988 in the City of Dalaran.
+    client = {96987: {"title": "Opportunistic Education", "zoneAreaId": 16544}}
+    records = without_text({}, {96987}, client, {}, DungeonMaps(), {}, dungeons={2959: {}})
+    assert records[96987]["dungeon"] == 2959
+    assert records[96987]["zones"] == [export_compendium.INSTANCE_ZONE[2959]]

@@ -19,13 +19,13 @@ import LineHeading from "@/components/reports/LineHeading";
 import QuestsPlayer from "@/components/Player";
 import TakeSelector from "@/components/TakeSelector";
 import { lineTextSubject, TranslateDialog } from "@/components/TranslateDialog";
-import { PageTextDialog } from "@/components/books/PageTextDialog";
-import { Player as BooksPlayer } from "@/components/books/Player";
+import { PageTextDialog } from "@/components/readables/PageTextDialog";
+import { Player as ReadablesPlayer } from "@/components/readables/Player";
 import { ReportContextNote } from "@/components/reports/ReportContextFacts";
 import { Button } from "@/components/ui/button";
-import { LoreDialog } from "@/components/zones/LoreDialog";
-import { Player as ZonesPlayer } from "@/components/zones/Player";
-import type { ResultLine as BookLine } from "@/lib/books/search";
+import { LoreDialog } from "@/components/places/LoreDialog";
+import { Player as PlacesPlayer } from "@/components/places/Player";
+import type { ResultLine as BookLine } from "@/lib/readables/search";
 import { isTypingTarget } from "@/lib/keyboard";
 import { BASE_LANG, withLang, type Lang } from "@/lib/lang";
 import { explorerHref } from "@/lib/links";
@@ -36,7 +36,7 @@ import type { ReportGroup } from "@/lib/reports/rows";
 import type { ResultLine as QuestLine } from "@/lib/search";
 import type { Source } from "@/lib/sections";
 import { cn, endsSelection } from "@/lib/utils";
-import type { ResultLine as ZoneLine } from "@/lib/zones/search";
+import type { ResultLine as ZoneLine } from "@/lib/places/search";
 
 /** Enough to read a typical complaint whole without pushing the actions off a phone screen. */
 const PREVIEW = 3;
@@ -477,8 +477,8 @@ function SourcePlayer({
   audio: React.RefObject<HTMLAudioElement | null>;
 }) {
   if (source === "quests") return <QuestsPlayer ref={audio} line={line as QuestLine | null} version={version} />;
-  if (source === "zones") return <ZonesPlayer audioRef={audio} line={line as ZoneLine | null} version={version} />;
-  return <BooksPlayer audioRef={audio} line={line as BookLine | null} version={version} />;
+  if (source === "places") return <PlacesPlayer audioRef={audio} line={line as ZoneLine | null} version={version} />;
+  return <ReadablesPlayer audioRef={audio} line={line as BookLine | null} version={version} />;
 }
 
 /** Each section's own editor: English quest text is an override, other quest text a translation. */
@@ -495,8 +495,8 @@ function EditDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  if (source === "zones") return <LoreDialog line={line as ZoneLine} onClose={onClose} onSaved={onSaved} />;
-  if (source === "books") return <PageTextDialog line={line as BookLine} onClose={onClose} onSaved={onSaved} />;
+  if (source === "places") return <LoreDialog line={line as ZoneLine} onClose={onClose} onSaved={onSaved} />;
+  if (source === "readables") return <PageTextDialog line={line as BookLine} onClose={onClose} onSaved={onSaved} />;
   if (lang !== BASE_LANG) {
     return <TranslateDialog subject={lineTextSubject(line as QuestLine)} onClose={onClose} onSaved={onSaved} />;
   }

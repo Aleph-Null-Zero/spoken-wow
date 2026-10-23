@@ -4,7 +4,7 @@ Screenshots of World of Warcraft, (c) Blizzard Entertainment, each chosen by han
 the warcraft.wiki.gg files linked below, the rest from where their row says. Each was cleaned
 up and sharpened with Gemini 3.1 Flash Image (the same scene, lighting and colours;
 compression artifacts and interface removed), then cropped, tinted and edged by
-`pipelines/zones/tools/pictures/prepare.py`. Each wiki file's page gives its uploader and
+`pipelines/places/tools/pictures/prepare.py`. Each wiki file's page gives its uploader and
 terms.
 
 | Picture | Place | Source file |
@@ -834,3 +834,4 @@ terms.
 | zone-2524 | Darkspear Islands | unknown, added by hand |
 | zone-2548 | Riverglades | unknown, added by hand |
 | zone-2652 | Shen'dralas | unknown, added by hand |
+| zone-947 | Azeroth | [Azeroth from Space.jpg](https://warcraft.wiki.gg/wiki/File:Azeroth_from_Space.jpg) |

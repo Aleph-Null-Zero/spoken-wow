@@ -25,8 +25,8 @@ import {
   type QueueJob,
 } from "./queue";
 import { regenerateLine, type RegenerateResult } from "./regenerate";
-import { regenerateBookLine } from "@/lib/books/regenerate";
-import { regenerateZoneLine } from "@/lib/zones/regenerate";
+import { regenerateBookLine } from "@/lib/readables/regenerate";
+import { regenerateZoneLine } from "@/lib/places/regenerate";
 import { generationStatus } from "./status";
 import type { Lang } from "@/lib/lang";
 import type { Source } from "@/lib/sections";
@@ -165,11 +165,11 @@ export function startWorker(isLeader: () => boolean, options: WorkerOptions = {}
   // rather than a state to handle - it fails as one, loudly, rather than being handed to
   // the quests generator and asked for a line id that corpus has never heard of. The
   // Record is total on purpose: adding a source to the type and forgetting it here is a
-  // type error, which is how books arrived without a silent gap.
+  // type error, which is how readables arrived without a silent gap.
   const generators: Record<Source, Generator | null> = {
     quests: options.regenerate?.quests ?? regenerateLine,
-    zones: options.regenerate?.zones ?? regenerateZoneLine,
-    books: options.regenerate?.books ?? regenerateBookLine,
+    places: options.regenerate?.places ?? regenerateZoneLine,
+    readables: options.regenerate?.readables ?? regenerateBookLine,
   };
 
   const budget = options.budget ?? currentBudget;

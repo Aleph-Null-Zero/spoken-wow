@@ -7,6 +7,38 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **Immersion turns its pages with the voice.** While Spoken Quests reads a quest or gossip page in Immersion's
   talk box, the text shows the part being read and Immersion's own timer waits. When the line ends or is stopped,
   Immersion goes on as before. *([Aleph-Null-Zero](https://github.com/Aleph-Null-Zero))*
+- **Bosses whose fight the game may not announce are found when you target them.** Baron Aquanis, Lord
+  Kazzak, Azuregos, Prince Thunderaan and the four Emerald Dragons could stay locked after you fought them.
+  Ribbly Screwspigot and Plugger Spazzring are listed in Blackrock Depths again. Blackfathom Deeps and
+  Gnomeregan list their bosses in Forever's order, not the Season of Discovery raid's, and targeting any creature of a fight of several,
+  such as Stalagg or one of the Four Horsemen, shows the fight's story. *([Nucabe](https://github.com/Nucabe))*
+- **The Compendium's quest list follows live Forever more closely.** Skyborne and other races
+  see the class quests Forever gives them, and human priests no longer see Desperate Prayer.
+  Quests whose only givers are one side's are listed for that side alone, three quests moved to
+  the zone Forever's quest log uses, Westfall's Toxic Soil quests and 30 follow-ups are linked into
+  their chains, and Dark Sacrifice has its new name. *([Nucabe](https://github.com/Nucabe))*
+- **The Places tab sorts names without a leading "The".** The Barrens is listed under B and
+  The Crossroads under C, among the zones, areas and dungeons, as you would look for them. The
+  names still read in full. *([rusty-key](https://github.com/rusty-key))*
+- **Readables in the Compendium are filed where Forever has them.** Archmage Khadgar's plaque is
+  under Alterac Mountains as well as Stormwind, Holidays and Events has a line for each event, the
+  Green Hills of Stranglethorn cover is under Stranglethorn Vale, and Hildelve's Journal and
+  Rabine's Letter are no longer under Loch Modan and Silithus. *([Nucabe](https://github.com/Nucabe))*
+- **A quest's page writes your class and race in lower case mid-sentence**, as the quest window does:
+  "young hunter", not "young Hunter". German keeps the capital. *([Nucabe](https://github.com/Nucabe))*
+- **Gossip finds its line on Chinese, Korean and French clients.** A reworded line now matches in
+  Chinese and Korean, and French text with a curly apostrophe or a no-break space matches the line it is,
+  where before it played nothing. On a client in another language than English, an NPC with several
+  lines and none in that language no longer reads one of its English lines at random: it reads nothing
+  and offers Contribute. *([Nucabe](https://github.com/Nucabe))*
+- **Readables that name you are recognised.** The class letters every new character gets, and other
+  letters that greet you by name, class or as brother or sister, now count as found, and the Compendium
+  shows them with your name in them. A page sent from the Contribute button no longer carries your
+  character's name. *([Nucabe](https://github.com/Nucabe))*
+- **117 more quest givers and enders show their own face.** Seven creatures, such as Malfurion Stormrage,
+  no longer ship an appearance the game cannot draw. *([Nucabe](https://github.com/Nucabe))*
+- **The Ruins of Lordaeron dungeon is listed in Tirisfal Glades**, where its entrance is, and its card
+  is Tirisfal's Ruins of Lordaeron. It was listed in the Undercity. *([Nucabe](https://github.com/Nucabe))*
 - **Highlight Words is on by default, and Type Words Out and Show Progress Bar are off.** The words of a
   line show whole and the word being read is lit. *([Nucabe](https://github.com/Nucabe))*
 - **The AddOns list says what each part reads.** Hovering Spoken now says it reads quests, gossip,
@@ -30,8 +62,6 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **A boss's story shows in the narrator when you target the boss.** It shows once per character, as words
   with no voice. On the Bosses settings page, Show a Boss's Story picks targeting or killing it, and Forget
   Stories Shown shows each again. *([Nucabe](https://github.com/Nucabe))*
-- **Found books, quests and areas are listed in gold in the Compendium**, as the groups above them are.
-  They were white, close to the grey of what is not found yet. *([Nucabe](https://github.com/Nucabe))*
 - **Quest givers show their own face.** The quest portraits in the Compendium and the narrator's quest-giver
   face are drawn from appearances that ship with Spoken, so a creature the client has not met yet no longer
   shows your own face or another creature's. *([Nucabe](https://github.com/Nucabe))*
@@ -43,6 +73,10 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - **The AddOns list shows Spoken and each module's name in colour, with new icons.** Spoken, Quests,
   Places, Readables, Contributions and Developer each have a new icon, the voice packs show Spoken in
   colour too, and the minimap button shows the mark at its size, centred. *([Nucabe](https://github.com/Nucabe))*
+- **Entering a dungeon or raid reads its story**, once per character, and counts it in the
+  Places tab as found. The Ruins of Lordaeron, the Deadmines, Ragefire Chasm and five more could
+  never be found before. Azeroth's story is back on the world map, and the Places tab lists Azeroth
+  above the continents. *([Nucabe](https://github.com/Nucabe))*
 - **The Spoken Manager can send the lines Spoken collects for you.** Turn on Sharing in the
   manager, and the lines Spoken had no voice for go to the site after each logout or /reload,
   so you no longer upload the file yourself. Collected lines now also say which version of your
@@ -193,6 +227,9 @@ Spoken Player until 3.0.0, when it became Spoken and took its modules into one d
 - Names and tooltips were read again in every language: a part or control has one name wherever it appears,
   tooltips that still described old behaviour say what the control does now, and the voice packs are called
   voice packs in chat and in the missing-pack messages. *([Nucabe](https://github.com/Nucabe))*
+- Seven settings rows no longer carry a line of description under the name: Text Language, Include
+  Places Found Before, Keep Reading in Background, Collect Missing Lines, Original Thrall Speech, Mark
+  Words in DialogueUI and NPC Voice Before Reading. *([anon1231823](https://github.com/anon1231823))*
 
 ### Battlegrounds
 

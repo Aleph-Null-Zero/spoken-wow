@@ -18,8 +18,8 @@ developers and is not in the zip.
 |---|---|---|---|
 | `Spoken` | **Spoken** | nothing itself: it plays every module's lines | — |
 | `Spoken_Quests` | **Spoken Quests** | quest dialogue and NPC gossip | [All](https://www.curseforge.com/wow/addons/spoken-quests-audio-all), or [Alliance](https://www.curseforge.com/wow/addons/spoken-audio-quests-alliance) · [Horde](https://www.curseforge.com/wow/addons/spoken-audio-quests-horde) · [Shared](https://www.curseforge.com/wow/addons/spoken-audio-quests-shared) · [Gossip](https://www.curseforge.com/wow/addons/spoken-audio-gossip) — or all in one from [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=quests-audio) |
-| `Spoken_Readables` | **Spoken Readables** | books, letters and other in-world texts | [CurseForge](https://www.curseforge.com/wow/addons/spoken-audio-readables) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=books-audio) |
-| `Spoken_Places` | **Spoken Places** | zone and subzone lore | [CurseForge](https://www.curseforge.com/wow/addons/spoken-audio-places) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=zones-audio) |
+| `Spoken_Readables` | **Spoken Readables** | books, letters and other in-world texts | [CurseForge](https://www.curseforge.com/wow/addons/spoken-audio-readables) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=readables-audio) |
+| `Spoken_Places` | **Spoken Places** | zone and subzone lore | [CurseForge](https://www.curseforge.com/wow/addons/spoken-audio-places) · [GitHub](https://github.com/rusty-key/spoken-wow/releases?q=places-audio) |
 
 `make package-spoken` builds the download, `Spoken-<version>.zip`, with every module built by
 its own packager. A module's voice pack holds its recordings; the module has nothing to play
@@ -123,8 +123,8 @@ docs/        each section's own prose
 ```
 make web-<target>       # see make/web.mk   -- the site and its droplet
 make quests-<target>    # see make/quests.mk
-make zones-<target>     # see make/zones.mk
-make books-<target>     # see make/books.mk
+make places-<target>     # see make/places.mk
+make readables-<target>     # see make/readables.mk
 make test-player        # the Lua harness, all addons
 make lint               # the repo-wide checks
 ```
@@ -132,6 +132,14 @@ make lint               # the repo-wide checks
 `THIRD_PARTY.md` says what in here is not this project's, and under what terms: the
 vendored libraries, the game text the corpus is built from, and the wiki lore and
 pictures the Places addon ships.
+
+## Credits
+
+Most of Forever's text that the world database lacks comes from players, through `/contribute`.
+The text of a few Forever quests that nobody has sent yet, some BroadcastText rows, and the quest
+data behind the Compendium come from Efficient Games (https://efficient.games), published as
+[EG Link output](https://github.com/JIVESCORP/eg-link-output-wowf) under CC BY 4.0. The text
+itself is Blizzard's. `THIRD_PARTY.md` lists the rest.
 
 Read `AGENTS.md` before changing anything, and the section READMEs under `docs/`
 for what each section does. They are detailed, and they are the reference to check

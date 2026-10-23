@@ -149,11 +149,11 @@ describe("createContribution", () => {
 
   it("lists one section's rows when asked for one", async () => {
     await createContribution(submission());
-    await createContribution(submission({ source: "books", dedup: `${dedup}-two` }));
-    const sources = async (source?: "quests" | "books") =>
+    await createContribution(submission({ source: "readables", dedup: `${dedup}-two` }));
+    const sources = async (source?: "quests" | "readables") =>
       ours(await listContributions("new", undefined, undefined, source)).map((row) => row.source);
-    expect((await sources()).sort()).toEqual(["books", "quests"]);
-    expect(await sources("books")).toEqual(["books"]);
+    expect((await sources()).sort()).toEqual(["quests", "readables"]);
+    expect(await sources("readables")).toEqual(["readables"]);
   });
 
   it("keeps different text for the same key as its own row", async () => {

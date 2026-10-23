@@ -2,7 +2,7 @@
 # Replace this machine's copy of one section's data with production's.
 #
 #   scripts/db/sync-section.sh <source> <corpus table>...
-#   scripts/db/sync-section.sh zones lore_line
+#   scripts/db/sync-section.sh places lore_line
 #
 # Production is upstream for everything the site writes -- corpus edits and takes -- so
 # data only ever flows droplet -> here. This is the one recipe for all three sections: the
@@ -110,7 +110,7 @@ SQL
   done
   # Take ids are one sequence across all three sections, so another section's local row can
   # hold an id production has since given to one of these -- a quests take here sitting on
-  # production's books take 10049 failed the whole sync on the primary key. Such a row is not
+  # production's readables take 10049 failed the whole sync on the primary key. Such a row is not
   # production's anyway: that section's own sync replaces every row it has. So it goes, and
   # the count says which section to sync next. A warning, not a notice: the dump sets
   # client_min_messages to warning, and a notice would never be seen.

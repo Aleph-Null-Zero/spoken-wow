@@ -76,8 +76,8 @@ describe("reportSubmission", () => {
     expect(typeof reportSubmission(await report(null))).toBe("string");
   });
 
-  it("refuses a zones report, whose addon has no text to send", async () => {
-    expect(typeof reportSubmission({ ...(await report("Hello.")), source: "zones" })).toBe("string");
+  it("refuses a places report, whose addon has no text to send", async () => {
+    expect(typeof reportSubmission({ ...(await report("Hello.")), source: "places" })).toBe("string");
   });
 
   it("keys the text on the quest and moment the addon named", async () => {

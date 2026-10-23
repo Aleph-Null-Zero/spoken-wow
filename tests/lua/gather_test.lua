@@ -1,5 +1,5 @@
 -- Contributing in the background: the store, the first-click choice, and what the quests and
--- books addons keep while the player simply plays. Run with `make test-player`.
+-- readables addons keep while the player simply plays. Run with `make test-player`.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")
@@ -8,7 +8,7 @@ local print = stub.print
 local world = stub.world
 local SPOKEN = here .. "/../../addons/Spoken/"
 local QUESTS = here .. "/../../addons/Spoken_Quests/"
-local BOOKS = here .. "/../../addons/Spoken_Readables/"
+local READABLES = here .. "/../../addons/Spoken_Readables/"
 local Expect, Failures = H.Expecter(print)
 
 stub.SetClient("16001")
@@ -148,27 +148,27 @@ Expect("...and says how to send the file",
     box.body:GetText():match("SavedVariables\\SpokenContributions%.lua") ~= nil, true)
 Expect("...counting what is kept", box.body:GetText():match("1 line") ~= nil, true)
 
-------------------------------------------------------------------------------- books
-local SpokenBooks = {}
+--------------------------------------------------------------------------- readables
+local SpokenReadables = {}
 for _, file in ipairs({ "Locale/enUS", "Checksum", "Core", "Language", "Reader", "Audio", "Contribute" }) do
-    assert(loadfile(BOOKS .. file .. ".lua"))("Spoken_Readables", SpokenBooks)
+    assert(loadfile(READABLES .. file .. ".lua"))("Spoken_Readables", SpokenReadables)
 end
-SpokenBooks:InitDB()
-dofile(BOOKS .. "Data/Books.lua")
+SpokenReadables:InitDB()
+dofile(READABLES .. "Data/Books.lua")
 
 Gather:Clear()
 local UNKNOWN = "A page no corpus has ever held.\n\nWritten for this test alone."
 stub.ShowPage({ title = "Ledger of Nothing", number = 2, text = UNKNOWN })
-Expect("an unknown page is gathered", SpokenBooks:GatherContribution(), true)
-Expect("...keyed on its checksum", _G.SpokenContributionsDB.Lines[1].key, "b:" .. SpokenBooks:ChecksumOf(UNKNOWN))
-SpokenBooks:GatherContribution()
+Expect("an unknown page is gathered", SpokenReadables:GatherContribution(), true)
+Expect("...keyed on its checksum", _G.SpokenContributionsDB.Lines[1].key, "b:" .. SpokenReadables:ChecksumOf(UNKNOWN))
+SpokenReadables:GatherContribution()
 Expect("...once", Gather:Count(), 1)
 
 stub.ShowPage({ title = "A letter", number = 1, text = "Private words.", creator = "Somebody" })
-Expect("mail is never gathered", SpokenBooks:GatherContribution(), false)
+Expect("mail is never gathered", SpokenReadables:GatherContribution(), false)
 
 Gather:SetEnabled(false)
 stub.ShowPage({ title = "Another", number = 1, text = "Another unknown page, for the switch." })
-Expect("nothing is gathered once the player opts out", SpokenBooks:GatherContribution(), false)
+Expect("nothing is gathered once the player opts out", SpokenReadables:GatherContribution(), false)
 
 os.exit(Failures() == 0 and 0 or 1)

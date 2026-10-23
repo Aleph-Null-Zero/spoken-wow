@@ -2,7 +2,7 @@
 --   SpokenBossStories[map][key] = "The words of its story."
 -- Written from the Adventure Guide's text and from warcraft.wiki.gg (CC BY-SA 4.0), rewritten in one
 -- voice and kept to Classic (THIRD_PARTY.md). A boss with no entry shows that its story is not written yet.
--- Built by pipelines/zones/tools/assemble-boss-stories.mjs and apply-boss-stories.mjs.
+-- Built by pipelines/places/tools/assemble-boss-stories.mjs and apply-boss-stories.mjs.
 
 SpokenBossStories = SpokenBossStories or {}
 for map, stories in pairs({

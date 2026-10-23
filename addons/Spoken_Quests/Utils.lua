@@ -161,7 +161,9 @@ function Utils:ColorizeText(text, color)
 end
 
 --- A line's text with the server's tokens filled in for the local player: name, race, class,
---- the $g branch for the player's sex, and $B as a line break.
+--- the $g branch for the player's sex, and $B as a line break. $c and $r are the class and race
+--- in lower case, as the client writes them ("young $c" is "young hunter"), save in German,
+--- whose nouns keep their capital.
 ---@param text string
 ---@return string
 function Utils:FillPlayerTokens(text)
@@ -169,6 +171,10 @@ function Utils:FillPlayerTokens(text)
     local class = UnitClass and UnitClass("player") or ""
     local race = UnitRace and UnitRace("player") or ""
     local female = UnitSex and UnitSex("player") == 3
+    local lowerCase = not (GetLocale and GetLocale() == "deDE")
+    local function Cased(word, token)
+        return (lowerCase and (token == "c" or token == "r")) and string.lower(word) or word
+    end
     -- $gmale:female; and $Gmale:female; - the export keeps Blizzard's spacing, "$GHe : She;".
     text = string.gsub(text, "%$[gG]([^:;]*):([^;]*);", function(male, femaleForm)
         return string.trim(female and femaleForm or male)
@@ -176,8 +182,8 @@ function Utils:FillPlayerTokens(text)
     -- Function replacements, so a % in a name is never read as a capture.
     text = string.gsub(text, "%$[bB]", "\n")
     text = string.gsub(text, "%$[nN]", function() return name end)
-    text = string.gsub(text, "%$[cC]", function() return class end)
-    text = string.gsub(text, "%$[rR]", function() return race end)
+    text = string.gsub(text, "%$([cC])", function(token) return Cased(class, token) end)
+    text = string.gsub(text, "%$([rR])", function(token) return Cased(race, token) end)
     return text
 end
 

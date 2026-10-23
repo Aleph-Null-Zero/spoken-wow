@@ -2,7 +2,7 @@
 -- stopping one file. Run with `make test-player`.
 --
 -- The audibility predicate is VoiceOverRedux's (it checks volumes, and Master bypasses the
--- per-channel toggles) with SpokenZones's player-facing reasons.
+-- per-channel toggles) with SpokenPlaces' player-facing reasons.
 local here = arg[0]:match("^(.*)/[^/]*$") or "."
 package.path = here .. "/?.lua;" .. package.path
 local stub = require("wow_client_stub")

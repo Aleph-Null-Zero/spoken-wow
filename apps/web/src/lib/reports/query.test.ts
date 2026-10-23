@@ -62,7 +62,7 @@ describe("reportsHref", () => {
 
   it("keeps the other filters and drops the page on a change", () => {
     const filtered = { ...current, q: "thrall", dir: "asc" as const };
-    expect(reportsHref(filtered, { section: "books" })).toBe("/reports/books?q=thrall&dir=asc");
+    expect(reportsHref(filtered, { section: "readables" })).toBe("/reports/readables?q=thrall&dir=asc");
     expect(reportsHref(filtered, {}, 3)).toBe("/reports/quests?q=thrall&dir=asc&page=3");
   });
 });

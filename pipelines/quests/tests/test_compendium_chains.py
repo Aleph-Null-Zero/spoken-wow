@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from export_compendium import chain_links, quest_line  # noqa: E402
+from export_compendium import chain_links, quest_line, quest_line_links  # noqa: E402
 
 
 def _row(prev=0, nxt=0, group=0, breadcrumb=0):
@@ -47,6 +47,39 @@ def test_a_loop_is_broken_so_the_chain_has_a_first_quest():
     assert len(links) == 2
     first = [q for q in (1, 2, 3) if q not in links]
     assert len(first) == 1
+
+
+def test_a_quest_offered_after_one_other_follows_it_where_nothing_else_links_it():
+    # 5 Jitters' Growling Gut, offered on handing in 163 Raven Hill (RewardNextQuest).
+    rows = {163: {**_row(), "reward": 5}, 5: _row()}
+    assert chain_links(rows, {5, 163}) == {5: 163}
+    # 97222 Gatehouse Goods keeps the client's link; the offer comes last.
+    rows = {97242: {**_row(), "reward": 97222}, 97222: _row()}
+    assert chain_links(rows, {97220, 97222, 97242}, {97220: 97222}) == {97222: 97220}
+
+
+def test_a_quest_offered_after_several_or_after_one_the_corpus_lacks_follows_none():
+    # 4490 Summon Felsteed, offered after 3631 and 4487-4489; 869 Raptor Thieves after 14066.
+    rows = {3631: {**_row(), "reward": 4490}, 4487: {**_row(), "reward": 4490}, 4490: _row(),
+            14066: {**_row(prev=905), "reward": 869}, 905: _row(), 869: _row()}
+    assert chain_links(rows, {3631, 4487, 4490, 905, 869}) == {}
+
+
+def _line(line, order, qid):
+    return {"QuestLineID": str(line), "OrderIndex": str(order), "QuestID": str(qid)}
+
+
+def test_a_client_quest_line_links_its_quests_by_their_order():
+    # Toxic Soil (QuestLine 6026), which neither the DB nor nextQuestId links.
+    lines = quest_line_links([_line(6026, 1, 92744), _line(6026, 0, 92742), _line(6026, 2, 92745)])
+    assert lines == {92744: 92742, 92745: 92744}
+    assert chain_links({}, {92742, 92744, 92745}, None, lines) == {92744: 92742, 92745: 92744}
+
+
+def test_a_quest_line_links_only_where_the_db_and_the_clients_next_quest_do_not():
+    rows = {1: _row(), 2: _row(prev=1), 3: _row(), 4: _row(), 5: _row()}
+    lines = quest_line_links([_line(7, 0, 3), _line(7, 1, 2), _line(7, 2, 4), _line(7, 3, 5)])
+    assert chain_links(rows, {1, 2, 3, 4, 5}, {1: 4}, lines) == {2: 1, 4: 1, 5: 4}
 
 
 def test_the_quest_line_names_the_one_before():

@@ -18,14 +18,14 @@ import path from "node:path";
 
 import { recordActivity } from "@/lib/activity/store";
 import { fileIndex } from "@/lib/audio";
-import { catalogue as booksCatalogue } from "@/lib/books/catalogue";
+import { catalogue as readablesCatalogue } from "@/lib/readables/catalogue";
 import { db, query } from "@/lib/db";
 import type { Lang } from "@/lib/lang";
 import type { Source } from "@/lib/sections";
 import { recordedDirOf } from "@/lib/takes/adapters";
 import { archiveName, writeAtomic } from "@/lib/takes/bytes";
 import type { TakeBytes } from "@/lib/takes/store";
-import { catalogue as zonesCatalogue } from "@/lib/zones/catalogue";
+import { catalogue as placesCatalogue } from "@/lib/places/catalogue";
 
 import { can } from "@/lib/permissions";
 import { currentSession } from "@/lib/session";
@@ -60,7 +60,7 @@ const COLUMNS = `"version", "format", "durationSec"::float8 as "durationSec", "b
  */
 export async function recordableFiles(source: Source, lang: Lang): Promise<Map<string, string>> {
   const corpus =
-    source === "quests" ? await fileIndex(lang) : source === "zones" ? await zonesCatalogue(lang) : await booksCatalogue(lang);
+    source === "quests" ? await fileIndex(lang) : source === "places" ? await placesCatalogue(lang) : await readablesCatalogue(lang);
   // Derived once per corpus rather than per request: each of those is memoised and handed back
   // as the same object until its table moves, and every upload, play and removal asks.
   let files = derived.get(corpus);

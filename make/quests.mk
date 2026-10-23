@@ -248,7 +248,7 @@ compendium-text: ## Re-export addons/Spoken_Quests/Data/QuestText.lua from the c
 # quest log's zone nor who may take a quest, so this reads the Forever repack's TrinityCore DB
 # (COMPENDIUM_MYSQL_*). ARGS=--no-db adds the corpus's new quests without it.
 
-compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL; ARGS=--no-db without it)
+compendium: ## Re-export addons/Spoken_Quests/Data/Compendium.lua (needs the repack's MySQL and its map files in COMPENDIUM_MAPS; ARGS=--no-db without them)
 	@$(PYTHON) pipelines/quests/tools/export_compendium.py $(ARGS)
 
 release-dry: ## Show what `make release` would upload to CurseForge and Wago
@@ -339,7 +339,7 @@ endif
 # corpus/corpus.json.gz is still what the Python CLI and the addon build read, and still
 # committed -- producing audio and shipping a pack need no database, which is the promise
 # requirements.txt makes. What changed is that the file is an EXPORT of quest_line rather
-# than something maintained by hand, exactly as zones' manifest.json is an export of the
+# than something maintained by hand, exactly as places' manifest.json is an export of the
 # take table. The check that proves the table carries everything is that an import followed
 # by an export leaves the file byte-identical.
 

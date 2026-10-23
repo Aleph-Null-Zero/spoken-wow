@@ -15,7 +15,7 @@ import { fishUse, type FishUse } from "@/lib/generation/fish-lexicon";
 import { PREVIEW_MODES, type PreviewMode } from "@/lib/generation/preview-modes";
 import type { CacheState } from "@/lib/generation/preview";
 import { Toaster, useToast } from "@/components/ui/toast";
-import { booksHref, questsHref, zonesHref } from "@/lib/links";
+import { readablesHref, questsHref, placesHref } from "@/lib/links";
 import {
   honoursPhonemes,
   kindOf,
@@ -70,8 +70,8 @@ const OK_FILTERS: { value: OkFilter; label: string }[] = [
  */
 const SECTIONS = [
   { letter: "Q", what: "quest lines", href: (q: string) => questsHref({ q, filter: "text" }) },
-  { letter: "Z", what: "zone lore", href: (q: string) => zonesHref({ q, field: "text" }) },
-  { letter: "B", what: "book pages", href: (q: string) => booksHref({ q, field: "text" }) },
+  { letter: "Z", what: "zone lore", href: (q: string) => placesHref({ q, field: "text" }) },
+  { letter: "B", what: "book pages", href: (q: string) => readablesHref({ q, field: "text" }) },
 ] as const;
 
 // Starts as a respelling, not IPA. Anyone who can write IPA can switch in one click, and

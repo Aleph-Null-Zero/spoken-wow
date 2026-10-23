@@ -1,4 +1,4 @@
-local _, SpokenBooks = ...
+local _, SpokenReadables = ...
 
 -- Interface strings for the Spoken Readables options, book-frame buttons and player
 -- menu entries, and the key set every other language is measured against.
@@ -11,8 +11,8 @@ local _, SpokenBooks = ...
 -- missing falls back to English at runtime. Chat and diagnostic prints stay
 -- English everywhere, as in the other Spoken addons.
 
-SpokenBooks.L = SpokenBooks.L or {}
-local L = SpokenBooks.L
+SpokenReadables.L = SpokenReadables.L or {}
+local L = SpokenReadables.L
 
 L.OPT_AUTOPLAY = "Read Automatically"
 L.OPT_WHOLE_BOOK = "Read Whole Book"

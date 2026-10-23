@@ -27,7 +27,7 @@ import { parseFrontmatter } from "./frontmatter.mjs";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "../..");
 export const PUBLISHERS_DIR = join(ROOT, "publishers");
 
-export const SECTIONS = ["quests", "zones", "books"];
+export const SECTIONS = ["quests", "places", "readables"];
 
 // tts_cli/factions.py PACK_SUFFIXES, for the four that ship to CurseForge.
 const QUESTS_PACKS = { alliance: "Alliance", horde: "Horde", shared: "Shared", gossip: "Gossip" };
@@ -47,8 +47,8 @@ const ENGLISH_QUESTS_BUNDLE = Object.values(QUESTS_PACKS).map((suffix) => "Spoke
 const LANGUAGE_QUESTS_PACKS = { ...QUESTS_PACKS, all: "" };
 
 function englishFolder(section, pack) {
-  if (section === "zones") return "SpokenZonesAudio";
-  if (section === "books") return "SpokenBooksAudio";
+  if (section === "places") return "SpokenPlacesAudio";
+  if (section === "readables") return "SpokenReadablesAudio";
   return "SpokenQuestsAudio" + ENGLISH_QUESTS_PACKS[pack];
 }
 
@@ -69,12 +69,13 @@ function englishRelease(section, pack) {
  * splitting by faction. Not on any store yet, so a rule and not a page (scripts/audio/acted.mjs).
  *
  * The prefix matters to nothing in the player: quests finds a pack by its TOC's
- * DataModule-Version key, and zones and books by the registry it writes itself into.
+ * DataModule-Version key, and places and readables by the registry it writes itself into.
  */
 export function actedFolder(section, lang) {
   if (!SECTIONS.includes(section)) throw new Error(`no section '${section}'`);
   if (!CODES.includes(lang)) throw new Error(`no language '${lang}'`);
-  // A language's single quests pack is the bare SpokenQuestsAudio, as zones and books always are.
+  // A language's single quests pack is the bare SpokenQuestsAudio, as places and readables
+  // always are.
   return `${languageFolder(section, "all")}Acted${lang === BASE_LOCALE ? "" : `_${lang}`}`;
 }
 
@@ -192,7 +193,7 @@ export function findPack(section, lang, pack, packs = loadPacks()) {
 
 // The oldest Spoken whose lookups each section's packs are built for. Bumped by hand only when a
 // section's lookup format changes; scripts/manager/ refuses to publish past the latest release.
-export const MIN_SPOKEN = { quests: "3.0.0", zones: "3.0.0", books: "3.0.0" };
+export const MIN_SPOKEN = { quests: "3.0.0", places: "3.0.0", readables: "3.0.0" };
 
 // The folders the manager channel carries, each once: a bundle's folders, else the pack's own.
 export function managerFolders(packs = loadPacks()) {
@@ -220,8 +221,8 @@ export function audioFamily(lang, dir = PUBLISHERS_DIR) {
 // counterpart of Spoken: English (scripts/spoken/package-meta.sh). Not a pack -- the page has
 // no `section` -- but its dependencies are the packs, so they are read off the registry here
 // rather than listed a second time: every pack of the language that is on CurseForge and not
-// dormant, quests, zones and books alike. A language without a zones or books project simply
-// has none to name.
+// dormant, quests, places and readables alike. A language without a places or readables project
+// simply has none to name.
 export function metaFor(lang, packs = loadPacks(), dir = PUBLISHERS_DIR) {
   if (lang === BASE_LOCALE) throw new Error(`English's meta addon is spoken-all itself, not a language's`);
   const page = join("spoken", `all-${lang.toLowerCase()}.md`);
@@ -242,7 +243,7 @@ export function metaFor(lang, packs = loadPacks(), dir = PUBLISHERS_DIR) {
   };
 }
 
-// `## 1.0.0 — zones-audio-esMX`: a release tag ending in a language code. English headings
+// `## 1.0.0 — places-audio-esMX`: a release tag ending in a language code. English headings
 // name a kind (`— audio`, `— pack`) or nothing, never a tag, so this is how an English matcher
 // steps over a language pack's notes that happen to share its version number.
 const LANGUAGE_HEADING = /^## \S+ — [a-z]+(?:-[a-z]+)+-[a-z]{2}[A-Z]{2}(?:\s|$)/;

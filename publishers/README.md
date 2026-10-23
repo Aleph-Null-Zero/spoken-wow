@@ -46,27 +46,27 @@ which is why there is one file per project here and not two.
 | `quests/audio-shared-<lang>.md` for itIT, ptBR, koKR, ruRU, zhCN, zhTW | `Spoken <Language> Audio: Quests`, every quest in one pack beside Gossip; Alliance and Horde dormant | each page's `curseforge:` | — | `<language>-spoken-quests` |
 | `quests/audio-<lang>.md` | Spoken Quests Audio: `<Language>`, every line in one folder, GitHub only | — | — | — |
 | `zones/spoken-zones.md` | Spoken Zones (retired; was ZoneLore) | 1636521 | mNw7b5No | `spoken-zones` |
-| `zones/spoken-zones-audio.md` | Spoken Audio: Places | 1636532 | b6mvD9KP | `spoken-audio-places` |
-| `zones/spoken-zones-audio-dede.md` | Spoken German Audio: Places | 1713131 | — | `spoken-german-audio-places` |
-| `zones/spoken-zones-audio-eses.md` | Spoken Spanish (EU) Audio: Places | 1712807 | — | `spoken-spanish-eu-audio-places` |
-| `zones/spoken-zones-audio-esmx.md` | Spoken Spanish (AL) Audio: Places | 1711067 | — | `spoken-spanish-al-audio-places` |
-| `zones/spoken-zones-audio-frfr.md` | Spoken French Audio: Places | 1713125 | — | `spoken-french-audio-places` |
-| `zones/spoken-zones-audio-kokr.md` | Spoken Korean Audio: Places | 1723252 | — | `spoken-korean-audio-places` |
-| `zones/spoken-zones-audio-ptbr.md` | Spoken Portuguese Audio: Places | 1713138 | — | `spoken-portuguese-audio-places` |
-| `zones/spoken-zones-audio-ruru.md` | Spoken Russian Audio: Places | 1713143 | — | `spoken-russian-audio-places` |
-| `zones/spoken-zones-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Places | 1723273 | — | `spoken-chinese-simplified-audio-places` |
-| `zones/spoken-zones-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Places | 1723276 | — | `spoken-chinese-traditional-audio-places` |
+| `zones/spoken-places-audio.md` | Spoken Audio: Places | 1636532 | b6mvD9KP | `spoken-audio-places` |
+| `zones/spoken-places-audio-dede.md` | Spoken German Audio: Places | 1713131 | — | `spoken-german-audio-places` |
+| `zones/spoken-places-audio-eses.md` | Spoken Spanish (EU) Audio: Places | 1712807 | — | `spoken-spanish-eu-audio-places` |
+| `zones/spoken-places-audio-esmx.md` | Spoken Spanish (AL) Audio: Places | 1711067 | — | `spoken-spanish-al-audio-places` |
+| `zones/spoken-places-audio-frfr.md` | Spoken French Audio: Places | 1713125 | — | `spoken-french-audio-places` |
+| `zones/spoken-places-audio-kokr.md` | Spoken Korean Audio: Places | 1723252 | — | `spoken-korean-audio-places` |
+| `zones/spoken-places-audio-ptbr.md` | Spoken Portuguese Audio: Places | 1713138 | — | `spoken-portuguese-audio-places` |
+| `zones/spoken-places-audio-ruru.md` | Spoken Russian Audio: Places | 1713143 | — | `spoken-russian-audio-places` |
+| `zones/spoken-places-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Places | 1723273 | — | `spoken-chinese-simplified-audio-places` |
+| `zones/spoken-places-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Places | 1723276 | — | `spoken-chinese-traditional-audio-places` |
 | `books/spoken-books.md` | Spoken Books (retired) | 1701514 | qGYZnRNg | `spoken-books` |
-| `books/spoken-books-audio.md` | Spoken Audio: Readables | 1701520 | qGZOrvNd | `spoken-audio-readables` |
-| `books/spoken-books-audio-dede.md` | Spoken German Audio: Readables | 1723279 | — | `spoken-german-audio-readables` |
-| `books/spoken-books-audio-eses.md` | Spoken Spanish (EU) Audio: Readables | 1723280 | — | `spoken-spanish-eu-audio-readables` |
-| `books/spoken-books-audio-esmx.md` | Spoken Spanish (AL) Audio: Readables | 1723282 | — | `spoken-spanish-al-audio-readables` |
-| `books/spoken-books-audio-frfr.md` | Spoken French Audio: Readables | 1723284 | — | `spoken-french-audio-readables` |
-| `books/spoken-books-audio-ruru.md` | Spoken Russian Audio: Readables | 1723285 | — | `spoken-russian-audio-readables` |
-| `books/spoken-books-audio-ptbr.md` | Spoken Portuguese Audio: Readables | 1723287 | — | `spoken-portuguese-audio-readables` |
-| `books/spoken-books-audio-kokr.md` | Spoken Korean Audio: Readables | 1723288 | — | `spoken-korean-audio-readables` |
-| `books/spoken-books-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Readables | 1723289 | — | `spoken-chinese-simplified-audio-readables` |
-| `books/spoken-books-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Readables | 1723295 | — | `spoken-chinese-traditional-audio-readables` |
+| `books/spoken-readables-audio.md` | Spoken Audio: Readables | 1701520 | qGZOrvNd | `spoken-audio-readables` |
+| `books/spoken-readables-audio-dede.md` | Spoken German Audio: Readables | 1723279 | — | `spoken-german-audio-readables` |
+| `books/spoken-readables-audio-eses.md` | Spoken Spanish (EU) Audio: Readables | 1723280 | — | `spoken-spanish-eu-audio-readables` |
+| `books/spoken-readables-audio-esmx.md` | Spoken Spanish (AL) Audio: Readables | 1723282 | — | `spoken-spanish-al-audio-readables` |
+| `books/spoken-readables-audio-frfr.md` | Spoken French Audio: Readables | 1723284 | — | `spoken-french-audio-readables` |
+| `books/spoken-readables-audio-ruru.md` | Spoken Russian Audio: Readables | 1723285 | — | `spoken-russian-audio-readables` |
+| `books/spoken-readables-audio-ptbr.md` | Spoken Portuguese Audio: Readables | 1723287 | — | `spoken-portuguese-audio-readables` |
+| `books/spoken-readables-audio-kokr.md` | Spoken Korean Audio: Readables | 1723288 | — | `spoken-korean-audio-readables` |
+| `books/spoken-readables-audio-zhcn.md` | Spoken Chinese (Simplified) Audio: Readables | 1723289 | — | `spoken-chinese-simplified-audio-readables` |
+| `books/spoken-readables-audio-zhtw.md` | Spoken Chinese (Traditional) Audio: Readables | 1723295 | — | `spoken-chinese-traditional-audio-readables` |
 
 **A sound pack's page is also its registry entry.** `section:` (quests, zones or books), `lang:`
 and, on a quests pack, `pack:` say which pack it is; a language other than English also carries
@@ -144,7 +144,7 @@ in all four. The project names are the addons' `## Title` too (`pack_title` in
 the site.
 
 **The folder names moved with them.** The packs ship as `SpokenQuestsAudio*` and the zones pack as
-`SpokenZonesAudio`, where they were `VoiceOverReduxHQAudio*` and `ZoneLoreAudio`. A renamed folder
+`SpokenPlacesAudio`, where they were `VoiceOverReduxHQAudio*` and `ZoneLoreAudio`. A renamed folder
 is a re-download of every clip in it, which the release doing the renaming costs anyway; what it
 is not is a broken path, because nothing stores one built from a folder name.
 
@@ -156,7 +156,7 @@ The Wago ids for the pack projects are listed above anyway: the projects exist, 
 that endpoint takes a larger file they are what it uploads to.
 A language's pack -- Spoken Spanish (AL) Audio: Places is the first -- has no Wago project at all:
 its page leaves `wago:` out, `scripts/descriptions.mjs` writes no Wago copy of it, and
-`scripts/zones/release.sh` skips the Wago upload for it.
+`scripts/places/release.sh` skips the Wago upload for it.
 
 **So the packs have a third channel**, `scripts/audio-github-release.sh` (`make audio-release`),
 one GitHub release per pack under `<pack>/vX.Y.Z` — the ceiling there is 2 GB a file. It runs

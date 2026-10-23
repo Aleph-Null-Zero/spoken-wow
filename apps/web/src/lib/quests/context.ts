@@ -8,7 +8,7 @@
  * the one page that was supposed to stay up.
  *
  * THAT PROMISE IS WEAKENING, DELIBERATELY. The corpus itself is moving into Postgres, where
- * the zones and books corpora already live, and a section whose words come from a table
+ * the places and readables corpora already live, and a section whose words come from a table
  * cannot browse without it - those two answer an outage with a "corpus empty" page rather
  * than with stale prose. The fail-soft below is kept while the corpus is still a file, and
  * the day it is not, this function becomes the place to decide deliberately what an outage
@@ -33,7 +33,7 @@ import { BASE_LANG, type Lang } from "../lang";
  * lineId -> how many reports about it are still open.
  *
  * Grouped in the database rather than counted here, and `lineId is not null` excludes a
- * report about the project, which belongs to no line. The same query the zones and books
+ * report about the project, which belongs to no line. The same query the places and readables
  * catalogues run; the count is public while the bodies are not, so a row can say "somebody
  * has already reported this one" without showing what they said.
  */

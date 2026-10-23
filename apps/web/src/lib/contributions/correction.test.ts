@@ -7,7 +7,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { closeDb, db } from "@/lib/db";
-import { saveBookText } from "@/lib/books/text";
+import { saveBookText } from "@/lib/readables/text";
 
 import { createContribution } from "./store";
 
@@ -222,7 +222,7 @@ describe("acceptCorrection", () => {
   });
 });
 
-describe("acceptCorrection: a books page", () => {
+describe("acceptCorrection: a readables page", () => {
   const base = 900_000_000 + Math.floor(Math.random() * 90_000_000);
   const page = `b:${base}`;
   const english = `Words one ${base}.`;
@@ -253,11 +253,11 @@ describe("acceptCorrection: a books page", () => {
     await db().query(`delete from "entity_name" where "kind" = 'gameobject' and "entityId" = $1`, [String(base)]);
   });
 
-  async function booksRow(text: string): Promise<number> {
+  async function readablesRow(text: string): Promise<number> {
     const dedup = `correction-test-${Math.random().toString(36).slice(2)}`;
     dedups.push(dedup);
     await createContribution({
-      source: "books", key: dedup, locale: "esES", build: "1.15.7/61582", text,
+      source: "readables", key: dedup, locale: "esES", build: "1.15.7/61582", text,
       meta: { page: dedup, book: `Libro ${base}`, number: "1" },
       raw: `raw:${dedup}`, dedup, body: null, name: null, email: null, userId: null, ip: null,
     });
@@ -274,19 +274,19 @@ describe("acceptCorrection: a books page", () => {
     return rows;
   }
 
-  it("accepts a books correction as the page's new words, and the same words are then known", async () => {
-    const id = await booksRow(english);
+  it("accepts a readables correction as the page's new words, and the same words are then known", async () => {
+    const id = await readablesRow(english);
     expect(await acceptCorrection(id, ACCEPTER)).toMatchObject({ ok: true });
     expect(await versions()).toEqual([
       { version: 1, text: "Viejo texto.", origin: "extracted", note: null },
       { version: 2, text: english, origin: "edited", note: correctionNote(id) },
     ]);
-    const [state] = await lineStates([{ source: "books", locale: "esES", text: english, meta: {} }]);
+    const [state] = await lineStates([{ source: "readables", locale: "esES", text: english, meta: {} }]);
     expect(state).toEqual({ kind: "known", lineId: page });
   });
 
   it("changes nothing when accepted a second time with the same text", async () => {
-    const id = await booksRow(english);
+    const id = await readablesRow(english);
     const before = await versions();
     // The corpus already says it, so the second accept is refused and writes no version.
     expect(await acceptCorrection(id, ACCEPTER)).toMatchObject({ ok: false, reason: "not-a-correction" });
@@ -295,7 +295,7 @@ describe("acceptCorrection: a books page", () => {
 
   it("flips the status alone when the words were written and the flip was not", async () => {
     const text = `Nuevo texto ${base}.`;
-    const id = await booksRow(text);
+    const id = await readablesRow(text);
     await saveBookText({ lineId: page, text, note: correctionNote(id), editedBy: ACCEPTER, lang: "esES" });
     const before = await versions();
     expect(await acceptCorrection(id, ACCEPTER)).toMatchObject({ ok: true, contribution: { status: "accepted" } });

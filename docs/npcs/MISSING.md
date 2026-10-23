@@ -5,7 +5,7 @@ As of 2026-10-20. The lists come from `Data/Bosses.lua`, `Data/Creatures.lua` an
 Sources checked for every boss below:
 
 - the Forever repack's world database (port 3317), by exact name, by part of the name, and by the
-  ids in `pipelines/zones/tools/boss-sources.json`;
+  ids in `pipelines/places/tools/boss-sources.json`;
 - Efficient Games' data for every 1.60.1 build (`encounters`, `creature_details`, `creatures`), the
   set `export_compendium.py` pins. It holds 50 encounter records, so a boss missing from it proves
   nothing;
@@ -23,15 +23,16 @@ A boss with no creature id is still found when the player targets it in its dung
 - Portrait: the display Efficient Games' `creature_details` gives for that creature once a player has
   recorded the fight, or the repack's model once its database has the creature. Check that the client's
   CreatureDisplayInfo has it.
-- Then add the boss to `pipelines/zones/tools/boss-creatures-manual.json` with the evidence, and run
+- Then add the boss to `pipelines/places/tools/boss-creatures-manual.json` with the evidence, and run
   `boss_creatures.py` and `write-boss-creatures.mjs` (README, "Data").
 - Story: written from the wiki's lore, as the others are (`build-boss-stories.mjs`,
   `apply-boss-stories.mjs`), Classic-era events only.
 
-## No creature and no portrait (26)
+## No creature and no portrait (28)
 
 | Dungeon | Bosses | Why |
 | --- | --- | --- |
+| Blackrock Depths (230) | Ribbly Screwspigot, Plugger Spazzring | The database has both (9543, 9499), each spawned once on the map, but `boss-sources.json` does not yet name them and the creature tools have not been run for them. |
 | Demon Fall Canyon (2784) | Grimroot, Destructor's Wraith, Zilbagob, Pyranis, Diathorus the Seeker, Hellscream's Phantom, Azgaloth | The database has no spawns on the map and none of the wiki's ids. Efficient Games recorded no fight there. The database's Diathorus the Seeker (6072) is the Ashenvale elite. |
 | Scarlet Enclave (2856) | Beatrix, Beastmaster, Solistrasza, Mason, Reborn Council, Lillian Voss, Caldoran | As for Demon Fall Canyon. The database's Beastmasters (26307, 133390) are retail creatures. |
 | Scarlet Enclave (2856) | Balnazzar | The only Balnazzar in the database is Stratholme's (10813), whose model the client lacks. The wiki's id, 240811, is not in the database. |
@@ -55,7 +56,7 @@ A boss with no creature id is still found when the player targets it in its dung
 | Excavation Site: Wetlands (2998) | Highland Horror | 260808, model 9010, by name in Efficient Games. No encounter record. |
 | Karazhan Crypts (2875) | Kaigy Maryla, Sairuh Maryla | 256275 and 256273, by name in Efficient Games. The database spawns Kaigy only in the open world (map 0), and the wiki gives other ids (238233, 238213). |
 
-## No story (23)
+## No story (25)
 
 No story was written for these: neither the Adventure Guide nor the wiki article in `boss-sources.json`
 gave lore for them.
@@ -64,6 +65,7 @@ gave lore for them.
 | --- | --- | --- |
 | Deadmines (36) | Miner Johnson | |
 | Razorfen Downs (129) | Ragglesnout | |
+| Blackrock Depths (230) | Ribbly Screwspigot, Plugger Spazzring | Not yet looked for. |
 | Stratholme (329) | Skul, Stonespine | |
 | Ahn'Qiraj Temple (531) | Viscidus | |
 | Karazhan Crypts (2875) | Creeping Malison, Hans and Greta, The Ugly Goblin, Barian Maryla | The wiki has event pages (Opera of Malediction, The Failed Apprentice), not the bosses'. |

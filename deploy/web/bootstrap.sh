@@ -49,7 +49,7 @@ install -d -o deploy -g deploy -m 755 \
   "$ROOT/shared/sounds" \
   "$ROOT/shared/audio-history" \
   "$ROOT/shared/audio-history/quests" \
-  "$ROOT/shared/audio-history/zones" \
+  "$ROOT/shared/audio-history/places" \
   "$ROOT/shared/voices" \
   "$ROOT/shared/voice-references" \
   "$ROOT/shared/seed-clips" \

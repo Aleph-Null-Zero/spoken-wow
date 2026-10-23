@@ -2,7 +2,7 @@
 -- sources, a clip factory, and a recorder for the player's callbacks.
 local M = {}
 
-local ZONES = (debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$") or ".") .. "/../../addons/Spoken_Places/"
+local PLACES = (debug.getinfo(1, "S").source:match("^@(.*)/[^/]*$") or ".") .. "/../../addons/Spoken_Places/"
 
 function M.Fresh(stub, spokenDir)
     stub.SetClient("11509")
@@ -11,9 +11,9 @@ function M.Fresh(stub, spokenDir)
     local env = stub.LoadSpoken(spokenDir)
     env.Addon.db.char.IsPaused = false
     local quests = env.Sources:Register("quests", { title = "Quests", addon = "Spoken_Quests", order = 1 })
-    local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2,
+    local places = env.Sources:Register("places", { title = "Places", addon = "Spoken_Places", order = 2,
         queueLimit = 3, interClipGap = 0.25 })
-    return env, quests, zones
+    return env, quests, places
 end
 
 local n = 0
@@ -75,27 +75,27 @@ function M.Expecter(print)
     return Expect, function() return failures end
 end
 
---- The zones addon loaded for real, Core.lua included -- unlike wow_client_stub.LoadZones,
+--- The Places addon loaded for real, Core.lua included -- unlike wow_client_stub.LoadZones,
 --- which loads only Audio/ContributeButton/Autoplay against a hand-built fake table for playback
 --- tests. Contribute.lua needs the real GetPlayerMapID, GetLoreWithFallback, GetSubzoneLore,
 --- GetLore and IsPending, all of which live in Core.lua, so this loads that too, and the
 --- language and pack answers it sends, from Language.lua and Audio.lua. Spoken's UI/Compendium.lua
 --- too where Spoken has not loaded it: a clip's header is the place above, from its tree.
 --- `seed` is the addon table as it stands before Language.lua runs, for what the
---- generated data would have put there first (SpokenZones.Languages).
-function M.LoadZones(addonDirectory, seed)
-    local SpokenZones = seed or {}
+--- generated data would have put there first (SpokenPlaces.Languages).
+function M.LoadPlaces(addonDirectory, seed)
+    local SpokenPlaces = seed or {}
     if not _G.SpokenCompendium then dofile(addonDirectory .. "../Spoken/UI/Compendium.lua") end
     for _, file in ipairs({ "Language", "Core", "Audio", "Contribute" }) do
         local chunk = assert(loadfile(addonDirectory .. file .. ".lua"))
-        chunk("Spoken_Places", SpokenZones)
+        chunk("Spoken_Places", SpokenPlaces)
     end
-    return SpokenZones
+    return SpokenPlaces
 end
 
---- The language codes SpokenZones.LOCALES lists, in order, read off its source. The other
+--- The language codes SpokenPlaces.LOCALES lists, in order, read off its source. The other
 --- addons each keep a copy of the list and are tested against this one.
-function M.ZonesLocaleCodes(here)
+function M.PlacesLocaleCodes(here)
     local codes = {}
     local file = assert(io.open(here .. "/../../addons/Spoken_Places/Language.lua"))
     for code in file:read("*a"):gmatch('{ code = "(%a+)"') do table.insert(codes, code) end
@@ -103,7 +103,7 @@ function M.ZonesLocaleCodes(here)
     return table.concat(codes, " ")
 end
 
---- The parts of the zones addon's Core.lua that its playback files read, as a fake.
+--- The parts of the Places addon's Core.lua that its playback files read, as a fake.
 function M.NewZoneLore()
     local cfg = { voiceEnabled = true, autoplay = true, autoplaySubzones = true,
         autoplayExplored = false, debug = false,
@@ -119,7 +119,7 @@ function M.NewZoneLore()
     local registered = {}
     Z.RegisterStrings = function(_, code, strings) registered[code] = strings end
     for _, code in ipairs({ "enUS", "deDE", "esES", "frFR", "ptBR", "ruRU", "koKR", "zhCN", "zhTW" }) do
-        assert(loadfile(ZONES .. "Locale/" .. code .. ".lua"))("Spoken_Places", Z)
+        assert(loadfile(PLACES .. "Locale/" .. code .. ".lua"))("Spoken_Places", Z)
     end
     Z.RegisterStrings = nil
     local english = registered.enUS
@@ -137,7 +137,7 @@ function M.NewZoneLore()
         cfg.showMapPanel = shown
         if shown then cfg.mapPanelCollapsed = false end
     end
-    function Z:IsPartOn() return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("zones") end
+    function Z:IsPartOn() return not (Spoken and Spoken.IsPartOn) or Spoken:IsPartOn("places") end
     function Z:GetMapName(id) return ({ [1411] = "Durotar", [1426] = "Dun Morogh" })[id] end
     function Z:GetLanguage() return "enUS" end
     function Z:Print(fmt, ...) table.insert(self.printed, select("#", ...) > 0 and string.format(fmt, ...) or fmt) end

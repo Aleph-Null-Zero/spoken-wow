@@ -326,8 +326,8 @@ world.npcGUID, world.gossipText, DUI.handler = questGiver, nil, nil
 -- A zone clip whose transcript is the quest text word for word.
 Spoken:StopAll()
 DUI:HandleQuestDetail()
-local zones = Spoken:RegisterSource("zones", { title = "Zones", addon = "Spoken_Places" })
-zones:Enqueue({ key = "z:12", path = "z12.ogg", length = 12,
+local places = Spoken:RegisterSource("places", { title = "Places", addon = "Spoken_Places" })
+places:Enqueue({ key = "z:12", path = "z12.ogg", length = 12,
     present = { header = "Elwynn Forest", transcript = QUEST_TEXT, bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 Expect("a zone clip is playing", Spoken:GetCurrent() and Spoken:GetCurrent().key, "z:12")
@@ -351,10 +351,10 @@ Expect("closing DialogueUI does not cut the line off", Spoken:GetQueueSize(), 1)
 DUI:Show()
 provider.stopPlaying()
 Expect("Stop removes it", Spoken:GetQueueSize(), 0)
-zones:Enqueue({ key = "z:13", path = "z13.ogg", length = 12,
+places:Enqueue({ key = "z:13", path = "z13.ogg", length = 12,
     present = { header = "Elwynn Forest", transcript = "Lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
-zones:Enqueue({ key = "z:14", path = "z14.ogg", length = 12,
+places:Enqueue({ key = "z:14", path = "z14.ogg", length = 12,
     present = { header = "Teldrassil", transcript = "More lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 Expect("another part's line is speaking", Spoken:GetCurrent() and Spoken:GetCurrent().key, "z:13")
@@ -367,8 +367,8 @@ local keys = {}
 for _, clip in ipairs(Spoken:GetQueue()) do table.insert(keys, clip.key) end
 Expect("...the line it cut off skipped, and the next one still waiting", table.concat(keys, " "), "101-accept z:14")
 Spoken:StopAll()
-zones:StopAll()
-zones:Enqueue({ key = "z:15", path = "z15.ogg", length = 12,
+places:StopAll()
+places:Enqueue({ key = "z:15", path = "z15.ogg", length = 12,
     present = { header = "Darkshore", transcript = "Lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 VO.Addon:InvokeQuestHandler("QUEST_DETAIL", "test", true)
@@ -378,7 +378,7 @@ Expect("...is not playing, so the button offers Play", provider.isPlaying(), fal
 provider.playFile()
 Expect("...and Play brings it forward", Spoken:GetCurrent() and Spoken:GetCurrent().fileName, "101-accept")
 Spoken:StopAll()
-zones:StopAll()
+places:StopAll()
 -- Answered for what the client is showing, which is the page DialogueUI asks about.
 world.questID = 102
 Expect("no recording, no button", provider.doesFileExist("quest", 102, "detail"), false)
@@ -559,7 +559,7 @@ play.scripts.OnClick(play, "LeftButton")
 skip.scripts.OnClick(skip)
 Expect("Skip skips what speaks", Spoken:GetCurrent() == nil or Spoken:GetCurrent().fileName ~= "101-accept", true)
 Spoken:StopAll()
-zones:Enqueue({ key = "z:16", path = "z16.ogg", length = 12,
+places:Enqueue({ key = "z:16", path = "z16.ogg", length = 12,
     present = { header = "Duskwood", transcript = "Lore.", bullet = "zone",
         portrait = { kind = "texture", texture = "Book" } } })
 play.scripts.OnClick(play, "LeftButton")
@@ -567,7 +567,7 @@ Expect("...in front of a zone's lore, which is skipped", Spoken:GetCurrent() and
     "101-accept")
 Expect("...the lore not kept to replay", Spoken:GetQueueSize(), 1)
 Spoken:StopAll()
-zones:StopAll()
+places:StopAll()
 DUI.TTSButton = stub.Widget("Button")
 DUI.TTSButton:SetAlpha(0.6)
 Bridge:RefreshPlayButton()
@@ -849,14 +849,6 @@ for _, style in ipairs({ "subtitle", "minimal", "classic", "none" }) do
     layout:Refresh()
     Expect("...and with the " .. style .. " style too", captions:IsShown() and Row(VO.L.OPT_DUI_PLAY_BUTTON):IsShown(), true)
 end
--- Show Words, Highlight Words and Type Words Out also set how DialogueUI's quest text is marked:
--- Mark Words in DialogueUI says so, once, rather than each of them.
-local markTip
-for _, entry in ipairs(layout.entries) do
-    if entry.label == VO.L.OPT_DUI_CAPTIONS then markTip = entry.tooltip end
-end
-Expect("Mark Words in DialogueUI's tooltip points to the Words section", markTip ~= nil
-    and string.find(markTip, "as set under Words", 1, true) ~= nil, true)
 chosen = "dialogueui"
 layout:Refresh()
 Expect("...live while DialogueUI is loaded", captions and captions.layoutReason, nil)

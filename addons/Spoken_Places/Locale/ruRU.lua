@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "ruRU" then
 	return
@@ -22,10 +22,8 @@ L.OPT_PLAY_BUTTON = "Читать истории вслух"
 L.OPT_AUTOPLAY = "Читать автоматически"
 L.OPT_AUTOPLAY_SUB = "Включать малые области"
 L.OPT_AUTOPLAY_EXPLORED = "Включать места, открытые раньше"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "Читает о каждом месте один раз для каждого персонажа, даже если оно открыто раньше."
 L.OPT_LANG_RELOAD = "Введите /reload, чтобы переключиться на него."
 L.OPT_LANGUAGE = "Язык текста"
-L.OPT_LANGUAGE_TIP = "Текст историй; голос следует языку озвучки."
 L.OPT_LANG_AUTO_FMT = "Авто (%1$s)"
 L.OPT_LANG_SET_FMT = "После перезагрузки интерфейса истории будут на языке: %1$s."
 L.OPT_LANG_PROFILE_FMT = "Этот профиль читает истории на языке: %1$s. Введите /reload, чтобы переключиться."
@@ -40,6 +38,10 @@ L.AUDIO_READ_TIP = "Прослушать эту историю."
 L.REPORT_BUTTON = "Сообщить"
 L.IN_ZONE_FMT = "Расположение: %1$s"
 L.DISCOVERED_FMT = "Открыто %1$d из %2$d"
+L.ZONE_COUNT_FMT = "зон: %1$d"
+L.ZONE_COUNT_ONE = "1 зона"
+L.CONTINENT_COUNT_FMT = "Континентов: %1$d"
+L.CONTINENT_COUNT_ONE = "1 континент"
 
 L.QUEUE_HELD_COMBAT = "Ожидание конца боя."
 L.QUEUE_HELD_CINEMATIC = "Ожидание конца ролика."
@@ -90,4 +92,4 @@ L.OPT_DEV_PREVIEW = "Незаконченные переводы"
 
 L.OPEN_IN_COMPENDIUM = "Открыть в «Компендиуме Азерота»"
 
-SpokenZones:RegisterStrings("ruRU", L)
+SpokenPlaces:RegisterStrings("ruRU", L)

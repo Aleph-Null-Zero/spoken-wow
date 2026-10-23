@@ -128,7 +128,7 @@ describe('ManagerService', () => {
     await svc.refreshCatalog(true)
     const missing = await waitFor(sent, svc.install(game.id, 'spoken', { version: '0.0.1' }))
     expect(missing).toMatchObject({ phase: 'error', message: 'Version 0.0.1 of Spoken is not in the list of releases.' })
-    const noPack = await waitFor(sent, svc.install(game.id, 'zones-audio'))
+    const noPack = await waitFor(sent, svc.install(game.id, 'places-audio'))
     expect(noPack.message).toBe('There is no release of Places voices to install yet.')
   })
 

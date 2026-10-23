@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 if GetLocale() ~= "deDE" then
 	return
@@ -22,10 +22,8 @@ L.OPT_PLAY_BUTTON = "Geschichten vorlesen"
 L.OPT_AUTOPLAY = "Automatisch vorlesen"
 L.OPT_AUTOPLAY_SUB = "Kleinere Gebiete einbeziehen"
 L.OPT_AUTOPLAY_EXPLORED = "Früher gefundene Orte einbeziehen"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "Liest jeden Ort einmal pro Charakter vor, auch einen früher entdeckten."
 L.OPT_LANG_RELOAD = "Tippe /reload, um zu ihr zu wechseln."
 L.OPT_LANGUAGE = "Textsprache"
-L.OPT_LANGUAGE_TIP = "Der Text der Geschichten; die Stimme folgt der Vertonungssprache."
 L.OPT_LANG_AUTO_FMT = "Automatisch (%1$s)"
 L.OPT_LANG_SET_FMT = "Nach dem Neuladen des Interfaces sind die Geschichten auf %1$s."
 L.OPT_LANG_PROFILE_FMT = "Dieses Profil liest die Geschichten auf %1$s vor. Tippe /reload, um zu wechseln."
@@ -40,6 +38,10 @@ L.AUDIO_READ_TIP = "Diese Geschichte vorlesen lassen."
 L.REPORT_BUTTON = "Melden"
 L.IN_ZONE_FMT = "Lage: %1$s"
 L.DISCOVERED_FMT = "%1$d von %2$d entdeckt"
+L.ZONE_COUNT_FMT = "%1$d Zonen"
+L.ZONE_COUNT_ONE = "1 Zone"
+L.CONTINENT_COUNT_FMT = "%1$d Kontinente"
+L.CONTINENT_COUNT_ONE = "1 Kontinent"
 
 L.QUEUE_HELD_COMBAT = "Wartet auf Kampfende."
 L.QUEUE_HELD_CINEMATIC = "Wartet auf das Ende der Zwischensequenz."
@@ -90,4 +92,4 @@ L.OPT_DEV_PREVIEW = "Unfertige Übersetzungen"
 
 L.OPEN_IN_COMPENDIUM = "Im „Kompendium von Azeroth“ öffnen"
 
-SpokenZones:RegisterStrings("deDE", L)
+SpokenPlaces:RegisterStrings("deDE", L)

@@ -125,7 +125,7 @@ export default function ContributeForm({ signedInAs }: { signedInAs: string | nu
   const preview = previewOf(raw);
   // A place with no lore: the addon can only name it, so what is sent is the player's own
   // description of it -- required, and in place of the optional note every other source gets.
-  const isPlace = preview.ok && preview.source === "zones";
+  const isPlace = preview.ok && preview.source === "places";
   const described = description.trim().length >= DESCRIPTION_MIN;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {

@@ -2,18 +2,18 @@
 -- and /spokenplaces and /spp. /spokenwritings and /spw, and /spokenbooks and /spb, still work, for
 -- players' macros.
 
-local ADDON_NAME, SpokenBooks = ...
+local ADDON_NAME, SpokenReadables = ...
 
 local function Print(message, ...)
 	local text = select("#", ...) > 0 and format(message, ...) or message
 	DEFAULT_CHAT_FRAME:AddMessage("|cff80c0ffSpoken Readables|r: " .. text)
 end
 
-SpokenBooks.Print = function(self, message, ...) Print(message, ...) end
+SpokenReadables.Print = function(self, message, ...) Print(message, ...) end
 
 local function Toggle(key, label)
-	SpokenBooksSettings[key] = not SpokenBooksSettings[key]
-	Print("%s %s", label, SpokenBooksSettings[key] and "enabled" or "disabled")
+	SpokenReadablesSettings[key] = not SpokenReadablesSettings[key]
+	Print("%s %s", label, SpokenReadablesSettings[key] and "enabled" or "disabled")
 end
 
 --- Read the page in front of the reader, or say why nothing happened.
@@ -21,7 +21,7 @@ end
 --- Deliberate, so it works with autoplay off: that is the whole point of the setting, and a
 --- command that respected it would leave no way to start narration.
 ---
-function SpokenBooks:ReadOrExplain()
+function SpokenReadables:ReadOrExplain()
 	if self:ReadCurrent() > 0 then
 		return
 	end
@@ -44,12 +44,12 @@ function SpokenBooks:ReadOrExplain()
 end
 
 local function Status()
-	local data = SpokenBooks:Data()
+	local data = SpokenReadables:Data()
 	local books, pages = 0, 0
 	for _ in pairs(data and data.books or {}) do books = books + 1 end
 	for _ in pairs(data and data.pages or {}) do pages = pages + 1 end
 
-	local packs = SpokenBooks:GetAudioPacks()
+	local packs = SpokenReadables:GetAudioPacks()
 	local clips = 0
 	for _, pack in ipairs(packs) do
 		for _ in pairs(pack.pages) do clips = clips + 1 end
@@ -58,30 +58,30 @@ local function Status()
 	Print("%d readables, %d pages known; %d narrated by %d pack%s", books, pages, clips,
 		#packs, #packs == 1 and "" or "s")
 	local read = 0
-	for _ in pairs(SpokenBooksCharacter and SpokenBooksCharacter.read or {}) do read = read + 1 end
+	for _ in pairs(SpokenReadablesCharacter and SpokenReadablesCharacter.read or {}) do read = read + 1 end
 
 	Print("autoplay %s, whole book %s, one line %s, read once %s",
-		SpokenBooksSettings.autoplay and "on" or "off",
-		SpokenBooksSettings.readWholeBook and "on" or "off",
-		SpokenBooks:OneLine() and "on" or "off",
-		SpokenBooksSettings.readOnce and "on" or "off")
-	Print("gathering %s", SpokenBooks:GatherAvailable() and (Spoken.Gather:IsEnabled() and "on" or "off") or "unavailable")
+		SpokenReadablesSettings.autoplay and "on" or "off",
+		SpokenReadablesSettings.readWholeBook and "on" or "off",
+		SpokenReadables:OneLine() and "on" or "off",
+		SpokenReadablesSettings.readOnce and "on" or "off")
+	Print("gathering %s", SpokenReadables:GatherAvailable() and (Spoken.Gather:IsEnabled() and "on" or "off") or "unavailable")
 	-- Said whether or not read-once is on, because the count is what makes `/spr forget`
 	-- make sense, and because a reader turning the setting on wants to know what it will
 	-- already consider read.
 	Print("%d readable%s read on this character", read, read == 1 and "" or "s")
 	if #packs == 0 then
-		Print(SpokenBooks:DescribeMissingAudio())
+		Print(SpokenReadables:DescribeMissingAudio())
 	end
 end
 
 --- What /spr status prints, for the settings' Show Diagnostics.
-function SpokenBooks:ShowStatus()
+function SpokenReadables:ShowStatus()
 	Status()
 end
 
 --- A page every installed pack has, played the way a real one is, to check it can be heard.
-function SpokenBooks:PlayTestLine()
+function SpokenReadables:PlayTestLine()
 	local held = false
 	for _, pack in ipairs(self:GetAudioPacks()) do
 		-- A page ClipFor can place: a pack may hold keys an older corpus does not know.
@@ -107,13 +107,13 @@ function SpokenBooks:PlayTestLine()
 	Print(self:DescribeMissingAudio())
 end
 
-_G.SLASH_SPOKENWRITINGS1 = "/spokenreadables"
-_G.SLASH_SPOKENWRITINGS2 = "/spr"
-_G.SLASH_SPOKENWRITINGS3 = "/spokenwritings"
-_G.SLASH_SPOKENWRITINGS4 = "/spw"
-_G.SLASH_SPOKENWRITINGS5 = "/spokenbooks"
-_G.SLASH_SPOKENWRITINGS6 = "/spb"
-SlashCmdList["SPOKENWRITINGS"] = function(msg)
+_G.SLASH_SPOKENREADABLES1 = "/spokenreadables"
+_G.SLASH_SPOKENREADABLES2 = "/spr"
+_G.SLASH_SPOKENREADABLES3 = "/spokenwritings"
+_G.SLASH_SPOKENREADABLES4 = "/spw"
+_G.SLASH_SPOKENREADABLES5 = "/spokenbooks"
+_G.SLASH_SPOKENREADABLES6 = "/spb"
+SlashCmdList["SPOKENREADABLES"] = function(msg)
 	local cmd = string.lower(msg or "")
 	cmd = string.match(cmd, "^%s*(%S*)") or ""
 
@@ -130,26 +130,26 @@ SlashCmdList["SPOKENWRITINGS"] = function(msg)
 	elseif cmd == "stoponclose" then
 		Toggle("stopOnClose", "stopping when the book closes")
 	elseif cmd == "forget" then
-		local count = SpokenBooks:ForgetRead()
+		local count = SpokenReadables:ForgetRead()
 		Print("forgot %d readable%s; they will be read again", count, count == 1 and "" or "s")
 	elseif cmd == "settings" or cmd == "options" then
 		-- Guarded because UI/Options.lua is the one file here that a client can do without:
 		-- everything it offers is also a command on this list.
-		if SpokenBooks.OpenOptions then
-			SpokenBooks:OpenOptions()
+		if SpokenReadables.OpenOptions then
+			SpokenReadables:OpenOptions()
 		else
 			Print("no settings panel on this client -- type /spr for the commands")
 		end
 	elseif cmd == "compendium" or cmd == "readables" then
-		if SpokenBooks.ShowReadables then
-			SpokenBooks:ShowReadables()
+		if SpokenReadables.ShowReadables then
+			SpokenReadables:ShowReadables()
 		else
 			Print("no Compendium on this client")
 		end
 	elseif cmd == "read" or cmd == "play" then
-		SpokenBooks:ReadOrExplain()
+		SpokenReadables:ReadOrExplain()
 	elseif cmd == "stop" then
-		SpokenBooks:StopReading()
+		SpokenReadables:StopReading()
 		Print("stopped")
 	elseif cmd == "diagnostics" or cmd == "status" then
 		Status()

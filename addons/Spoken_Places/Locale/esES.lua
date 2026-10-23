@@ -5,7 +5,7 @@
 -- falls back to English at runtime, and the shortfall is what keeps this language
 -- out of the switcher -- see tools/locale/build-languages.mjs.
 
-local _, SpokenZones = ...
+local _, SpokenPlaces = ...
 
 -- esMX shares this file: nothing in these strings varies by region. Both codes
 -- register the same table, so check-strings.mjs (which reads one file per code)
@@ -25,10 +25,8 @@ L.OPT_PLAY_BUTTON = "Leer historias en voz alta"
 L.OPT_AUTOPLAY = "Leer automáticamente"
 L.OPT_AUTOPLAY_SUB = "Incluir áreas más pequeñas"
 L.OPT_AUTOPLAY_EXPLORED = "Incluir lugares encontrados antes"
-L.OPT_AUTOPLAY_EXPLORED_TIP = "Lee cada lugar una vez por personaje, aunque ya se hubiera descubierto."
 L.OPT_LANG_RELOAD = "Escribe /reload para cambiar a él."
 L.OPT_LANGUAGE = "Idioma del texto"
-L.OPT_LANGUAGE_TIP = "El texto de las historias; la voz sigue el idioma de las voces."
 L.OPT_LANG_AUTO_FMT = "Automático (%1$s)"
 L.OPT_LANG_SET_FMT = "Las historias estarán en %1$s cuando se recargue la interfaz."
 L.OPT_LANG_PROFILE_FMT = "Este perfil lee las historias en %1$s. Escribe /reload para cambiar."
@@ -43,6 +41,10 @@ L.AUDIO_READ_TIP = "Escuchar esta historia en voz alta."
 L.REPORT_BUTTON = "Informar"
 L.IN_ZONE_FMT = "Ubicación: %1$s"
 L.DISCOVERED_FMT = "%1$d de %2$d descubiertas"
+L.ZONE_COUNT_FMT = "%1$d zonas"
+L.ZONE_COUNT_ONE = "1 zona"
+L.CONTINENT_COUNT_FMT = "%1$d continentes"
+L.CONTINENT_COUNT_ONE = "1 continente"
 
 L.QUEUE_HELD_COMBAT = "Esperando que termine el combate."
 L.QUEUE_HELD_CINEMATIC = "Esperando que termine la cinemática."
@@ -105,5 +107,5 @@ L.DUNGEONS = "Mazmorras y bandas"
 
 L.OPEN_IN_COMPENDIUM = "Abrir en el Compendio de Azeroth"
 
-SpokenZones:RegisterStrings("esES", L)
-SpokenZones:RegisterStrings("esMX", L)
+SpokenPlaces:RegisterStrings("esES", L)
+SpokenPlaces:RegisterStrings("esMX", L)

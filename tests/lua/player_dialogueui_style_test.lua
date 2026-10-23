@@ -336,8 +336,8 @@ Expect("...and keeps it when the window is laid out again", Faces(), NOTO .. "|"
 Spoken:StopAll()
 
 -- A book page and a zone's lore, queued as Spoken_Readables and Spoken_Places queue them.
-local books = env.Sources:Register("books", { title = "Books", addon = "Spoken_Readables", order = 3 })
-books:Enqueue({ key = "b:1", path = "b1.mp3", length = 6, present = { header = "A Letter Home", transcript = "Dear mother, the war goes well.",
+local readables = env.Sources:Register("readables", { title = "Readables", addon = "Spoken_Readables", order = 3 })
+readables:Enqueue({ key = "b:1", path = "b1.mp3", length = 6, present = { header = "A Letter Home", transcript = "Dear mother, the war goes well.",
     bullet = "book", portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 Expect("a book page shows the window", Skin.wanted, true)
 Expect("...titled by the book, never by its key", Skin.title.text:GetText(), "A Letter Home")
@@ -347,8 +347,8 @@ Expect("...badged as a book, as the subtitle badges it", tostring(Skin.badge:IsS
     "true " .. tostring(env.Face.BADGES.book))
 Expect("...with its words in the window", T.text, "Dear mother, the war goes well.")
 Spoken:StopAll()
-local zones = env.Sources:Register("zones", { title = "Zones", addon = "Spoken_Places", order = 2 })
-zones:Enqueue({ key = "z:12", path = "z12.ogg", length = 20, present = { header = "Elwynn Forest", label = "Goldshire",
+local places = env.Sources:Register("places", { title = "Places", addon = "Spoken_Places", order = 2 })
+places:Enqueue({ key = "z:12", path = "z12.ogg", length = 20, present = { header = "Elwynn Forest", label = "Goldshire",
     bullet = "zone", portrait = { kind = "texture", texture = [[Interface\AddOns\Spoken\Textures\Book]] } } })
 Expect("a zone's lore shows it too", Skin.name:GetText() .. "/" .. Skin.title.text:GetText(), "Elwynn Forest/Goldshire")
 Expect("...even with no words to show", T.frame:IsShown(), false)
@@ -1118,7 +1118,7 @@ Skin.title.text.SetText = function(self, text)
     table.insert(titleSets, text)
     return setTitle(self, text)
 end
-books:Enqueue(Page(nil))
+readables:Enqueue(Page(nil))
 Skin.title.text.SetText = setTitle
 local emptiedThenSet = false
 for i = 1, #titleSets - 1 do
@@ -1140,7 +1140,7 @@ Expect("...in dark ink", table.concat(Skin.colors.title, ","), "0.19,0.17,0.13")
 Spoken:StopAll()
 local shadowAlpha
 Skin.title.text.SetShadowColor = function(_, r, g, b, a) shadowAlpha = a end
-books:Enqueue(Page("Stone"))
+readables:Enqueue(Page("Stone"))
 Expect("a tombstone's or plaque's in its stone", Skin.parchments[1].texture, BOOK .. "Metal.png")
 Expect("...in pale letters with a shadow under them, as the book view's", table.concat(Skin.colors.title, ",") .. " "
     .. tostring(shadowAlpha), "0.9,0.9,0.9 1")
@@ -1151,7 +1151,7 @@ Expect("a quest's line is back in the quest window's parchment", Skin.parchments
 Spoken:StopAll()
 -- Another line following on screen in another art: another page, at its own height at once, its
 -- words fading in as any next line's do.
-books:Enqueue(Page("Stone"))
+readables:Enqueue(Page("Stone"))
 quests:Enqueue(H.Clip({ length = 30, present = { header = "Grull", label = "The Hunt Begins", portrait = { kind = "none" } } }))
 Skin:Tick(1)
 Expect("(the stone's page on screen)", tostring(Skin.frame:IsShown()) .. " " .. Skin.parchments[1].texture, "true " .. BOOK .. "Metal.png")
@@ -1169,7 +1169,7 @@ local BookView = _G.DUIBookFrame
 local bookWatch = Skin.dialogWatches and Skin.dialogWatches[BookView]
 Expect("the book view is watched, as the quest window is", bookWatch ~= nil, true)
 if bookWatch then
-    books:Enqueue(Page("Stone"))
+    readables:Enqueue(Page("Stone"))
     Skin:Tick(1)
     BookView:Show()
     bookWatch.scripts.OnShow(bookWatch)
@@ -1200,7 +1200,7 @@ Skin:Tick(1)
 stub.Advance(2)
 BookView:Show()
 bookWatch.scripts.OnShow(bookWatch)
-books:Enqueue(Page("Stone"))
+readables:Enqueue(Page("Stone"))
 Skin.frame.GetLeft, Skin.frame.GetTop = function() return nil end, function() return nil end
 BookView:Hide()
 Expect("a stone closed while a quest's line plays, its line queued, fades its words on the stone first",
@@ -1250,7 +1250,7 @@ end
 stub.Advance(2)
 BookView:Show()
 bookWatch.scripts.OnShow(bookWatch)
-books:Enqueue(Page(nil))
+readables:Enqueue(Page(nil))
 BookView:Hide()
 Skin:CloseStep(1)
 bookWatch.scripts.OnHide(bookWatch)
@@ -1308,7 +1308,7 @@ stub.Advance(2)
 OpenDialog()
 CloseDialog()
 stub.Advance(0.4)
-zones:Enqueue({ key = "z:99", path = "z99.ogg", length = 20, present = { header = "Durotar", label = "Razor Hill", transcript = "Lore." } })
+places:Enqueue({ key = "z:99", path = "z99.ogg", length = 20, present = { header = "Durotar", label = "Razor Hill", transcript = "Lore." } })
 Expect("a zone's line queued just after a quest window closed is not the window's",
     tostring(Skin.settling) .. " " .. tostring(Skin.tuck), "nil nil")
 stub.Advance(2)
@@ -1322,7 +1322,7 @@ Expect("...nor a quest's line queued long after", tostring(Skin.settling) .. " "
 Spoken:StopAll()
 for _ = 1, 40 do Skin:Tick(0.05) end
 stub.Advance(2)
-zones:Enqueue({ key = "z:98", path = "z98.ogg", length = 30, present = { header = "Mulgore", label = "Thunder Bluff", transcript = "Lore." } })
+places:Enqueue({ key = "z:98", path = "z98.ogg", length = 30, present = { header = "Mulgore", label = "Thunder Bluff", transcript = "Lore." } })
 stub.Advance(1)
 OpenDialog()
 CloseDialog()

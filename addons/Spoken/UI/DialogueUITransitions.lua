@@ -33,7 +33,7 @@ local JUST_BEFORE = 0.5
 -- words have held still, and a quest accepted at once (the space bar) closes before that. A line
 -- from the dialog's own modules this soon after it closed is still the dialog's.
 local JUST_AFTER = 1
-local DIALOG_SOURCES = { DUIQuestFrame = { quests = true, gossip = true }, DUIBookFrame = { books = true } }
+local DIALOG_SOURCES = { DUIQuestFrame = { quests = true, gossip = true }, DUIBookFrame = { readables = true } }
 -- The tuck: the page slides behind over TUCK_SLIDE seconds and the count ripples over
 -- TUCK_RIPPLE. The page lands at TUCK_SIZE of the window, TUCK_LOW of its height under its middle,
 -- its foot showing under it.
